@@ -1,0 +1,156 @@
+//这里定义了一些基础的变量
+
+//通用基础颜色
+$color-darker               : rgba(0,0,0,.87);/*#333333*/
+$color-dark                 : rgba(0,0,0,.54);/*#666666*/
+$color-base                 : rgba(0,0,0,.38);/*#999999*/
+$color-medium               : rgba(0,0,0,.24);/*#CCCCCC*/
+$color-light                : rgba(0,0,0,.1);/*#E5E5E5*/
+$color-light-1              : rgba(0,0,0,.05);
+$color-lighter              : #F8F8F8;
+$color-lightest             : #FFFFFF;
+
+//通用辅助颜色
+$supplement                 : #FF9801;
+$danger                     : #FF5D4A;
+$success                    : #5ABB3C;
+$name-other                 : #596E8F;
+$name-own                   : #CC841B;
+$color-pink                 : #F37D9A;//女性
+$color-blue                 : #46BEEF;//男性
+
+
+//存放一些宽度
+
+$main-title-height      : 70px;//顶部70px
+$nav-width              :60px;
+$left-width             :280px;//内容区域左边列表宽度
+
+
+//z-index.scss
+$min-zindex             : 1;
+$medium-zindex          : 10;
+$large-zindex           : 100;
+$max-zindex             : 1000;
+
+//普通元素的padding
+$ctn-padding-xmin       : 1px;
+$ctn-padding-min        : 2px;
+$ctn-padding-normal     : 5px;
+$ctn-padding-large      : 10px;
+$ctn-padding-xlarge     : 15px;
+$ctn-padding-xxlarge    : 20px;
+
+//profile 宽高度
+
+//thumb 头像大小(头像的尺寸：80，60，40，36，28.)
+$thumb-base             : 28px;
+$thumb-large            : 36px;
+$thumb-xlarge           : 40px;
+$thumb-xxlarge          : 60px;
+$thumb-xxxlarge         : 80px;
+
+
+//原有的头像尺寸(需要废弃)
+//$thumb
+//$thumb-min              : 12px;
+//$thumb-xxxxlarge        : $thumb-min * 6;
+//$thumb-big              : 80px;
+
+
+
+//这里存字体相关的
+$font-family            : "Helvetica Neue",Helvetica,"Apple Color Emoji",'Segoe UI Emoji', 'Segoe UI Symbol',Arial,"PingFang SC","Heiti SC", "Hiragino Sans GB","Microsoft YaHei","微软雅黑",sans-serif;
+$code-family            : Consolas,Menlo,Courier,monospace;
+$font-size-small        : 12px; //针对h6,说明文字
+$font-size-lSmall       : 13px; //针对h6,说明文字
+$font-size-base         : 14px; //正文,链接,h5
+$font-size-large        : 16px; //h4
+$font-size-xlarge       : 18px; //h3
+$font-size-xxlarge      : 20px; //h2
+$font-size-xxxlarge     : 24px; //h1
+$line-height-base       : 1.5;
+$line-height-computed   : floor(($font-size-base * $line-height-base));
+
+$border-radius-base     : 2px;
+$border-radius-normal   : 4px;
+$border-radius-large    : 5px;
+$border-radius-xlarge   : 10px;
+$border-radius-xxlarge   : 15px;
+
+
+
+// ICONFONT
+$iconfont-css-prefix    : dxicon;
+
+$icon-url               : "//at.alicdn.com/t/font_ovsogmhgit4ndn29"; //经常会改变,以后会换成本地的地址
+
+
+
+// Animation
+$ease-out            : cubic-bezier(0.215, 0.61, 0.355, 1);
+$ease-in             : cubic-bezier(0.55, 0.055, 0.675, 0.19);
+$ease-in-out         : cubic-bezier(0.645, 0.045, 0.355, 1);
+$ease-out-back       : cubic-bezier(0.12, 0.4, 0.29, 1.46);
+$ease-in-back        : cubic-bezier(0.71, -0.46, 0.88, 0.6);
+$ease-in-out-back    : cubic-bezier(0.71, -0.46, 0.29, 1.46);
+$ease-out-circ       : cubic-bezier(0.08, 0.82, 0.17, 1);
+$ease-in-circ        : cubic-bezier(0.6, 0.04, 0.98, 0.34);
+$ease-in-out-circ    : cubic-bezier(0.78, 0.14, 0.15, 0.86);
+$ease-out-quint      : cubic-bezier(0.23, 1, 0.32, 1);
+$ease-in-quint       : cubic-bezier(0.755, 0.05, 0.855, 0.06);
+$ease-in-out-quint   : cubic-bezier(0.86, 0, 0.07, 1);
+
+
+// 按钮边框颜色,理论上应该是背景色加深一点就可以了
+
+//$border-color-base      : #d9d9d9;        // base border outline a component
+//$box-shadow-base        : 0 0 4px rgba(0, 0, 0, 0.17);
+//$border-color-split     : #e9e9e9;        // split border inside a component
+$cursor-disabled        : not-allowed;
+$btn-font-weight        : normal;
+
+
+
+
+
+$btn-default-color      : $color-darker;
+$btn-default-bg         : $color-lighter;
+$btn-default-border     : $color-light;
+
+
+
+
+
+
+$btn-padding-base       : 8px 31px;
+$btn-border-radius-base : 4px;
+
+$btn-font-size-lg       : 14px;
+$btn-padding-lg         : 4px 11px 5px 11px;
+$btn-border-radius-lg   : $btn-border-radius-base;
+
+$btn-padding-sm         : 1px 7px;
+$btn-border-radius-sm   : $btn-border-radius-base;
+
+$btn-circle-size        : 28px;
+$btn-circle-size-lg     : 32px;
+$btn-circle-size-sm     : 22px;
+
+$msg-title-height: 70px;
+$msg-border-color: $color-light;
+
+
+
+
+
+//气泡页部分宽度定义
+$msg-medium-min-width: 630px;
+$msg-medium-max-width: 1000px;
+$msg-medium-width : 860px;
+$msg-medium-left : 0px;
+$msg-medium-right : 0px;
+$msg-medium-top: 0px;
+$msg-medium-bottom: 0px;
+$slidepanel-width: 470px;
+

@@ -1,0 +1,51 @@
+{
+  "name": "fabricPhoto",
+  "version": "0.1.0",
+  "description": "web 图片编辑器",
+  "repository": "",
+  "author": "yanzhi",
+  "scripts": {
+    "i": "PUPPETEER_DOWNLOAD_HOST=https://npm.taobao.org/mirrors SASS_BINARY_SITE=https://npm.taobao.org/mirrors/node-sass npm install",
+    "build": "webpack --config mywebpack.config.js",
+    "dev": "./node_modules/.bin/webpack-dev-server ",
+    "dll": "./node_modules/.bin/webpack --config webpack.dll.config.js"
+  },
+  "dependencies": {
+    "babel-polyfill": "^6.20.0",
+    "classnames": "^2.2.5",
+    "fabric": "1.7.3",
+    "react": "^15.4.2",
+    "react-dom": "^15.4.2"
+  },
+  "devDependencies": {
+    "autoprefixer": "^6.6.1",
+    "babel-core": "^6.6.0",
+    "babel-eslint": "^6.1.2",
+    "babel-loader": "^6.2.1",
+    "babel-plugin-import": "^1.0.1",
+    "babel-plugin-syntax-async-functions": "^6.8.0",
+    "babel-plugin-transform-decorators-legacy": "^1.3.4",
+    "babel-plugin-transform-export-extensions": "^6.8.0",
+    "babel-plugin-transform-regenerator": "^6.9.0",
+    "babel-plugin-transform-runtime": "^6.9.0",
+    "babel-preset-es2015": "^6.9.0",
+    "babel-preset-react": "^6.5.0",
+    "babel-preset-stage-0": "^6.5.0",
+    "css-loader": "^0.23.1",
+    "eslint": "^3.13.1",
+    "eslint-plugin-react": "^6.9.0",
+    "file-loader": "^0.9.0",
+    "node-sass": "^4.2.0",
+    "postcss": "^5.2.10",
+    "postcss-clearfix": "^1.0.0",
+    "postcss-loader": "^1.2.2",
+    "postcss-position": "^0.5.0",
+    "postcss-size": "^1.1.1",
+    "react-hot-loader": "^3.0.0-beta.6",
+    "sass-loader": "^4.1.1",
+    "style-loader": "^0.13.1",
+    "url-loader": "^0.5.7",
+    "webpack": "^2.2.1",
+    "webpack-dev-server": "^2.2.1"
+  }
+}

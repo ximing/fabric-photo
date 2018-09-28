@@ -1,0 +1,413 @@
+// font-face
+// @icon-url： 字体源文件的地址
+@font-face {
+
+
+  font-family: 'dxicon';
+
+  src: url('#{$icon-url}.eot'); /* IE9*/
+  src: url('#{$icon-url}.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+  url('#{$icon-url}.woff') format('woff'), /* chrome、firefox */
+  url('#{$icon-url}.ttf') format('truetype'), /* chrome、firefox、opera、Safari, Android, iOS 4.2+*/
+  url('#{$icon-url}.svg#dxicon') format('svg'); /* iOS 4.1- */
+
+}
+
+.#{$iconfont-css-prefix} {
+  @include iconfont-mixin;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.#{$iconfont-css-prefix}-setting:before {
+  content: "\e654";
+}
+
+.#{$iconfont-css-prefix}-group-setting:before {
+  content: "\e676";
+}
+
+.#{$iconfont-css-prefix}-todo:before {
+  content: "\e62d";
+}
+
+.#{$iconfont-css-prefix}-right:before {
+  content: "\e678";
+}
+
+.#{$iconfont-css-prefix}-news:before {
+  content: "\e657";
+}
+
+.#{$iconfont-css-prefix}-contact:before {
+  content: "\e651";
+}
+
+.#{$iconfont-css-prefix}-group:before {
+  content: "\e655";
+}
+
+.#{$iconfont-css-prefix}-group1:before {
+  content: "\e675";
+}
+
+.#{$iconfont-css-prefix}-group2:before {
+  content: "\e68c";
+}
+
+.#{$iconfont-css-prefix}-addchat:before {
+  content: "\e686";
+}
+
+.#{$iconfont-css-prefix}-addapp:before {
+  content: "\e602";
+}
+
+.#{$iconfont-css-prefix}-xiangshang:before {
+  content: "\e62c";
+}
+
+.#{$iconfont-css-prefix}-arrow-down:before {
+  content: "\e66b";
+}
+
+//实心向下尖头
+
+.#{$iconfont-css-prefix}-arrow-right:before {
+  content: "\e66a";
+}
+
+.#{$iconfont-css-prefix}-mute:before {
+  content: "\e670";
+}
+
+.#{$iconfont-css-prefix}-round_close:before {
+  content: "\e673";
+}
+
+//缺失
+.#{$iconfont-css-prefix}-search:before {
+  content: "\e66e";
+}
+
+.#{$iconfont-css-prefix}-unrecognized:before {
+  content: "\e66f";
+}
+
+.#{$iconfont-css-prefix}-zhankai:before {
+  content: "\e656";
+}
+
+.#{$iconfont-css-prefix}-search-close:before {
+  content: "\e679";
+}
+
+.#{$iconfont-css-prefix}-pull_right:before {
+  content: "\e674";
+}
+
+.#{$iconfont-css-prefix}-message:before {
+  content: "\e690";
+}
+
+.#{$iconfont-css-prefix}-checkbox:before {
+  content: "\e668";
+}
+
+.#{$iconfont-css-prefix}-checkbox-checked:before {
+  content: "\e669";
+}
+
+.#{$iconfont-css-prefix}-radio_box:before {
+  content: "\e604";
+}
+
+.#{$iconfont-css-prefix}-radio_box_fill:before {
+  content: "\e605";
+}
+
+.#{$iconfont-css-prefix}-gender-woman:before {
+  content: "\e66d";
+}
+
+.#{$iconfont-css-prefix}-gender-man:before {
+  content: "\e66c";
+}
+
+.#{$iconfont-css-prefix}-star-full:before {
+  content: "\e680";
+}
+
+.#{$iconfont-css-prefix}-star:before {
+  content: "\e67f";
+}
+
+.#{$iconfont-css-prefix}-folder:before {
+  content: "\e67e";
+}
+
+.#{$iconfont-css-prefix}-sendfile:before {
+  content: "\e61b";
+}
+
+.#{$iconfont-css-prefix}-screenshot:before {
+  content: "\e62b";
+}
+
+.#{$iconfont-css-prefix}-unfold:before {
+  content: "\e67b";
+}
+
+.#{$iconfont-css-prefix}-emoji:before {
+  content: "\e610";
+}
+
+.#{$iconfont-css-prefix}-plus:before {
+  content: "\e691";
+}
+
+.#{$iconfont-css-prefix}-post:before {
+  content: "\e600";
+}
+
+//
+.#{$iconfont-css-prefix}-more:before {
+  content: "\e652";
+}
+
+.#{$iconfont-css-prefix}-file:before {
+  content: "\e650";
+}
+
+.#{$iconfont-css-prefix}-kefu:before {
+  content: "\e653";
+}
+
+
+//toastr 使用的
+.#{$iconfont-css-prefix}-error:before {
+  content: "\e693";
+}
+
+.#{$iconfont-css-prefix}-confirm:before {
+  content: "\e684";
+}
+
+//app 自定义配置
+.#{$iconfont-css-prefix}-confirm-fill:before {
+  content: "\e603";
+}
+
+.#{$iconfont-css-prefix}-remove-fill:before {
+  content: "\e601";
+}
+
+.#{$iconfont-css-prefix}-left_voice_0:before {
+  content: "\e681";
+}
+
+.#{$iconfont-css-prefix}-left_voice_1:before {
+  content: "\e682";
+}
+
+.#{$iconfont-css-prefix}-left_voice_2:before {
+  content: "\e683";
+}
+
+.#{$iconfont-css-prefix}-right_voice_0:before {
+  content: "\e60b";
+}
+
+.#{$iconfont-css-prefix}-right_voice_1:before {
+  content: "\e60c";
+}
+
+.#{$iconfont-css-prefix}-right_voice_2:before {
+  content: "\e60d";
+}
+
+.#{$iconfont-css-prefix}-remove:before {
+  content: "\e673";
+}
+
+.#{$iconfont-css-prefix}-warning:before {
+  content: "\e672";
+}
+
+.#{$iconfont-css-prefix}-remove-group:before {
+  content: "\e694";
+}
+
+.#{$iconfont-css-prefix}-round_down:before {
+  content: "\e687";
+}
+
+.#{$iconfont-css-prefix}-quit:before {
+  content: "\e67a";
+}
+
+.#{$iconfont-css-prefix}-crown:before {
+  content: "\e667";
+}
+
+.#{$iconfont-css-prefix}-info:before {
+  content: "\e677";
+}
+
+.#{$iconfont-css-prefix}-bubble-leader:before {
+  content: "\e607";
+}
+
+.#{$iconfont-css-prefix}-bubble-star:before {
+  content: "\e608";
+}
+
+.#{$iconfont-css-prefix}-yunpan:before {
+  content: "\e613";
+}
+
+.#{$iconfont-css-prefix}-yunpan-close:before {
+  content: "\e60a";
+}
+
+.#{$iconfont-css-prefix}-gongzongpingtai:before {
+  content: "\e68b";
+}
+
+.#{$iconfont-css-prefix}-dalaba:before {
+  content: "\e689";
+}
+
+.#{$iconfont-css-prefix}-message-fail:before {
+  content: "\e606";
+}
+
+.#{$iconfont-css-prefix}-quote:before {
+  content: "\e627";
+}
+
+.#{$iconfont-css-prefix}-chehui:before {
+  content: "\e626";
+}
+
+.#{$iconfont-css-prefix}-close_notice:before {
+  content: "\e670";
+}
+
+.#{$iconfont-css-prefix}-feedback:before {
+  content: "\e614";
+}
+
+.#{$iconfont-css-prefix}-open-qr:before {
+  content: "\e61a";
+}
+
+.#{$iconfont-css-prefix}-close-qr:before {
+  content: "\e619";
+}
+
+.#{$iconfont-css-prefix}-view-qr:before {
+  content: "\e618";
+}
+
+.#{$iconfont-css-prefix}-lfc:before { //left full corner
+  content: "\e615";
+}
+
+.#{$iconfont-css-prefix}-llc:before {
+  content: "\e616";
+}
+
+.#{$iconfont-css-prefix}-rfc:before { //left full corner
+  content: "\e611";
+}
+
+.#{$iconfont-css-prefix}-rlc:before {
+  content: "\e617";
+}
+.#{$iconfont-css-prefix}-i1000:before {
+  content: "\e60e";
+}
+
+.#{$iconfont-css-prefix}-survey:before {
+  content: "\e60f";
+}
+
+.#{$iconfont-css-prefix}-moremessage:before {
+  content: "\e622";
+}
+.#{$iconfont-css-prefix}-forward:before {
+  content: "\e628";
+}
+
+.#{$iconfont-css-prefix}-checkboxChecked:before {
+  content: "\e620";
+}
+.#{$iconfont-css-prefix}-checkboxUncheck:before {
+  content: "\e61f";
+}
+.#{$iconfont-css-prefix}-cancelChecked:before {
+  content: "\e61e";
+}
+
+.#{$iconfont-css-prefix}-tag-receipt:before {
+  content: "\e61d";
+}
+
+.#{$iconfont-css-prefix}-send-receipt:before {
+  content: "\e61c";
+}
+
+.#{$iconfont-css-prefix}-daiban:before {
+  content: "\e625";
+}
+.#{$iconfont-css-prefix}-backArrow:before {
+  content: "\e623";
+}
+.#{$iconfont-css-prefix}-update:before {
+  content: "\e624";
+}
+.#{$iconfont-css-prefix}-checked:before {
+  content: "\e629";
+}
+.#{$iconfont-css-prefix}-toastr-close:before {
+  content: "\e62a";
+}
+.#{$iconfont-css-prefix}-question-mark:before {
+  content: "\e621";
+}
+.#{$iconfont-css-prefix}-daily-qun:before {
+  content: "\e62e";
+}
+/*图片编辑器*/
+.#{$iconfont-css-prefix}-image-fangda:before {
+  content: "\e638";
+}
+.#{$iconfont-css-prefix}-image-gou:before {
+  content: "\e637";
+}
+.#{$iconfont-css-prefix}-image-xuanzhuan:before {
+  content: "\e636";
+}
+.#{$iconfont-css-prefix}-image-masaike:before {
+  content: "\e635";
+}
+.#{$iconfont-css-prefix}-image-suoxiao:before {
+  content: "\e634";
+}
+.#{$iconfont-css-prefix}-image-text:before {
+  content: "\e633";
+}
+.#{$iconfont-css-prefix}-image-huabi:before {
+  content: "\e632";
+}
+.#{$iconfont-css-prefix}-image-jiantou:before {
+  content: "\e631";
+}
+.#{$iconfont-css-prefix}-image-guanbi:before {
+  content: "\e630";
+}
+.#{$iconfont-css-prefix}-image-jiancai:before {
+  content: "\e62f";
+}
+/* end */

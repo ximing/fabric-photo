@@ -1,0 +1,80 @@
+//上面的六种颜色是要删掉的,不要再项目中引用了
+//灰白色,这里只是取一些更普通的名称
+//$color-darker               : rgba(0,0,0,.87);/*#333333*/
+//$color-dark                 : rgba(0,0,0,.54);/*#666666*/
+//$color-base                 : rgba(0,0,0,.38);/*#666666*/
+//$color-medium               : #CCCCCC;
+//$color-light                : #E5E5E5;
+//$color-lighter              : #F8F8F8;
+//$color-lightest             : #FFFFFF;
+
+$border-color               : rgba(0,0,0,0.1);
+$chat-bg-color              : #F3F5F7;//右侧聊天窗口的背景色 rgba(255,255,255, 0.75)
+$session-bg-color           : #E8EBEF;//右侧聊天窗口的背景色 rgba(255,255,255, 0.65)
+$right-bg-color             : #F3F5F7;
+$right-chat-bg-color        : transparent;
+$search-ipt-bg-color        : rgba(255,255,255, 0.5);
+
+//主色
+$primary                    : #118BFB;
+$navigation-bg              : #2E3E51;
+$navigation-hover-bg        : rgba($primary, 0.1);
+$navigation-active-bg       : rgba(16,139,251,0.15);
+$navigation-active-border   : $primary;
+$navigation-color           : rgba($color-lightest, 0.5);//导航栏icon颜色
+
+$divider-color              : rgba($color-lightest,0.1);
+
+
+$hover-color: rgba($primary, 0.05);//hover时候的颜色
+$active-color: rgba($primary, 0.15);//激活时候的颜色
+
+
+//辅助颜色
+$toast-common               : #F3F9FF;
+$toast-abnormal             : #FFFAF2;
+$toast-error                : #FFF7F6;
+$toast-success              : #F7FBF5;
+
+
+
+$color-grey                 : #F4F4F4;//搜索框
+$color-you                  : #CAE5F9;
+$color-me                   : #E5E5E5;
+
+//输入框背景色
+$input-background-color     : #FBFBFB;
+
+
+
+$bg-image                   : $chat-bg-color;//背景图片
+
+$main-bg-style              : url($chat-bg-color) left bottom/cover no-repeat at-2x;
+$group-file-bg-image        : '';
+$group-file-bg-group-path   : rgba(0,0,0,0.02);
+$group-file-bg-group-path-border: 1px solid rgba(130, 130, 130, 0.1);
+$group-file-search-border: 1px solid rgba(0, 0, 0, 0.1);
+$group-file-header-tab-background-color: transparent;
+
+
+$btn-bg-base            : $primary;
+$border-color-base      : darken($primary, 5%);
+$btn-primary-color      : #fff;
+$btn-primary-bg         : $primary;
+
+$btn-ghost-color        : #FFFFFF;
+$btn-ghost-bg           : $supplement;
+$btn-ghost-border       : darken($supplement, 5%);
+
+$btn-disable-color      : #ccc;
+$btn-disable-bg         : #f3f5f7;
+$btn-disable-border     : $border-color-base;
+
+$btn-danger-color        : #FFFFFF;
+$btn-danger-bg           : $danger;
+$btn-danger-border       : $danger;
+
+
+
+//new css
+$yunpan-bg : #FFFFFF

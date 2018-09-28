@@ -1,0 +1,4 @@
+@mixin cyclize-avatar($radius) {
+  width: $radius * 2;
+  border-radius: $radius;
+}
