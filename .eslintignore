@@ -1,0 +1,5 @@
+node_modules/**/*.js
+*.json
+dist/**/*.js
+babel/*.js
+postcss.config.js

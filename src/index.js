@@ -1392,3 +1392,8 @@ class FabricPhoto {
 CustomEvents.mixin(FabricPhoto);
 
 export default FabricPhoto;
+
+export {
+    FabricPhoto,
+    consts
+}

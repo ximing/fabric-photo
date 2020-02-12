@@ -1,0 +1,4 @@
+src/login
+src/lib/npm/**/*.js
+src/lib/wxapp-mobx/**/*.js
+src/lib/wxParse/**/*.js

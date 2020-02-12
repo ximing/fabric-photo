@@ -6,14 +6,9 @@ import React, {
     Component
 }
 from 'react';
-import ReactDOM, {
-    findDOMNode
-}
-from 'react-dom';
 import classnames from 'classnames';
 
-import FabricPhoto from '../src/index'
-import consts from '../src/consts'
+import {FabricPhoto,consts} from '../src/index'
 
 export default class WrapContainer extends Component {
     constructor() {
