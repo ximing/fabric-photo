@@ -1,5 +1,4 @@
 import { fabric } from 'fabric';
-
 import Base from './base.js';
 import consts from '../consts';
 
