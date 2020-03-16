@@ -1,13 +1,13 @@
 import consts from './consts';
 
-
 import addObject from './commands/add-object';
 import remove from './commands/remove';
 import clear from './commands/clear';
 import loadImage from './commands/load-image.js';
 import zoom from './commands/zoom.js';
 import rotationImage from './commands/rotation-image.js';
-const {commandNames} = consts;
+
+const { commandNames } = consts;
 const creators = {};
 
 creators[commandNames.CLEAR_OBJECTS] = clear;

@@ -1,4 +1,5 @@
-import {fabric} from 'fabric';
+import { fabric } from 'fabric';
+
 const Arrow = fabric.util.createClass(fabric.Path, {
     /**
      * Constructor
@@ -9,8 +10,8 @@ const Arrow = fabric.util.createClass(fabric.Path, {
         options.type = 'arrow';
         this.callSuper('initialize', options);
         this.on({
-            'moving': this._onMoving,
-            'scaling': this._onScaling
+            moving: this._onMoving,
+            scaling: this._onScaling
         });
     },
     objectCaching: false,
@@ -42,7 +43,12 @@ const Arrow = fabric.util.createClass(fabric.Path, {
         this._strokeBorder(ctx, 'rgb(0, 0, 0)', cropzoneDashLineWidth);
 
         // White dash line
-        this._strokeBorder(ctx, 'rgb(255, 255, 255)', cropzoneDashLineWidth, cropzoneDashLineOffset);
+        this._strokeBorder(
+            ctx,
+            'rgb(255, 255, 255)',
+            cropzoneDashLineWidth,
+            cropzoneDashLineOffset
+        );
 
         // Reset scale
         ctx.scale(1 / originalScaleX, 1 / originalScaleY);
@@ -66,44 +72,32 @@ const Arrow = fabric.util.createClass(fabric.Path, {
         }
         this._setLineDash(ctx, this.cornerDashArray, null);
         // top-left
-        this._drawControl('tl', ctx, methodName,
-            left,
-            top);
+        this._drawControl('tl', ctx, methodName, left, top);
         // top-right
-        this._drawControl('tr', ctx, methodName,
-            left + width,
-            top);
+        this._drawControl('tr', ctx, methodName, left + width, top);
         // bottom-left
-        this._drawControl('bl', ctx, methodName,
-            left,
-            top + height);
+        this._drawControl('bl', ctx, methodName, left, top + height);
         // bottom-right
-        this._drawControl('br', ctx, methodName,
-            left + width,
-            top + height);
+        this._drawControl('br', ctx, methodName, left + width, top + height);
         if (!this.get('lockUniScaling')) {
             // middle-top
-            this._drawControl('mt', ctx, methodName,
-                left + width / 2,
-                top);
+            this._drawControl('mt', ctx, methodName, left + width / 2, top);
             // middle-bottom
-            this._drawControl('mb', ctx, methodName,
-                left + width / 2,
-                top + height);
+            this._drawControl('mb', ctx, methodName, left + width / 2, top + height);
             // middle-right
-            this._drawControl('mr', ctx, methodName,
-                left + width,
-                top + height / 2);
+            this._drawControl('mr', ctx, methodName, left + width, top + height / 2);
             // middle-left
-            this._drawControl('ml', ctx, methodName,
-                left,
-                top + height / 2);
+            this._drawControl('ml', ctx, methodName, left, top + height / 2);
         }
         // middle-top-rotate
         if (this.hasRotatingPoint) {
-            this._drawControl('mtr', ctx, methodName,
+            this._drawControl(
+                'mtr',
+                ctx,
+                methodName,
                 left + width / 2,
-                top - this.rotatingPointOffset);
+                top - this.rotatingPointOffset
+            );
         }
         ctx.restore();
     }

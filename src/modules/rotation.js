@@ -1,7 +1,8 @@
+import { fabric } from 'fabric';
 import Base from './base';
 import consts from '../consts';
-const {rejectMessages} = consts;
 
+const { rejectMessages } = consts;
 
 export default class Rotation extends Base {
     constructor(parent) {
@@ -55,7 +56,7 @@ export default class Rotation extends Base {
             y: oldImageCenter.y - newImageCenter.y
         };
 
-        canvas.forEachObject(obj => {
+        canvas.forEachObject((obj) => {
             const objCenter = obj.getCenterPoint();
             const radian = fabric.util.degreesToRadians(angleDiff);
             const newObjCenter = fabric.util.rotatePoint(objCenter, oldImageCenter, radian);

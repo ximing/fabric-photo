@@ -28,9 +28,9 @@ export default class Mosaic extends Base {
         canvas.selection = false;
 
         setting = setting || {};
-        this._dimensions = parseInt(setting.dimensions,10) || this._dimensions;
+        this._dimensions = parseInt(setting.dimensions, 10) || this._dimensions;
 
-        canvas.forEachObject(obj => {
+        canvas.forEachObject((obj) => {
             obj.set({
                 evented: false
             });
@@ -47,7 +47,7 @@ export default class Mosaic extends Base {
         canvas.defaultCursor = 'default';
         canvas.selection = false;
 
-        canvas.forEachObject(obj => {
+        canvas.forEachObject((obj) => {
             obj.set({
                 evented: true
             });
@@ -55,13 +55,14 @@ export default class Mosaic extends Base {
         canvas.off('mouse:down', this._listeners.mousedown);
     }
 
-    _onFabricMouseDown(fEvent) {
+    _onFabricMouseDown() {
         const canvas = this.getCanvas();
         let lowerCanvas = canvas.getElement();
-        let mosaicLayer = this.mosaicLayer = $(lowerCanvas.cloneNode(true));
-        mosaicLayer.removeClass('lower-canvas').addClass('mosaic-canvas');
+        let mosaicLayer = (this.mosaicLayer = lowerCanvas.cloneNode(true));
+        mosaicLayer.classList.remove('lower-canvas');
+        mosaicLayer.classList.add('mosaic-canvas');
         this.mosaicArr = [];
-        $(lowerCanvas).after(mosaicLayer);
+        lowerCanvas.insertAdjacentElement('afterend', mosaicLayer);
         canvas.on({
             'mouse:move': this._listeners.mousemove,
             'mouse:up': this._listeners.mouseup
@@ -74,7 +75,12 @@ export default class Mosaic extends Base {
         let dimensions = this._dimensions * ratio;
         const canvas = this.getCanvas();
         const pointer = canvas.getPointer(fEvent.e);
-        let imageData = canvas.contextContainer.getImageData(parseInt(pointer.x,10), parseInt(pointer.y,10), dimensions, dimensions);
+        let imageData = canvas.contextContainer.getImageData(
+            parseInt(pointer.x, 10),
+            parseInt(pointer.y, 10),
+            dimensions,
+            dimensions
+        );
         // let imageData = canvas.getContext().getImageData(parseInt(pointer.x), parseInt(pointer.y), this._dimensions, this._dimensions);
         let rgba = [0, 0, 0, 0];
         let length = imageData.data.length / 4;
@@ -87,11 +93,14 @@ export default class Mosaic extends Base {
         let mosaicRect = {
             left: pointer.x,
             top: pointer.y,
-            fill: `rgb(${parseInt(rgba[0] / length)},${parseInt(rgba[1] / length)},${parseInt(rgba[2] / length)})`,
-            dimensions: dimensions
+            fill: `rgb(${Number.parseInt(rgba[0] / length, 10)},${Number.parseInt(
+                rgba[1] / length,
+                10
+            )},${Number.parseInt(rgba[2] / length, 10)})`,
+            dimensions
         };
         this.mosaicArr.push(mosaicRect);
-        let ctx = this.mosaicLayer[0].getContext('2d');
+        let ctx = this.mosaicLayer.getContext('2d');
         ctx.fillStyle = mosaicRect.fill;
         ctx.fillRect(mosaicRect.left, mosaicRect.top, mosaicRect.dimensions, mosaicRect.dimensions);
     }
@@ -110,8 +119,8 @@ export default class Mosaic extends Base {
             canvas.add(__mosaicShape);
             canvas.renderAll();
         }
-        if(this.mosaicLayer) {
-            this.mosaicLayer.remove();
+        if (this.mosaicLayer) {
+            this.mosaicLayer.parentNode.removeChild(this.mosaicLayer);
         }
         this.mosaicArr = [];
         canvas.off({

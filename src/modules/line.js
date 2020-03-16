@@ -1,4 +1,4 @@
-import {fabric} from 'fabric';
+import { fabric } from 'fabric';
 import Base from './base';
 import consts from '../consts';
 
@@ -29,7 +29,7 @@ export default class Line extends Base {
 
         this.setBrush(setting);
 
-        canvas.forEachObject(obj => {
+        canvas.forEachObject((obj) => {
             obj.set({
                 evented: false
             });
@@ -66,7 +66,7 @@ export default class Line extends Base {
         canvas.defaultCursor = 'default';
         canvas.selection = false;
 
-        canvas.forEachObject(obj => {
+        canvas.forEachObject((obj) => {
             obj.set({
                 evented: true
             });

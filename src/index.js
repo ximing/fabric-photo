@@ -7,21 +7,12 @@ import CustomEvents from './lib/custom-event';
 const events = consts.eventNames;
 const modules = consts.moduleNames;
 const commands = consts.commandNames;
-const {
-    states,
-    keyCodes,
-    fObjectOptions
-} = consts;
-const {
-    isUndefined,
-    forEach,
-    hasStamp
-} = util;
+const { states, keyCodes, fObjectOptions } = consts;
+const { isUndefined, forEach, hasStamp } = util;
 
 let DomURL = window.URL || window.webkitURL || window;
 
 class FabricPhoto {
-
     constructor(element, option) {
         option = option || {};
         this._module = new Module();
@@ -43,7 +34,6 @@ class FabricPhoto {
         this._attachCanvasEvents();
         this._attachDomEvents();
 
-
         if (option.selectionStyle) {
             this._setSelectionStyle(option.selectionStyle);
         }
@@ -54,12 +44,7 @@ class FabricPhoto {
     }
 
     _attachModuleEvents() {
-        const {
-            PUSH_UNDO_STACK,
-            PUSH_REDO_STACK,
-            EMPTY_UNDO_STACK,
-            EMPTY_REDO_STACK
-        } = events;
+        const { PUSH_UNDO_STACK, PUSH_REDO_STACK, EMPTY_UNDO_STACK, EMPTY_REDO_STACK } = events;
 
         /**
          * @event fabricPhoto#pushUndoStack
@@ -104,8 +89,10 @@ class FabricPhoto {
             this.redo();
         }
 
-        if ((e.keyCode === keyCodes.BACKSPACE || e.keyCode === keyCodes.DEL) &&
-            this._canvas.getActiveObject()) {
+        if (
+            (e.keyCode === keyCodes.BACKSPACE || e.keyCode === keyCodes.DEL) &&
+            this._canvas.getActiveObject()
+        ) {
             e.preventDefault();
             this.removeActiveObject();
         }
@@ -217,7 +204,6 @@ class FabricPhoto {
         this.fire(events.ADJUST_OBJECT, fEvent.target, 'move');
     }
 
-
     /**
      * EventListener - "path:created"
      *  - Events:: "object:added" -> "path:created"
@@ -243,8 +229,7 @@ class FabricPhoto {
 
         if (obj.text === '') {
             obj.remove();
-        }
-        else if (!hasStamp(obj)) {
+        } else if (!hasStamp(obj)) {
             const command = commandFactory.create(commands.ADD_OBJECT, obj);
             this._module.pushUndoStack(command);
             this._module.clearRedoStack();
@@ -264,8 +249,7 @@ class FabricPhoto {
 
         if (obj.text === '') {
             obj.remove();
-        }
-        else if (!hasStamp(obj) && textComp.isSelected()) {
+        } else if (!hasStamp(obj) && textComp.isSelected()) {
             const command = commandFactory.create(commands.ADD_OBJECT, obj);
             this._module.pushUndoStack(command);
             this._module.clearRedoStack();
@@ -309,7 +293,6 @@ class FabricPhoto {
     _getModule(name) {
         return this._module.getModule(name);
     }
-
 
     getCurrentState() {
         return this._state;
@@ -415,10 +398,7 @@ class FabricPhoto {
             return;
         }
 
-        this.loadImageFromURL(
-            DomURL.createObjectURL(imgFile),
-            imageName || imgFile.name
-        );
+        this.loadImageFromURL(DomURL.createObjectURL(imgFile), imageName || imgFile.name);
     }
 
     /**
@@ -435,18 +415,15 @@ class FabricPhoto {
 
         const callback = this._callbackAfterImageLoading.bind(this);
         const command = commandFactory.create(commands.LOAD_IMAGE, imageName, url);
-        command.setExecuteCallback(callback)
-            .setUndoCallback(oImage => {
-                if (oImage) {
-                    callback(oImage);
-                }
-                else {
-                    this.fire(events.CLEAR_IMAGE);
-                }
-            });
+        command.setExecuteCallback(callback).setUndoCallback((oImage) => {
+            if (oImage) {
+                callback(oImage);
+            } else {
+                this.fire(events.CLEAR_IMAGE);
+            }
+        });
         this.execute(command);
     }
-
 
     /**
      * Callback after image loading
@@ -456,10 +433,7 @@ class FabricPhoto {
     _callbackAfterImageLoading(oImage) {
         const mainModule = this._getMainModule();
         const canvasElement = mainModule.getCanvasElement();
-        const {
-            width,
-            height
-        } = canvasElement.getBoundingClientRect();
+        const { width, height } = canvasElement.getBoundingClientRect();
 
         /**
          * @event fabricPhoto#loadImage
@@ -496,11 +470,9 @@ class FabricPhoto {
             return;
         }
 
-        fabric.Image.fromURL(imgUrl,
-            this._callbackAfterLoadingImageObject.bind(this), {
-                crossOrigin: 'Anonymous'
-            }
-        );
+        fabric.Image.fromURL(imgUrl, this._callbackAfterLoadingImageObject.bind(this), {
+            crossOrigin: 'Anonymous'
+        });
     }
 
     /**
@@ -569,15 +541,15 @@ class FabricPhoto {
     /**
      * start cropping
      */
-    startCropByBoundInfo(){
+    startCropByBoundInfo() {
         this._state = states.CROP;
     }
     /**
      * Apply cropping
      * @param {object} [cropInfo] - crop bound info left top width height
      */
-    endCropByBoundInfo(cropInfo){
-        if(!cropInfo){
+    endCropByBoundInfo(cropInfo) {
+        if (!cropInfo) {
             return;
         }
 
@@ -597,7 +569,7 @@ class FabricPhoto {
         }
     }
 
-    getViewPortImage(){
+    getViewPortImage() {
         return this._getMainModule().getViewPortImage();
     }
 
@@ -618,8 +590,7 @@ class FabricPhoto {
          *     console.log('angle: ', angle);
          * });
          */
-        command.setExecuteCallback(callback)
-            .setUndoCallback(callback);
+        command.setExecuteCallback(callback).setUndoCallback(callback);
         this.execute(command);
     }
 
@@ -653,8 +624,8 @@ class FabricPhoto {
     /**
      * Get angle
      */
-    getAngle(){
-        return this._getMainModule().getCanvasImage().angle
+    getAngle() {
+        return this._getMainModule().getCanvasImage().angle;
     }
 
     /**
@@ -685,11 +656,14 @@ class FabricPhoto {
      * change path style
      * @param {{width: number, color: string}} [setting] - Brush width & color
      */
-    changeFreeDrawingPathStyle(setting){
+    changeFreeDrawingPathStyle(setting) {
         const activeObj = this._canvas.getActiveObject();
 
-        if (this.getCurrentState() !== states.FREE_DRAWING ||
-            !activeObj || activeObj.customType !== 'freedraw') {
+        if (
+            this.getCurrentState() !== states.FREE_DRAWING ||
+            !activeObj ||
+            activeObj.customType !== 'freedraw'
+        ) {
             return;
         }
 
@@ -788,7 +762,6 @@ class FabricPhoto {
         this.fire(events.END_LINE_DRAWING);
     }
 
-
     /**
      * Start arrow-drawing mode
      * @param {{width: number, color: string}} [setting] - Brush width & color
@@ -811,11 +784,14 @@ class FabricPhoto {
      * Start change arrow obj
      * @param {{width: number, color: string}} [setting] - Brush width & color
      */
-    changeArrowStyle(setting){
+    changeArrowStyle(setting) {
         const activeObj = this._canvas.getActiveObject();
 
-        if (this.getCurrentState() !== states.ARROW ||
-            !activeObj || activeObj.customType !== 'arrow') {
+        if (
+            this.getCurrentState() !== states.ARROW ||
+            !activeObj ||
+            activeObj.customType !== 'arrow'
+        ) {
             return;
         }
 
@@ -832,7 +808,6 @@ class FabricPhoto {
         this._state = states.NORMAL;
         this.fire(events.END_ARROW_DRAWING);
     }
-
 
     /**
      * Start mosaic mode
@@ -1056,12 +1031,12 @@ class FabricPhoto {
      *     }
      * });
      */
-    addText(text, options,defaultEdit=false) {
+    addText(text, options, defaultEdit = false) {
         if (this.getCurrentState() !== states.TEXT) {
             this._state = states.TEXT;
         }
 
-        this._getModule(modules.TEXT).add(text || '', options || {},defaultEdit);
+        this._getModule(modules.TEXT).add(text || '', options || {}, defaultEdit);
     }
 
     /**
@@ -1073,8 +1048,7 @@ class FabricPhoto {
     changeText(text) {
         const activeObj = this._canvas.getActiveObject();
 
-        if (this.getCurrentState() !== states.TEXT ||
-            !activeObj) {
+        if (this.getCurrentState() !== states.TEXT || !activeObj) {
             return;
         }
 
@@ -1099,8 +1073,7 @@ class FabricPhoto {
     changeTextStyle(styleObj) {
         const activeObj = this._canvas.getActiveObject();
 
-        if (this.getCurrentState() !== states.TEXT ||
-            !activeObj) {
+        if (this.getCurrentState() !== states.TEXT || !activeObj) {
             return;
         }
 
@@ -1143,7 +1116,8 @@ class FabricPhoto {
      * @param {fabric.Event} event - Current mousedown event object
      * @private
      */
-    _onFabricMouseDown(event) { // eslint-disable-line
+    _onFabricMouseDown(event) {
+        // eslint-disable-line
         const obj = event.target;
         const e = event.e || {};
         const originPointer = this._canvas.getPointer(e);
@@ -1184,14 +1158,16 @@ class FabricPhoto {
         this.fire(events.ACTIVATE_TEXT, {
             type: !isNew ? 'select' : 'new',
             text: obj ? obj.text : '',
-            styles: obj ? {
-                fill: obj.fill,
-                fontFamily: obj.fontFamily,
-                fontSize: obj.fontSize,
-                fontStyle: obj.fontStyle,
-                textAlign: obj.textAlign,
-                textDecoration: obj.textDecoration
-            } : {},
+            styles: obj
+                ? {
+                      fill: obj.fill,
+                      fontFamily: obj.fontFamily,
+                      fontSize: obj.fontSize,
+                      fontStyle: obj.fontStyle,
+                      textAlign: obj.textAlign,
+                      textDecoration: obj.textDecoration
+                  }
+                : {},
             originPosition: {
                 x: originPointer.x,
                 y: originPointer.y
@@ -1241,15 +1217,14 @@ class FabricPhoto {
         rate = rate || 1;
         const command = commandFactory.create(commands.ZOOM, rate);
         const callback = this._callbackAfterZoom.bind(this);
-        command.setExecuteCallback(callback)
-            .setUndoCallback(zoom => {
-                callback(zoom);
-            });
+        command.setExecuteCallback(callback).setUndoCallback((zoom) => {
+            callback(zoom);
+        });
         this.execute(command);
     }
 
-    _callbackAfterZoom(zoom){
-        this.fire(consts.eventNames.CHANGE_ZOOM,zoom)
+    _callbackAfterZoom(zoom) {
+        this.fire(consts.eventNames.CHANGE_ZOOM, zoom);
     }
 
     getZoom() {
@@ -1354,9 +1329,13 @@ class FabricPhoto {
 
         wrapperEl.parentNode.removeChild(wrapperEl);
 
-        forEach(this, (value, key) => {
-            this[key] = null;
-        }, this);
+        forEach(
+            this,
+            (value, key) => {
+                this[key] = null;
+            },
+            this
+        );
     }
 
     /**
@@ -1379,21 +1358,17 @@ class FabricPhoto {
     /**
      * adjustCanvasDimension
      */
-    adjustCanvasDimension(){
+    adjustCanvasDimension() {
         this._getMainModule().adjustCanvasDimension();
     }
 
-    getViewPortInfo(){
+    getViewPortInfo() {
         return this._getMainModule().getViewPortInfo();
     }
-
 }
 
 CustomEvents.mixin(FabricPhoto);
 
 export default FabricPhoto;
 
-export {
-    FabricPhoto,
-    consts
-}
+export { FabricPhoto, consts };

@@ -1,4 +1,5 @@
-import {fabric} from 'fabric';
+import { fabric } from 'fabric';
+
 const DIVISOR = {
     rect: 1,
     circle: 2,
@@ -45,13 +46,13 @@ function getPositionsOfRotatedOrigin(origin, pointer, angle) {
     const sy = origin.y;
     const px = pointer.x;
     const py = pointer.y;
-    const r = angle * Math.PI / 180;
-    const rx = ((px - sx) * Math.cos(r)) - ((py - sy) * Math.sin(r)) + sx;
-    const ry = ((px - sx) * Math.sin(r)) + ((py - sy) * Math.cos(r)) + sy;
+    const r = (angle * Math.PI) / 180;
+    const rx = (px - sx) * Math.cos(r) - (py - sy) * Math.sin(r) + sx;
+    const ry = (px - sx) * Math.sin(r) + (py - sy) * Math.cos(r) + sy;
 
     return {
-        originX: (sx > rx) ? 'right' : 'left',
-        originY: (sy > ry) ? 'bottom' : 'top'
+        originX: sx > rx ? 'right' : 'left',
+        originY: sy > ry ? 'bottom' : 'top'
     };
 }
 
@@ -62,8 +63,7 @@ function getPositionsOfRotatedOrigin(origin, pointer, angle) {
  * @ignore
  */
 function hasCenterOrigin(shape) {
-    return (shape.getOriginX() === 'center' &&
-            shape.getOriginY() === 'center');
+    return shape.getOriginX() === 'center' && shape.getOriginY() === 'center';
 }
 
 /**
@@ -170,7 +170,7 @@ function adjustDimensionOnMouseMove(pointer, shape) {
         width = height = Math.max(width, height);
 
         if (isTriangle) {
-            height = Math.sqrt(3) / 2 * width;
+            height = (Math.sqrt(3) / 2) * width;
         }
     }
 

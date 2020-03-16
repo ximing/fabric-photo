@@ -1,4 +1,4 @@
-import {fabric} from 'fabric';
+import { fabric } from 'fabric';
 import Base from './base';
 import consts from '../consts';
 import util from '../lib/util.js';
@@ -37,7 +37,6 @@ export default class Main extends Base {
         this.imageName = '';
 
         fabric.Path.prototype.selectable = false;
-
     }
 
     /**
@@ -50,7 +49,15 @@ export default class Main extends Base {
         const wrapperElStyle = Object.assign({}, this.canvas.wrapperEl.style);
         const lowerCanvasElStyle = Object.assign({}, this.canvas.lowerCanvasEl.style);
         const upperCanvasElStyle = Object.assign({}, this.canvas.upperCanvasEl.style);
-        let url = this.canvas.toDataURL(type, quality, 1, 0, 0, this.canvas.width, this.canvas.height);
+        let url = this.canvas.toDataURL(
+            type,
+            quality,
+            1,
+            0,
+            0,
+            this.canvas.width,
+            this.canvas.height
+        );
         util.setStyle(this.canvas.wrapperEl, wrapperElStyle);
         util.setStyle(this.canvas.lowerCanvasEl, lowerCanvasElStyle);
         util.setStyle(this.canvas.upperCanvasEl, upperCanvasElStyle);
@@ -101,11 +108,9 @@ export default class Main extends Base {
 
         if (element.jquery) {
             selectedElement = element[0];
-        }
-        else if (element.nodeType) {
+        } else if (element.nodeType) {
             selectedElement = element;
-        }
-        else {
+        } else {
             selectedElement = document.querySelector(element);
         }
 
@@ -153,12 +158,12 @@ export default class Main extends Base {
         });
         this.canvas.centerObject(canvasImage);
         if (this.canvas.lowerCanvasEl) {
-            this.canvas.lowerCanvasEl.style.setProperty('top','0px');
-            this.canvas.lowerCanvasEl.style.setProperty('left','0px');
+            this.canvas.lowerCanvasEl.style.setProperty('top', '0px');
+            this.canvas.lowerCanvasEl.style.setProperty('left', '0px');
         }
         if (this.canvas.upperCanvasEl) {
-            this.canvas.upperCanvasEl.style.setProperty('top','0px');
-            this.canvas.upperCanvasEl.style.setProperty('left','0px');
+            this.canvas.upperCanvasEl.style.setProperty('top', '0px');
+            this.canvas.upperCanvasEl.style.setProperty('left', '0px');
         }
         this._zoom = maxDimension.width / width;
     }
@@ -180,8 +185,7 @@ export default class Main extends Base {
         if (wScaleFactor < 1 && wScaleFactor < hScaleFactor) {
             cssMaxWidth = width * wScaleFactor;
             cssMaxHeight = height * wScaleFactor;
-        }
-        else if (hScaleFactor < 1 && hScaleFactor < wScaleFactor) {
+        } else if (hScaleFactor < 1 && hScaleFactor < wScaleFactor) {
             cssMaxWidth = width * hScaleFactor;
             cssMaxHeight = height * hScaleFactor;
         }
@@ -219,7 +223,7 @@ export default class Main extends Base {
         // const boundingRect = canvasImage.getBoundingRect();
         // const width = boundingRect.width;
         // const height = boundingRect.height;
-        let {width,height} = this.getViewPortInfo().canvas;
+        let { width, height } = this.getViewPortInfo().canvas;
         const maxDimension = this._calcMaxDimension(width, height);
         //maximum is no more than twice the size of the picture
 
@@ -228,13 +232,13 @@ export default class Main extends Base {
         const maxWidth = width * zoom;
         const maxHeight = height * zoom;
         if (this.canvas.lowerCanvasEl) {
-            this.canvas.lowerCanvasEl.style.setProperty('height',`${maxHeight}px`);
+            this.canvas.lowerCanvasEl.style.setProperty('height', `${maxHeight}px`);
             this.canvas.lowerCanvasEl.style.setProperty('width', `${maxWidth}px`);
             this.canvas.lowerCanvasEl.style.setProperty('top', '0px');
             this.canvas.lowerCanvasEl.style.setProperty('left', '0px');
         }
         if (this.canvas.upperCanvasEl) {
-            this.canvas.upperCanvasEl.style.setProperty('height',`${maxHeight}px`);
+            this.canvas.upperCanvasEl.style.setProperty('height', `${maxHeight}px`);
             this.canvas.upperCanvasEl.style.setProperty('width', `${maxWidth}px`);
             this.canvas.upperCanvasEl.style.setProperty('top', '0px');
             this.canvas.upperCanvasEl.style.setProperty('left', '0px');
@@ -244,7 +248,7 @@ export default class Main extends Base {
             this.canvas.wrapperEl.style.setProperty('width', `${maxWidth}px`);
         }
         if (this.cssMaxHeight > maxHeight) {
-            this.canvas.wrapperEl.style.setProperty('height',`${maxHeight}px`);
+            this.canvas.wrapperEl.style.setProperty('height', `${maxHeight}px`);
         }
         this._zoom = zoom;
         this.canvas.renderAll();
@@ -309,8 +313,8 @@ export default class Main extends Base {
                 width: canvas.width,
                 cssHeight: upperCanvasCssHeight,
                 cssWidth: upperCanvasCssWidth,
-                left:left,
-                top:top
+                left: left,
+                top: top
             }
         };
     }

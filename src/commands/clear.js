@@ -1,9 +1,9 @@
 import Command from './base';
 import consts from '../consts';
 
-const {moduleNames} = consts;
-const {MAIN} = moduleNames;
-export default function () {
+const { moduleNames } = consts;
+const { MAIN } = moduleNames;
+export default function() {
     return new Command({
         /**
          * @param {object.<string, Component>} moduleMap - Components injection
@@ -17,10 +17,10 @@ export default function () {
 
                 // Slice: "canvas.clear()" clears the objects array, So shallow copy the array
                 this.store = objs.slice();
-                objs.slice().forEach(obj => {
-                    if(obj.get('type') === 'group') {
+                objs.slice().forEach((obj) => {
+                    if (obj.get('type') === 'group') {
                         canvas.remove(obj);
-                    }else{
+                    } else {
                         obj.remove();
                     }
                 });

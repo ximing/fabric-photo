@@ -29,7 +29,7 @@ export default class Mosaic extends Base {
         setting = setting || {};
         this._dimensions = parseInt(setting.dimensions) || this._dimensions;
 
-        canvas.forEachObject(obj => {
+        canvas.forEachObject((obj) => {
             obj.set({
                 evented: false
             });
@@ -46,7 +46,7 @@ export default class Mosaic extends Base {
         canvas.defaultCursor = 'default';
         canvas.selection = false;
 
-        canvas.forEachObject(obj => {
+        canvas.forEachObject((obj) => {
             obj.set({
                 evented: true
             });
@@ -57,7 +57,7 @@ export default class Mosaic extends Base {
 
     _onFabricMouseDown(fEvent) {
         const canvas = this.getCanvas();
-        const pointer = this.pointer = canvas.getPointer(fEvent.e);
+        const pointer = (this.pointer = canvas.getPointer(fEvent.e));
         this._mosaicGroup = new fabric.Group([], {
             left: pointer.x,
             top: pointer.y,
@@ -78,7 +78,12 @@ export default class Mosaic extends Base {
         let dimensions = this._dimensions * ratio;
         const canvas = this.getCanvas();
         const pointer = canvas.getPointer(fEvent.e);
-        let imageData = canvas.contextContainer.getImageData(parseInt(pointer.x), parseInt(pointer.y), dimensions, dimensions);
+        let imageData = canvas.contextContainer.getImageData(
+            parseInt(pointer.x),
+            parseInt(pointer.y),
+            dimensions,
+            dimensions
+        );
         // let imageData = canvas.getContext().getImageData(parseInt(pointer.x), parseInt(pointer.y), this._dimensions, this._dimensions);
         let rgba = [0, 0, 0, 0];
         let length = imageData.data.length / 4;
@@ -89,7 +94,9 @@ export default class Mosaic extends Base {
             rgba[3] += imageData.data[i * 4 + 3];
         }
         let mosaicRect = new fabric.Rect({
-            fill: `rgb(${parseInt(rgba[0] / length)},${parseInt(rgba[1] / length)},${parseInt(rgba[2] / length)})`,
+            fill: `rgb(${parseInt(rgba[0] / length)},${parseInt(rgba[1] / length)},${parseInt(
+                rgba[2] / length
+            )})`,
             height: dimensions,
             width: dimensions,
             left: pointer.x,

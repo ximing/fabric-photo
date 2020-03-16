@@ -1,4 +1,9 @@
-const {min, max} = Math;
+const { min, max } = Math;
+
+function isExisty(param) {
+    return param != null;
+}
+
 function isUndefined(obj) {
     return obj === void 0;
 }
@@ -16,8 +21,7 @@ function isFalsy(obj) {
 }
 
 function isArguments(obj) {
-    var result = isExisty(obj) &&
-        ((toString.call(obj) === '[object Arguments]') || !!obj.callee);
+    var result = isExisty(obj) && (toString.call(obj) === '[object Arguments]' || !!obj.callee);
 
     return result;
 }
@@ -62,8 +66,7 @@ function pick(obj, paths) {
             target = target[args[i]];
         }
         return target;
-    }
-    catch (e) {
+    } catch (e) {
         return;
     }
 }
@@ -75,7 +78,7 @@ function hasStamp(obj) {
 function resetLastId() {
     lastId = 0;
 }
-function inArray (val,arr,startIndex = 0) {
+function inArray(val, arr, startIndex = 0) {
     arr = arr || [];
     let len = arr.length;
     for (let i = startIndex; i < len; i++) {
@@ -84,7 +87,7 @@ function inArray (val,arr,startIndex = 0) {
         }
     }
     return false;
-};
+}
 function compareJSON(object) {
     var leftChain,
         rightChain,
@@ -94,10 +97,7 @@ function compareJSON(object) {
     function isSameObject(x, y) {
         var p;
 
-        if (isNaN(x) &&
-            isNaN(y) &&
-            isNumber(x) &&
-            isNumber(y)) {
+        if (isNaN(x) && isNaN(y) && isNumber(x) && isNumber(y)) {
             return true;
         }
 
@@ -105,11 +105,13 @@ function compareJSON(object) {
             return true;
         }
 
-        if ((isFunction(x) && isFunction(y)) ||
+        if (
+            (isFunction(x) && isFunction(y)) ||
             (x instanceof Date && y instanceof Date) ||
             (x instanceof RegExp && y instanceof RegExp) ||
             (x instanceof String && y instanceof String) ||
-            (x instanceof Number && y instanceof Number)) {
+            (x instanceof Number && y instanceof Number)
+        ) {
             return x.toString() === y.toString();
         }
 
@@ -117,23 +119,23 @@ function compareJSON(object) {
             return false;
         }
 
-        if (x.isPrototypeOf(y) ||
+        if (
+            x.isPrototypeOf(y) ||
             y.isPrototypeOf(x) ||
             x.constructor !== y.constructor ||
-            x.prototype !== y.prototype) {
+            x.prototype !== y.prototype
+        ) {
             return false;
         }
 
-        if (inArray(x, leftChain) > -1 ||
-            inArray(y, rightChain) > -1) {
+        if (inArray(x, leftChain) > -1 || inArray(y, rightChain) > -1) {
             return false;
         }
 
         for (p in y) {
             if (y.hasOwnProperty(p) !== x.hasOwnProperty(p)) {
                 return false;
-            }
-            else if (typeof y[p] !== typeof x[p]) {
+            } else if (typeof y[p] !== typeof x[p]) {
                 return false;
             }
         }
@@ -141,12 +143,11 @@ function compareJSON(object) {
         for (p in x) {
             if (y.hasOwnProperty(p) !== x.hasOwnProperty(p)) {
                 return false;
-            }
-            else if (typeof y[p] !== typeof x[p]) {
+            } else if (typeof y[p] !== typeof x[p]) {
                 return false;
             }
 
-            if (typeof (x[p]) === 'object' || typeof (x[p]) === 'function') {
+            if (typeof x[p] === 'object' || typeof x[p] === 'function') {
                 leftChain.push(x);
                 rightChain.push(y);
 
@@ -156,8 +157,7 @@ function compareJSON(object) {
 
                 leftChain.pop();
                 rightChain.pop();
-            }
-            else if (x[p] !== y[p]) {
+            } else if (x[p] !== y[p]) {
                 return false;
             }
         }
@@ -181,7 +181,6 @@ function compareJSON(object) {
     return true;
 }
 
-
 function clamp(value, minValue, maxValue) {
     let temp;
     if (minValue > maxValue) {
@@ -196,7 +195,7 @@ function clamp(value, minValue, maxValue) {
 function keyMirror(...args) {
     const obj = {};
 
-    args.forEach(key => {
+    args.forEach((key) => {
         obj[key] = key;
     });
 
@@ -205,7 +204,7 @@ function keyMirror(...args) {
 
 function makeStyleText(styleObj) {
     let styleStr = '';
-    Object.keys(styleObj).forEach(key => {
+    Object.keys(styleObj).forEach((key) => {
         styleStr += `${key}: ${styleObj[key]};`;
     });
 
@@ -228,33 +227,31 @@ var rIE = /MSIE\s([0-9]+[.0-9]*)/,
     rIE11 = /Trident.*rv:11\./,
     rEdge = /Edge\/(\d+)\./,
     versionRegex = {
-        'firefox': /Firefox\/(\d+)\./,
-        'chrome': /Chrome\/(\d+)\./,
-        'safari': /Version\/([\d\.]+)\sSafari\/(\d+)/
+        firefox: /Firefox\/(\d+)\./,
+        chrome: /Chrome\/(\d+)\./,
+        safari: /Version\/([\d\.]+)\sSafari\/(\d+)/
     };
 
 var key, tmp;
 
 var detector = {
-    'Microsoft_Internet_Explorer': function() {
+    Microsoft_Internet_Explorer: function() {
         // ie8 ~ ie10
         browser.msie = true;
         browser.version = parseFloat(userAgent.match(rIE)[1]);
     },
-    'Netscape': function() {
+    Netscape: function() {
         var detected = false;
 
         if (rIE11.exec(userAgent)) {
             browser.msie = true;
             browser.version = 11;
             detected = true;
-        }
-        else if (rEdge.exec(userAgent)) {
+        } else if (rEdge.exec(userAgent)) {
             browser.edge = true;
             browser.version = userAgent.match(rEdge)[1];
             detected = true;
-        }
-        else {
+        } else {
             for (key in versionRegex) {
                 if (versionRegex.hasOwnProperty(key)) {
                     tmp = userAgent.match(versionRegex[key]);
@@ -291,7 +288,6 @@ function forEachArray(arr, iteratee, context) {
     }
 }
 
-
 function forEachOwnProperties(obj, iteratee, context) {
     var key;
 
@@ -309,8 +305,7 @@ function forEachOwnProperties(obj, iteratee, context) {
 function forEach(obj, iteratee, context) {
     if (Array.isArray(obj)) {
         forEachArray(obj, iteratee, context);
-    }
-    else {
+    } else {
         forEachOwnProperties(obj, iteratee, context);
     }
 }
@@ -324,9 +319,6 @@ function map(obj, iteratee, context) {
     });
 
     return resultArray;
-}
-function isExisty(param) {
-    return param != null;
 }
 
 function isObject(obj) {
@@ -347,12 +339,12 @@ function bind(fn, obj) {
         return fn.bind.apply(fn, slice.call(arguments, 1));
     }
 
-        /* istanbul ignore next */
+    /* istanbul ignore next */
     var args = slice.call(arguments, 2);
 
-        /* istanbul ignore next */
+    /* istanbul ignore next */
     return function() {
-            /* istanbul ignore next */
+        /* istanbul ignore next */
         return fn.apply(obj, args.length ? args.concat(slice.call(arguments)) : arguments);
     };
 }
@@ -373,9 +365,9 @@ function extend(target, objects) {
     }
     return target;
 }
-function setStyle(obj,css) {
-    for(let atr in css) {
-        obj.style.setProperty(atr,css[atr]);
+function setStyle(obj, css) {
+    for (let atr in css) {
+        obj.style.setProperty(atr, css[atr]);
     }
 }
 export default {
@@ -406,5 +398,5 @@ export default {
     bind: bind,
     extend: extend,
     setStyle: setStyle,
-    inArray:inArray
+    inArray: inArray
 };

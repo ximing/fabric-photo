@@ -1,8 +1,8 @@
+import { fabric } from 'fabric';
 import Base from './base';
 import consts from '../consts';
 // import util from '../lib/util';
 
-const abs = Math.abs;
 // const resetStyles = {
 //     fill: '#000000',
 //     width: 5
@@ -15,8 +15,8 @@ export default class Arrow extends Base {
         this._width = 5;
         this._radius = 3;
         this._dimension = {
-            height:20,
-            width:20
+            height: 20,
+            width: 20
         };
         this._oColor = new fabric.Color('rgba(0, 0, 0, 0.5)');
         this._listeners = {
@@ -36,7 +36,7 @@ export default class Arrow extends Base {
         canvas.defaultCursor = 'crosshair';
         canvas.selection = false;
 
-        canvas.forEachObject(obj => {
+        canvas.forEachObject((obj) => {
             obj.set({
                 evented: false
             });
@@ -45,7 +45,6 @@ export default class Arrow extends Base {
         canvas.on({
             'mouse:down': this._listeners.mousedown
         });
-
     }
 
     /**
@@ -58,7 +57,7 @@ export default class Arrow extends Base {
         setting = setting || {};
         this._width = setting.width || this._width;
         this._radius = setting.radius || this._radius;
-        this._dimension = Object.assign(this._dimension,setting.dimension);
+        this._dimension = Object.assign(this._dimension, setting.dimension);
 
         if (setting.color) {
             this._oColor = new fabric.Color(setting.color);
@@ -72,7 +71,7 @@ export default class Arrow extends Base {
      * @param {object} activeObj - Current selected text object
      * @param {object} styleObj - Initial styles
      */
-    setStyle(activeObj,styleObj) {
+    setStyle(activeObj, styleObj) {
         activeObj.set(styleObj);
         this.getCanvas().renderAll();
     }
@@ -86,7 +85,7 @@ export default class Arrow extends Base {
         canvas.defaultCursor = 'default';
         canvas.selection = false;
 
-        canvas.forEachObject(obj => {
+        canvas.forEachObject((obj) => {
             obj.set({
                 evented: true
             });
@@ -106,18 +105,23 @@ export default class Arrow extends Base {
         //     canvas.trigger('object:selected', {target: fEvent.target});
         //     return;
         // }
-        const pointer = this.startPointer = canvas.getPointer(fEvent.e);
+        const pointer = (this.startPointer = canvas.getPointer(fEvent.e));
         //this.drawArrow(pointer,pointer);
-        let group = this.group = new fabric.Group([/*this.line, this.arrow, this.circle*/], {
-            left: pointer.x,
-            top: pointer.y
-            // originX: 'center',
-            // originY: 'center',
-            // selection:true,
-            // transparentCorners: true,
-            //  hasControls :true,
-            //  hasBorders :true
-        });
+        let group = (this.group = new fabric.Group(
+            [
+                /*this.line, this.arrow, this.circle*/
+            ],
+            {
+                left: pointer.x,
+                top: pointer.y
+                // originX: 'center',
+                // originY: 'center',
+                // selection:true,
+                // transparentCorners: true,
+                //  hasControls :true,
+                //  hasBorders :true
+            }
+        ));
         this.group.set(consts.fObjectOptions.SELECTION_STYLE);
         // this.group.set('selectable', true);
         group.customType = 'arrow';
@@ -129,34 +133,41 @@ export default class Arrow extends Base {
         });
     }
 
-    drawArrow(startPointer,endPointer) {
+    drawArrow(startPointer, endPointer) {
         const points = [startPointer.x, startPointer.y, endPointer.x, endPointer.y];
-        const line = this.line = new fabric.Line(points, {
+        const line = (this.line = new fabric.Line(points, {
             stroke: this._oColor.toRgba(),
             strokeWidth: this._width,
             padding: 5,
             originX: 'center',
             originY: 'center'
-        });
+        }));
 
         let centerX = (line.x1 + line.x2) / 2,
             centerY = (line.y1 + line.y2) / 2;
         let deltaX = line.left - centerX,
             deltaY = line.top - centerY;
 
-        const arrow = this.arrow = new fabric.Triangle({
+        const arrow = (this.arrow = new fabric.Triangle({
             left: line.get('x1') + deltaX,
             top: line.get('y1') + deltaY,
             originX: 'center',
             originY: 'center',
             pointType: 'arrow_start',
-            angle: startPointer.x === endPointer.x && startPointer.y === endPointer.y ? -45 :
-            this.calcArrowAngle(startPointer.x, startPointer.y, endPointer.x, endPointer.y) - 90,
+            angle:
+                startPointer.x === endPointer.x && startPointer.y === endPointer.y
+                    ? -45
+                    : this.calcArrowAngle(
+                          startPointer.x,
+                          startPointer.y,
+                          endPointer.x,
+                          endPointer.y
+                      ) - 90,
             width: this._dimension.width,
             height: this._dimension.height,
             fill: this._oColor.toRgba()
-        });
-        const circle = this.circle = new fabric.Circle({
+        }));
+        const circle = (this.circle = new fabric.Circle({
             left: line.get('x2') + deltaX,
             top: line.get('y2') + deltaY,
             radius: this._radius,
@@ -166,7 +177,7 @@ export default class Arrow extends Base {
             originY: 'center',
             pointType: 'arrow_end',
             fill: this._oColor.toRgba()
-        });
+        }));
         line.customType = arrow.customType = circle.customType = 'arrow';
     }
 
@@ -178,11 +189,10 @@ export default class Arrow extends Base {
     _onFabricMouseMove(fEvent) {
         const canvas = this.getCanvas();
         const pointer = canvas.getPointer(fEvent.e);
-        const x = pointer.x;
-        const y = pointer.y;
-        if (abs(x - this.startPointer.x) + abs(y - this.startPointer.y) > 5) {
-            this.group.remove(this.line,this.arrow,this.circle);
-            this.drawArrow(pointer,this.startPointer);
+        const { x, y } = pointer.x;
+        if (Math.abs(x - this.startPointer.x) + Math.abs(y - this.startPointer.y) > 5) {
+            this.group.remove(this.line, this.arrow, this.circle);
+            this.drawArrow(pointer, this.startPointer);
             this.group.addWithUpdate(this.arrow);
             this.group.addWithUpdate(this.line);
             this.group.addWithUpdate(this.circle);
@@ -207,21 +217,24 @@ export default class Arrow extends Base {
         });
     }
 
-
     calcArrowAngle(x1, y1, x2, y2) {
         var angle = 0,
-            x, y;
-        x = (x2 - x1);
-        y = (y2 - y1);
+            x,
+            y;
+        x = x2 - x1;
+        y = y2 - y1;
         if (x === 0) {
-            angle = (y === 0) ? 0 : (y > 0) ? Math.PI / 2 : Math.PI * 3 / 2;
+            angle = y === 0 ? 0 : y > 0 ? Math.PI / 2 : (Math.PI * 3) / 2;
+        } else if (y === 0) {
+            angle = x > 0 ? 0 : Math.PI;
+        } else {
+            angle =
+                x < 0
+                    ? Math.atan(y / x) + Math.PI
+                    : y < 0
+                    ? Math.atan(y / x) + 2 * Math.PI
+                    : Math.atan(y / x);
         }
-        else if (y === 0) {
-            angle = (x > 0) ? 0 : Math.PI;
-        }
-        else {
-            angle = (x < 0) ? Math.atan(y / x) + Math.PI : (y < 0) ? Math.atan(y / x) + (2 * Math.PI) : Math.atan(y / x);
-        }
-        return (angle * 180 / Math.PI);
+        return (angle * 180) / Math.PI;
     }
 }

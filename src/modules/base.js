@@ -1,7 +1,7 @@
 /*
-* module base class
-* all modules should inherite this base class
-*/
+ * module base class
+ * all modules should inherite this base class
+ */
 export default class {
     /**
      * Save image(background) of canvas

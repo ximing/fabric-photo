@@ -71,7 +71,7 @@ export default {
         APPLY_FILTER: 'applyFilter',
         EDIT_TEXT: 'editText',
         MOUSE_DOWN: 'mousedown',
-        CHANGE_ZOOM:'changeZoom'
+        CHANGE_ZOOM: 'changeZoom'
     },
 
     /**
@@ -110,13 +110,13 @@ export default {
         SELECTION_STYLE: {
             borderColor: '#118BFB',
             cornerColor: '#FFFFFF',
-            cornerStrokeColor:'#118BFB',
+            cornerStrokeColor: '#118BFB',
             cornerSize: 12,
-            padding:1,
+            padding: 1,
             originX: 'center',
             originY: 'center',
             transparentCorners: false,
-            cornerStyle:'circle'
+            cornerStyle: 'circle'
         }
     },
 
@@ -129,5 +129,5 @@ export default {
         redo: 'The promise of redo command is reject.'
     },
 
-    MOUSE_MOVE_THRESHOLD:10
+    MOUSE_MOVE_THRESHOLD: 10
 };

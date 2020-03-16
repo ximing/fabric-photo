@@ -1,14 +1,13 @@
+import { fabric } from 'fabric';
+
 import Base from './base.js';
 import consts from '../consts';
 import Cropzone from '../shape/cropzone';
 import util from '../lib/util';
 
-const MOUSE_MOVE_THRESHOLD = consts.MOUSE_MOVE_THRESHOLD;
-const abs = Math.abs;
-const clamp = util.clamp;
-const keyCodes = consts.keyCodes;
-const bind = util.bind;
-
+const { MOUSE_MOVE_THRESHOLD } = consts;
+const { clamp, bind } = util;
+const { keyCodes } = consts;
 
 export default class Cropper extends Base {
     constructor(parent) {
@@ -35,23 +34,23 @@ export default class Cropper extends Base {
         };
     }
 
-
     start() {
         if (this._cropzone) {
             return;
         }
         const canvas = this.getCanvas();
-        canvas.forEachObject(obj => { // {@link http://fabricjs.com/docs/fabric.Object.html#evented}
+        canvas.forEachObject((obj) => {
+            // {@link http://fabricjs.com/docs/fabric.Object.html#evented}
             obj.evented = false;
         });
         let canvasCssWidth = parseInt(canvas.wrapperEl.style['width'], 10),
             canvasCssHeight = parseInt(canvas.wrapperEl.style['height'], 10),
             canvasWidth = canvas.upperCanvasEl.width;
         let radio = canvasCssWidth / canvasWidth;
-        let marginLeft = canvasCssWidth * 0.1 / radio;
-        let marginTop = canvasCssHeight * 0.1 / radio;
-        let width = canvasCssWidth * 0.8 / radio;
-        let height = canvasCssHeight * 0.8 / radio;
+        let marginLeft = (canvasCssWidth * 0.1) / radio;
+        let marginTop = (canvasCssHeight * 0.1) / radio;
+        let width = (canvasCssWidth * 0.8) / radio;
+        let height = (canvasCssHeight * 0.8) / radio;
 
         this._cropzone = new Cropzone({
             left: marginLeft,
@@ -59,9 +58,9 @@ export default class Cropper extends Base {
             width: width,
             height: height,
             strokeWidth: 0, // {@link https://github.com/kangax/fabric.js/issues/2860}
-            cornerStyle:'circle',
+            cornerStyle: 'circle',
             cornerColor: '#FFFFFF',
-            cornerStrokeColor:'#118BFB',
+            cornerStrokeColor: '#118BFB',
             cornerSize: 15,
             fill: 'transparent',
             hasRotatingPoint: false,
@@ -98,7 +97,7 @@ export default class Cropper extends Base {
         cropzone.remove();
         canvas.selection = false;
         canvas.defaultCursor = 'default';
-        canvas.forEachObject(obj => {
+        canvas.forEachObject((obj) => {
             obj.evented = true;
         });
         if (isApplying) {
@@ -106,11 +105,8 @@ export default class Cropper extends Base {
         }
         this._cropzone = null;
 
-
-
         return data;
     }
-
 
     _onFabricMouseDown(fEvent) {
         const canvas = this.getCanvas();
@@ -131,7 +127,6 @@ export default class Cropper extends Base {
         });
     }
 
-
     _onFabricMouseMove(fEvent) {
         const canvas = this.getCanvas();
         const pointer = canvas.getPointer(fEvent.e);
@@ -139,7 +134,7 @@ export default class Cropper extends Base {
         const y = pointer.y;
         const cropzone = this._cropzone;
 
-        if (abs(x - this._startX) + abs(y - this._startY) > MOUSE_MOVE_THRESHOLD) {
+        if (Math.abs(x - this._startX) + Math.abs(y - this._startY) > MOUSE_MOVE_THRESHOLD) {
             cropzone.remove();
             cropzone.set(this._calcRectDimensionFromPoint(x, y));
 
@@ -165,11 +160,11 @@ export default class Cropper extends Base {
         let width = clamp(x, startX, canvasWidth) - left; // (startX <= x(mouse) <= canvasWidth) - left
         let height = clamp(y, startY, canvasHeight) - top; // (startY <= y(mouse) <= canvasHeight) - top
 
-        if (this._withShiftKey) { // make fixed ratio cropzone
+        if (this._withShiftKey) {
+            // make fixed ratio cropzone
             if (width > height) {
                 height = width;
-            }
-            else if (height > width) {
+            } else if (height > width) {
                 width = height;
             }
 
@@ -190,7 +185,6 @@ export default class Cropper extends Base {
         };
     }
 
-
     _onFabricMouseUp() {
         const cropzone = this._cropzone;
         const listeners = this._listeners;
@@ -202,7 +196,6 @@ export default class Cropper extends Base {
             'mouse:up': listeners.mouseup
         });
     }
-
 
     _getCroppedImageData() {
         const cropzone = this._cropzone;
@@ -223,7 +216,6 @@ export default class Cropper extends Base {
             url: this.getCanvas().toDataURL(cropInfo)
         };
     }
-
 
     _onKeyDown(e) {
         if (e.keyCode === keyCodes.SHIFT) {

@@ -8,7 +8,8 @@ module.exports = {
     globals: {
         window: true,
         Blob: true,
-        atob: true
+        atob: true,
+        document: true
     },
     settings: {},
     rules: {

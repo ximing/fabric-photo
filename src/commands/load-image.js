@@ -1,9 +1,9 @@
 import Command from './base';
 import consts from '../consts';
 
-const {moduleNames} = consts;
-const {IMAGE_LOADER} = moduleNames;
-export default function (imageName, img) {
+const { moduleNames } = consts;
+const { IMAGE_LOADER } = moduleNames;
+export default function(imageName, img) {
     return new Command({
         execute(moduleMap) {
             const loader = moduleMap[IMAGE_LOADER];
@@ -19,19 +19,16 @@ export default function (imageName, img) {
             canvas.clear();
 
             return loader.load(imageName, img);
-
         },
         undo(moduleMap) {
             const loader = moduleMap[IMAGE_LOADER];
             const canvas = loader.getCanvas();
-            const store = this.store;
             const canvasContext = canvas;
 
             canvas.clear();
-            canvas.add.apply(canvasContext, store.objects);
+            canvas.add.apply(canvasContext, this.store.objects);
 
-            return loader.load(store.prevName, store.prevImage);
-
+            return loader.load(this.store.prevName, this.store.prevImage);
         }
     });
 }

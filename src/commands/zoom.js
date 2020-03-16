@@ -1,12 +1,8 @@
 import Command from './base';
 import consts from '../consts';
 
-const {
-    moduleNames
-} = consts;
-const {
-    MAIN
-} = moduleNames;
+const { moduleNames } = consts;
+const { MAIN } = moduleNames;
 export default function(zoom) {
     return new Command({
         /**
@@ -23,7 +19,7 @@ export default function(zoom) {
             // this.zoom = canvas.getZoom();
             // canvas.setZoom(zoom);
             //使用新的方法通过放大canvas本身的方式进行设置
-            this.zoom = mainModule.getZoom();//mainModule.getZoom();
+            this.zoom = mainModule.getZoom(); //mainModule.getZoom();
             mainModule.setZoom(zoom);
             return Promise.resolve(zoom);
         },

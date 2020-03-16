@@ -2,13 +2,10 @@
  * Created by yeanzhi on 17/1/13.
  */
 'use strict';
-import React, {
-    Component
-}
-from 'react';
+import React, { Component } from 'react';
 import classnames from 'classnames';
 
-import {FabricPhoto,consts} from '../src/index'
+import { FabricPhoto, consts } from '../src/index';
 
 export default class WrapContainer extends Component {
     constructor() {
@@ -50,13 +47,12 @@ export default class WrapContainer extends Component {
             //console.log('selectObject--->',obj);
             if (obj.type === 'rect' || obj.type === 'circle' || obj.type === 'triangle') {
                 this.setState({
-                    editState: consts.states.SHAPE,
+                    editState: consts.states.SHAPE
                 });
                 this.activateShapeMode();
-            }
-            else if (obj.type === 'text') {
+            } else if (obj.type === 'text') {
                 this.setState({
-                    editState: consts.states.TEXT,
+                    editState: consts.states.TEXT
                 });
                 this.activateTextMode();
             }
@@ -105,7 +101,6 @@ export default class WrapContainer extends Component {
                 }
             }
         });
-
     }
 
     componentWillUnmount() {
@@ -147,18 +142,15 @@ export default class WrapContainer extends Component {
         return {
             height: $(window).height(),
             width: $(window).width()
-        }
+        };
     }
 
     getDialogViewPort() {
-        const {
-            height,
-            width
-        } = this.getWindowViewPort();
+        const { height, width } = this.getWindowViewPort();
         return {
             width: width < 680 ? 680 : width > 900 ? 900 : width,
             height: height < 450 ? 450 : height > 600 ? 600 : height
-        }
+        };
     }
 
     resetEditorState() {
@@ -172,8 +164,7 @@ export default class WrapContainer extends Component {
         //this.fp.startLineDrawing();
         if (this.state.editState === consts.states.ARROW) {
             this.resetEditorState();
-        }
-        else {
+        } else {
             this.setState({
                 editState: consts.states.ARROW
             });
@@ -188,8 +179,7 @@ export default class WrapContainer extends Component {
         this.fp.endAll();
         if (this.state.editState === consts.states.FREE_DRAWING) {
             this.resetEditorState();
-        }
-        else {
+        } else {
             this.setState({
                 editState: consts.states.FREE_DRAWING
             });
@@ -204,8 +194,7 @@ export default class WrapContainer extends Component {
         this.fp.endAll();
         if (this.state.editState === consts.states.MOSAIC) {
             this.resetEditorState();
-        }
-        else {
+        } else {
             this.setState({
                 editState: consts.states.MOSAIC
             });
@@ -219,8 +208,7 @@ export default class WrapContainer extends Component {
         if (this.fp.getCurrentState() === consts.states.TEXT) {
             this.fp.endAll();
             this.resetEditorState();
-        }
-        else {
+        } else {
             this.setState({
                 editState: consts.states.TEXT
             });
@@ -269,33 +257,47 @@ export default class WrapContainer extends Component {
             <div className="tools-panel">
                 <div className="tools-panel-brush">
                     <div>
-                        <span className="small-brush" onClick={() => { }}> </span>
+                        <span className="small-brush" onClick={() => {}}>
+                            {' '}
+                        </span>
                     </div>
                     <div>
-                        <span className="normal-brush" onClick={() => { }}> </span>
+                        <span className="normal-brush" onClick={() => {}}>
+                            {' '}
+                        </span>
                     </div>
                     <div>
-                        <span className="big-brush" onClick={() => { }}> </span>
+                        <span className="big-brush" onClick={() => {}}>
+                            {' '}
+                        </span>
                     </div>
                 </div>
                 <span className="tools-divider"> </span>
                 <div className="tools-panel-color">
-                    <span className="color red" onClick={this.changeEditorColor('#FF3440')}> </span>
-                    <span className="color yellow"
-                        onClick={this.changeEditorColor('#FFCF50')}> </span>
-                    <span className="color green"
-                        onClick={this.changeEditorColor('#00A344')}> </span>
-                    <span className="color blue"
-                        onClick={this.changeEditorColor('#0DA9D6')}> </span>
-                    <span className="color grey"
-                        onClick={this.changeEditorColor('#999999')}> </span>
-                    <span className="color black"
-                        onClick={this.changeEditorColor('#ffffff')}> </span>
-                    <span className="color white"
-                        onClick={this.changeEditorColor('#000000')}> </span>
+                    <span className="color red" onClick={this.changeEditorColor('#FF3440')}>
+                        {' '}
+                    </span>
+                    <span className="color yellow" onClick={this.changeEditorColor('#FFCF50')}>
+                        {' '}
+                    </span>
+                    <span className="color green" onClick={this.changeEditorColor('#00A344')}>
+                        {' '}
+                    </span>
+                    <span className="color blue" onClick={this.changeEditorColor('#0DA9D6')}>
+                        {' '}
+                    </span>
+                    <span className="color grey" onClick={this.changeEditorColor('#999999')}>
+                        {' '}
+                    </span>
+                    <span className="color black" onClick={this.changeEditorColor('#ffffff')}>
+                        {' '}
+                    </span>
+                    <span className="color white" onClick={this.changeEditorColor('#000000')}>
+                        {' '}
+                    </span>
                 </div>
             </div>
-        )
+        );
     }
 
     renderFreeDrawMenus() {
@@ -303,33 +305,47 @@ export default class WrapContainer extends Component {
             <div className="tools-panel">
                 <div className="tools-panel-brush">
                     <div>
-                        <span className="small-brush" onClick={() => { }}> </span>
+                        <span className="small-brush" onClick={() => {}}>
+                            {' '}
+                        </span>
                     </div>
                     <div>
-                        <span className="normal-brush" onClick={() => { }}> </span>
+                        <span className="normal-brush" onClick={() => {}}>
+                            {' '}
+                        </span>
                     </div>
                     <div>
-                        <span className="big-brush" onClick={() => { }}> </span>
+                        <span className="big-brush" onClick={() => {}}>
+                            {' '}
+                        </span>
                     </div>
                 </div>
                 <span className="tools-divider"> </span>
                 <div className="tools-panel-color">
-                    <span className="color red" onClick={this.changeEditorColor('#FF3440')}> </span>
-                    <span className="color yellow"
-                        onClick={this.changeEditorColor('#FFCF50')}> </span>
-                    <span className="color green"
-                        onClick={this.changeEditorColor('#00A344')}> </span>
-                    <span className="color blue"
-                        onClick={this.changeEditorColor('#0DA9D6')}> </span>
-                    <span className="color grey"
-                        onClick={this.changeEditorColor('#999999')}> </span>
-                    <span className="color black"
-                        onClick={this.changeEditorColor('#ffffff')}> </span>
-                    <span className="color white"
-                        onClick={this.changeEditorColor('#000000')}> </span>
+                    <span className="color red" onClick={this.changeEditorColor('#FF3440')}>
+                        {' '}
+                    </span>
+                    <span className="color yellow" onClick={this.changeEditorColor('#FFCF50')}>
+                        {' '}
+                    </span>
+                    <span className="color green" onClick={this.changeEditorColor('#00A344')}>
+                        {' '}
+                    </span>
+                    <span className="color blue" onClick={this.changeEditorColor('#0DA9D6')}>
+                        {' '}
+                    </span>
+                    <span className="color grey" onClick={this.changeEditorColor('#999999')}>
+                        {' '}
+                    </span>
+                    <span className="color black" onClick={this.changeEditorColor('#ffffff')}>
+                        {' '}
+                    </span>
+                    <span className="color white" onClick={this.changeEditorColor('#000000')}>
+                        {' '}
+                    </span>
                 </div>
             </div>
-        )
+        );
     }
 
     renderMosaicMenus() {
@@ -337,52 +353,74 @@ export default class WrapContainer extends Component {
             <div className="tools-panel">
                 <div className="tools-panel-brush">
                     <div>
-                        <span className="small-brush" onClick={() => { }}> </span>
+                        <span className="small-brush" onClick={() => {}}>
+                            {' '}
+                        </span>
                     </div>
                     <div>
-                        <span className="normal-brush" onClick={() => { }}> </span>
+                        <span className="normal-brush" onClick={() => {}}>
+                            {' '}
+                        </span>
                     </div>
                     <div>
-                        <span className="big-brush" onClick={() => { }}> </span>
+                        <span className="big-brush" onClick={() => {}}>
+                            {' '}
+                        </span>
                     </div>
                 </div>
             </div>
-        )
+        );
     }
 
     renderTextMenus() {
         return (
             <div className="tools-panel">
                 <div className="tools-panel-color">
-                    <span className="color red" onClick={this.changeEditorColor('#FF3440')}> </span>
-                    <span className="color yellow"
-                        onClick={this.changeEditorColor('#FFCF50')}> </span>
-                    <span className="color green"
-                        onClick={this.changeEditorColor('#00A344')}> </span>
-                    <span className="color blue"
-                        onClick={this.changeEditorColor('#0DA9D6')}> </span>
-                    <span className="color grey"
-                        onClick={this.changeEditorColor('#999999')}> </span>
-                    <span className="color black"
-                        onClick={this.changeEditorColor('#ffffff')}> </span>
-                    <span className="color white"
-                        onClick={this.changeEditorColor('#000000')}> </span>
+                    <span className="color red" onClick={this.changeEditorColor('#FF3440')}>
+                        {' '}
+                    </span>
+                    <span className="color yellow" onClick={this.changeEditorColor('#FFCF50')}>
+                        {' '}
+                    </span>
+                    <span className="color green" onClick={this.changeEditorColor('#00A344')}>
+                        {' '}
+                    </span>
+                    <span className="color blue" onClick={this.changeEditorColor('#0DA9D6')}>
+                        {' '}
+                    </span>
+                    <span className="color grey" onClick={this.changeEditorColor('#999999')}>
+                        {' '}
+                    </span>
+                    <span className="color black" onClick={this.changeEditorColor('#ffffff')}>
+                        {' '}
+                    </span>
+                    <span className="color white" onClick={this.changeEditorColor('#000000')}>
+                        {' '}
+                    </span>
                 </div>
             </div>
-        )
+        );
     }
 
     renderCropMenus() {
         return (
             <div className="tools-panel">
                 <div className="tools-panel-crop">
-                    <span className="tools-panel-crop-apply-btn"
-                        onClick={this.onApplyCropBtn.bind(this)}> </span>
-                    <span className="tools-panel-crop-cancel-btn"
-                        onClick={this.onCancleCropBtn.bind(this)}> </span>
+                    <span
+                        className="tools-panel-crop-apply-btn"
+                        onClick={this.onApplyCropBtn.bind(this)}
+                    >
+                        {' '}
+                    </span>
+                    <span
+                        className="tools-panel-crop-cancel-btn"
+                        onClick={this.onCancleCropBtn.bind(this)}
+                    >
+                        {' '}
+                    </span>
                 </div>
             </div>
-        )
+        );
     }
 
     zoomOut(delta) {
@@ -398,14 +436,14 @@ export default class WrapContainer extends Component {
         if (nextZoom < 1) {
             return;
         }
-        this.fp.setZoom(nextZoom)
+        this.fp.setZoom(nextZoom);
     }
 
     changeEditorColor() {
-        return () => {}
+        return () => {};
     }
     onURL() {
-        this.fp.toDataURL('image/png')
+        this.fp.toDataURL('image/png');
     }
     render() {
         let btnClassname = classnames({
@@ -417,51 +455,85 @@ export default class WrapContainer extends Component {
         this.fp && console.log('editor state', this.fp.getCurrentState());
         if (this.fp && this.fp.getCurrentState() === consts.states.FREE_DRAWING) {
             menus = this.renderFreeDrawMenus();
-        }
-        else if (this.fp && this.fp.getCurrentState() === consts.states.ARROW) {
+        } else if (this.fp && this.fp.getCurrentState() === consts.states.ARROW) {
             menus = this.renderArrowMenus();
-        }
-        else if (this.fp && this.fp.getCurrentState() === consts.states.MOSAIC) {
+        } else if (this.fp && this.fp.getCurrentState() === consts.states.MOSAIC) {
             menus = this.renderMosaicMenus();
-        }
-        else if (this.fp && this.fp.getCurrentState() === consts.states.TEXT) {
+        } else if (this.fp && this.fp.getCurrentState() === consts.states.TEXT) {
             menus = this.renderTextMenus();
-        }
-        else {
+        } else {
             menus = null;
         }
         return (
             <div className="wrap_inner">
                 <div className="main">
-                    <div className="upload-file-image-preview" id="upload-file-image-preview">
-                    </div>
+                    <div className="upload-file-image-preview" id="upload-file-image-preview"></div>
                     <div className={btnClassname}>
                         <div className="image-thumb-btns">
-                            <i className="dxicon dxicon-image-suoxiao" onClick={this.zoomIn.bind(this, 0.2)} />
+                            <i
+                                className="dxicon dxicon-image-suoxiao"
+                                onClick={this.zoomIn.bind(this, 0.2)}
+                            />
                             <div className="thumb-divider"></div>
-                            <i className="dxicon dxicon-image-fangda" onClick={this.zoomOut.bind(this, 0.2)} />
+                            <i
+                                className="dxicon dxicon-image-fangda"
+                                onClick={this.zoomOut.bind(this, 0.2)}
+                            />
                         </div>
                         <div className="image-tools-btns">
-                            <i className="dxicon dxicon-image-jiantou" onClick={this.onArrowBtnClick.bind(this)} />
-                            <i className="dxicon dxicon-image-huabi" onClick={this.onFreeDrawBtnClick.bind(this)} />
-                            <i className="dxicon dxicon-image-text" onClick={this.onTextBtnClick.bind(this)} />
-                            <i className="dxicon dxicon-image-masaike" onClick={this.onMosaicBtnClick.bind(this)} />
-                            <i className="dxicon dxicon-image-xuanzhuan" onClick={this.onRotationBtnClick.bind(this)} />
-                            <i className="dxicon dxicon-image-jiancai" onClick={this.onCropBtnClick.bind(this)} />
-                            <i className="dxicon dxicon-image-jiancai" onClick={this.onPanBtnClick.bind(this)} />
+                            <i
+                                className="dxicon dxicon-image-jiantou"
+                                onClick={this.onArrowBtnClick.bind(this)}
+                            />
+                            <i
+                                className="dxicon dxicon-image-huabi"
+                                onClick={this.onFreeDrawBtnClick.bind(this)}
+                            />
+                            <i
+                                className="dxicon dxicon-image-text"
+                                onClick={this.onTextBtnClick.bind(this)}
+                            />
+                            <i
+                                className="dxicon dxicon-image-masaike"
+                                onClick={this.onMosaicBtnClick.bind(this)}
+                            />
+                            <i
+                                className="dxicon dxicon-image-xuanzhuan"
+                                onClick={this.onRotationBtnClick.bind(this)}
+                            />
+                            <i
+                                className="dxicon dxicon-image-jiancai"
+                                onClick={this.onCropBtnClick.bind(this)}
+                            />
+                            <i
+                                className="dxicon dxicon-image-jiancai"
+                                onClick={this.onPanBtnClick.bind(this)}
+                            />
                             <span className="tools-divider"> </span>
-                            <span className="file-button-cancel"
-                                onClick={this.onClearBtnClick.bind(this)}>复原</span>
-                            <span className="file-button-cancel"
-                                onClick={this.onUndoBtn.bind(this)}>undo</span>
-                            <span className="file-button-cancel"
-                                onClick={this.onRedoBtn.bind(this)}>redo</span>
-                                <span className="file-button-cancel"
-                                onClick={this.onURL.bind(this)}>url</span>
+                            <span
+                                className="file-button-cancel"
+                                onClick={this.onClearBtnClick.bind(this)}
+                            >
+                                复原
+                            </span>
+                            <span
+                                className="file-button-cancel"
+                                onClick={this.onUndoBtn.bind(this)}
+                            >
+                                undo
+                            </span>
+                            <span
+                                className="file-button-cancel"
+                                onClick={this.onRedoBtn.bind(this)}
+                            >
+                                redo
+                            </span>
+                            <span className="file-button-cancel" onClick={this.onURL.bind(this)}>
+                                url
+                            </span>
                             {menus}
                         </div>
-                        <div className="ctn-btns">
-                        </div>
+                        <div className="ctn-btns"></div>
                     </div>
                 </div>
             </div>

@@ -1,6 +1,5 @@
 import Base from './base';
 import consts from '../consts';
-import $ from 'jquery';
 
 export default class Pan extends Base {
     constructor(parent) {
@@ -20,7 +19,7 @@ export default class Pan extends Base {
         canvas.defaultCursor = 'move';
         canvas.selection = false;
 
-        canvas.forEachObject(obj => {
+        canvas.forEachObject((obj) => {
             obj.set({
                 evented: false
             });
@@ -37,7 +36,7 @@ export default class Pan extends Base {
         canvas.defaultCursor = 'default';
         canvas.selection = false;
 
-        canvas.forEachObject(obj => {
+        canvas.forEachObject((obj) => {
             obj.set({
                 evented: true
             });
@@ -54,13 +53,16 @@ export default class Pan extends Base {
     _onFabricMouseDown(fEvent) {
         const canvas = this.getCanvas();
         this.pointer = canvas.getPointer(fEvent.e);
-        this.$lower = $(canvas.lowerCanvasEl);
-        this.$upper = $(canvas.upperCanvasEl);
-        this.$wrapper = $(canvas.wrapperEl);
-        this.deltaX = parseInt(this.$lower.css('left'), 10);
-        this.deltaY = parseInt(this.$lower.css('top'), 10);
-        this.deltaWidth = this.$upper.width() - this.$wrapper.width();
-        this.deltaHeight = this.$upper.height() - this.$wrapper.height();
+        this.$lower = canvas.lowerCanvasEl;
+        this.$upper = canvas.upperCanvasEl;
+        this.$wrapper = canvas.wrapperEl;
+        this.deltaX = parseInt(window.getComputedStyle(this.$lower).left, 10);
+        this.deltaY = parseInt(window.getComputedStyle(this.$lower).top, 10);
+        this.deltaWidth =
+            this.$upper.getBoundingClientRect().width - this.$wrapper.getBoundingClientRect().width;
+        this.deltaHeight =
+            this.$upper.getBoundingClientRect().height -
+            this.$wrapper.getBoundingClientRect().height;
         canvas.on({
             'mouse:move': this._listeners.mousemove,
             'mouse:up': this._listeners.mouseup
@@ -83,17 +85,17 @@ export default class Pan extends Base {
         const canvas = this.getCanvas();
         const movePointer = canvas.getPointer(fEvent.e);
 
-        let deltaX = this.deltaX + movePointer.x-this.pointer.x;
+        let deltaX = this.deltaX + movePointer.x - this.pointer.x;
         let deltaY = this.deltaY + movePointer.y - this.pointer.y;
 
         if (this.deltaWidth > Math.abs(deltaX) && deltaX < 0) {
-            this.$lower.css('left', deltaX);
-            this.$upper.css('left', deltaX);
+            this.$lower.style.left = deltaX;
+            this.$upper.style.left = deltaX;
             this.deltaX = deltaX;
         }
         if (this.deltaHeight > Math.abs(deltaY) && deltaY < 0) {
-            this.$lower.css('top', deltaY);
-            this.$upper.css('top', deltaY);
+            this.$lower.style.top = deltaY;
+            this.$upper.style.top = deltaY;
             this.deltaY = deltaY;
         }
     }

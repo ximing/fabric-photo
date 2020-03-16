@@ -16,15 +16,14 @@ import consts from './consts';
 
 import util from './lib/util.js';
 
-const {eventNames, rejectMessages} = consts;
+const { eventNames, rejectMessages } = consts;
 
-export default class{
+export default class {
     constructor() {
         this._customEvents = new CustomEvents();
 
         this._undoStack = [];
         this._redoStack = [];
-
 
         this._moduleMap = {};
 
@@ -33,7 +32,6 @@ export default class{
 
         this._createModules();
     }
-
 
     _createModules() {
         const main = new Main();
@@ -49,20 +47,18 @@ export default class{
         this._register(new Arrow(main));
         this._register(new Cropper(main));
         this._register(new Pan(main));
-
     }
-
 
     _register(component) {
         this._moduleMap[component.getName()] = component;
     }
 
-
     _invokeExecution(command) {
         this.lock();
 
-        return command.execute(this._moduleMap)
-            .then(value => {
+        return command
+            .execute(this._moduleMap)
+            .then((value) => {
                 this.pushUndoStack(command);
                 this.unlock();
                 if (util.isFunction(command.executeCallback)) {
@@ -71,20 +67,23 @@ export default class{
 
                 return value;
             })
-            .catch((err) => {this.unlock();console.error(err)}) // do nothing with exception
-            .then(value => {
+            .catch((err) => {
+                this.unlock();
+                console.error(err);
+            }) // do nothing with exception
+            .then((value) => {
                 this.unlock();
 
                 return value;
             });
     }
 
-
     _invokeUndo(command) {
         this.lock();
 
-        return command.undo(this._moduleMap)
-            .then(value => {
+        return command
+            .undo(this._moduleMap)
+            .then((value) => {
                 this.pushRedoStack(command);
                 this.unlock();
                 if (util.isFunction(command.undoCallback)) {
@@ -93,8 +92,11 @@ export default class{
 
                 return value;
             })
-            .catch(() => {this.unlock();console.error(err)}) //TODO  do nothing with exception
-            .then(value => {
+            .catch(() => {
+                this.unlock();
+                console.error(err);
+            }) //TODO  do nothing with exception
+            .then((value) => {
                 this.unlock();
 
                 return value;
@@ -106,7 +108,6 @@ export default class{
         const eventContext = event;
         event.emit.apply(eventContext, args);
     }
-
 
     on(...args) {
         const event = this._customEvents;
@@ -137,15 +138,14 @@ export default class{
             return Promise.reject(rejectMessages.isLock);
         }
 
-        return this._invokeExecution(command)
-            .then(value => {
-                this.clearRedoStack();
+        return this._invokeExecution(command).then((value) => {
+            this.clearRedoStack();
 
-                return value;
-            });
+            return value;
+        });
     }
 
-//undo命令
+    //undo命令
     undo() {
         let command = this._undoStack.pop();
         let promise;
@@ -166,7 +166,7 @@ export default class{
         return promise;
     }
 
-//redo命令
+    //redo命令
     redo() {
         let command = this._redoStack.pop();
 
@@ -200,7 +200,6 @@ export default class{
         }
     }
 
-
     pushRedoStack(command, isSilent) {
         this._redoStack.push(command);
         if (!isSilent) {
@@ -208,16 +207,13 @@ export default class{
         }
     }
 
-
     isEmptyRedoStack() {
         return this._redoStack.length === 0;
     }
 
-
     isEmptyUndoStack() {
         return this._undoStack.length === 0;
     }
-
 
     clearUndoStack() {
         if (!this.isEmptyUndoStack()) {

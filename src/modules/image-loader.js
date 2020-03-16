@@ -1,5 +1,6 @@
 import Base from './base.js';
 import consts from '../consts';
+
 const {moduleNames, rejectMessages} = consts;
 const imageOption = {
     padding: 0,

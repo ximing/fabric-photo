@@ -1,8 +1,8 @@
 import Command from './base';
 import consts from '../consts';
 
-const {moduleNames} = consts;
-const {MAIN} = moduleNames;
+const { moduleNames } = consts;
+const { MAIN } = moduleNames;
 export default function(target) {
     return new Command({
         /**
@@ -18,7 +18,7 @@ export default function(target) {
                 if (isValidGroup) {
                     canvas.discardActiveGroup(); // restore states for each objects
                     this.store = target.getObjects();
-                    target.forEachObject(obj => {
+                    target.forEachObject((obj) => {
                         obj.remove();
                     });
                     resolve();

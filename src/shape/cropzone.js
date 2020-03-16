@@ -1,4 +1,4 @@
-import {fabric} from 'fabric';
+import { fabric } from 'fabric';
 import util from '../lib/util';
 
 const clamp = util.clamp;
@@ -26,8 +26,8 @@ const Cropzone = fabric.util.createClass(fabric.Rect, {
         options.type = 'cropzone';
         this.callSuper('initialize', options);
         this.on({
-            'moving': this._onMoving,
-            'scaling': this._onScaling
+            moving: this._onMoving,
+            scaling: this._onScaling
         });
     },
     objectCaching: false,
@@ -59,7 +59,12 @@ const Cropzone = fabric.util.createClass(fabric.Rect, {
         this._strokeBorder(ctx, 'rgb(0, 0, 0)', cropzoneDashLineWidth);
 
         // White dash line
-        this._strokeBorder(ctx, 'rgb(255, 255, 255)', cropzoneDashLineWidth, cropzoneDashLineOffset);
+        this._strokeBorder(
+            ctx,
+            'rgb(255, 255, 255)',
+            cropzoneDashLineWidth,
+            cropzoneDashLineOffset
+        );
 
         // Reset scale
         ctx.scale(1 / originalScaleX, 1 / originalScaleY);
@@ -137,18 +142,24 @@ const Cropzone = fabric.util.createClass(fabric.Rect, {
             canvasEl = ctx.canvas; // canvas element, not fabric object
 
         return {
-            x: util.map([
-                -(halfWidth + left),                        // x0
-                -(halfWidth),                               // x1
-                halfWidth,                                  // x2
-                halfWidth + (canvasEl.width - left - width) // x3
-            ], ceil),
-            y: util.map([
-                -(halfHeight + top),                            // y0
-                -(halfHeight),                                  // y1
-                halfHeight,                                     // y2
-                halfHeight + (canvasEl.height - top - height)   // y3
-            ], ceil)
+            x: util.map(
+                [
+                    -(halfWidth + left), // x0
+                    -halfWidth, // x1
+                    halfWidth, // x2
+                    halfWidth + (canvasEl.width - left - width) // x3
+                ],
+                ceil
+            ),
+            y: util.map(
+                [
+                    -(halfHeight + top), // y0
+                    -halfHeight, // y1
+                    halfHeight, // y2
+                    halfHeight + (canvasEl.height - top - height) // y3
+                ],
+                ceil
+            )
         };
     },
 
@@ -244,8 +255,8 @@ const Cropzone = fabric.util.createClass(fabric.Rect, {
     _calcTopLeftScalingSizeFromPointer(x, y) {
         const bottom = this.getHeight() + this.top,
             right = this.getWidth() + this.left,
-            top = clamp(y, 0, bottom - 1),  // 0 <= top <= (bottom - 1)
-            left = clamp(x, 0, right - 1);  // 0 <= left <= (right - 1)
+            top = clamp(y, 0, bottom - 1), // 0 <= top <= (bottom - 1)
+            left = clamp(x, 0, right - 1); // 0 <= left <= (right - 1)
 
         // When scaling "Top-Left corner": It fixes right and bottom coordinates
         return {
@@ -272,8 +283,8 @@ const Cropzone = fabric.util.createClass(fabric.Rect, {
 
         // When scaling "Bottom-Right corner": It fixes left and top coordinates
         return {
-            width: clamp(x, (left + 1), maxX) - left,    // (width = x - left), (left + 1 <= x <= maxX)
-            height: clamp(y, (top + 1), maxY) - top      // (height = y - top), (top + 1 <= y <= maxY)
+            width: clamp(x, left + 1, maxX) - left, // (width = x - left), (left + 1 <= x <= maxX)
+            height: clamp(y, top + 1, maxY) - top // (height = y - top), (top + 1 <= y <= maxY)
         };
     },
 
@@ -342,19 +353,14 @@ const Cropzone = fabric.util.createClass(fabric.Rect, {
         }
 
         return settings;
-    }, /* eslint-enable complexity */
+    } /* eslint-enable complexity */,
 
     /**
      * Return the whether this cropzone is valid
      * @returns {boolean}
      */
     isValid() {
-        return (
-            this.left >= 0 &&
-            this.top >= 0 &&
-            this.width > 0 &&
-            this.height > 0
-        );
+        return this.left >= 0 && this.top >= 0 && this.width > 0 && this.height > 0;
     }
 });
 export default Cropzone;

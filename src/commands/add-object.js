@@ -2,8 +2,8 @@ import util from '../lib/util';
 import Command from './base';
 import consts from '../consts';
 
-const {moduleNames} = consts;
-const {MAIN} = moduleNames;
+const { moduleNames } = consts;
+const { MAIN } = moduleNames;
 export default function(object) {
     util.stamp(object);
 

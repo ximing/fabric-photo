@@ -1,10 +1,12 @@
+import { fabric } from 'fabric';
+
 import Base from './base';
 import consts from '../consts';
 import util from '../lib/util';
 
 import resizeHelper from '../lib/shape-resize-helper.js';
 
-const {inArray,extend} = util;
+const { inArray, extend } = util;
 
 const KEY_CODES = consts.keyCodes;
 const DEFAULT_TYPE = 'rect';
@@ -24,7 +26,6 @@ const DEFAULT_OPTIONS = {
 };
 
 const shapeType = ['rect', 'circle', 'triangle'];
-
 
 export default class Shape extends Base {
     constructor(parent) {
@@ -181,9 +182,14 @@ export default class Shape extends Base {
                 instance = new fabric.Rect(options);
                 break;
             case 'circle':
-                instance = new fabric.Ellipse(extend({
-                    type: 'circle'
-                }, options));
+                instance = new fabric.Ellipse(
+                    extend(
+                        {
+                            type: 'circle'
+                        },
+                        options
+                    )
+                );
                 break;
             case 'triangle':
                 instance = new fabric.Triangle(options);

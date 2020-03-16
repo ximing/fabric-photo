@@ -1,8 +1,8 @@
 import Command from './base';
 import consts from '../consts';
 
-const {moduleNames} = consts;
-export default function(type,angle) {
+const { moduleNames } = consts;
+export default function(type, angle) {
     return new Command({
         execute(moduleMap) {
             const rotationComp = moduleMap[moduleNames.ROTATION];
