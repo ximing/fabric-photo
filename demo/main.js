@@ -1,11 +1,10 @@
 /**
  * Created by yeanzhi on 17/1/13.
  */
-'use strict';
 import React, { Component } from 'react';
 import classnames from 'classnames';
 
-import { FabricPhoto, consts } from '../src/index';
+import { FabricPhoto, consts } from '../core/index';
 
 export default class WrapContainer extends Component {
     constructor() {
@@ -34,15 +33,10 @@ export default class WrapContainer extends Component {
             cssMaxWidth: 700,
             cssMaxHeight: 400
         });
-        this.fp.once('loadImage', (oImage) => {
+        this.fp.once('loadImage', () => {
             this.fp.clearUndoStack();
         });
-        //this.fp.loadImageFromURL('http://mss.ximing.ren/v1/mss_814dc1610cda4b2e8febd6ea2c809db5/image/1484297783302.jpg', 'image name');
         this.fp.loadImageFromURL('/demo.jpeg', 'image name');
-        //this.fp.loadImageFromURL('http://mss.ximing.ren/v1/mss_814dc1610cda4b2e8febd6ea2c809db5/image/1484297784312.png', 'image name');
-        // this.fp.loadImageFromURL('http://mss.ximing.ren/v1/mss_814dc1610cda4b2e8febd6ea2c809db5/image/1484297783376.jpeg', 'image name');
-        //this.fp.loadImageFromURL('http://mss.ximing.ren/v1/mss_814dc1610cda4b2e8febd6ea2c809db5/image/1484297783036.png', 'image name');
-        //this.fp.loadImageFromURL('http://mss.ximing.ren/v1/mss_814dc1610cda4b2e8febd6ea2c809db5/image/1486378338826.png','带文字的')
         this.fp.on('selectObject', (obj) => {
             //console.log('selectObject--->',obj);
             if (obj.type === 'rect' || obj.type === 'circle' || obj.type === 'triangle') {
@@ -442,9 +436,11 @@ export default class WrapContainer extends Component {
     changeEditorColor() {
         return () => {};
     }
+
     onURL() {
         this.fp.toDataURL('image/png');
     }
+
     render() {
         let btnClassname = classnames({
             'file-button': true,
