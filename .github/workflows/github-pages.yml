@@ -2,7 +2,7 @@ name: Example Build & Deploy to GitHub Pages
 on:
   push:
     branches:
-      - master1
+      - master
     tags:
       - v1
     paths:
