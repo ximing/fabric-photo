@@ -9,6 +9,8 @@
     "scripts": {
         "i": "PUPPETEER_DOWNLOAD_HOST=https://npm.taobao.org/mirrors SASS_BINARY_SITE=https://npm.taobao.org/mirrors/node-sass npm install",
         "dev": "./node_modules/.bin/webpack-dev-server ",
+        "install:website": "cd website && npm i --registry=https://registry.npmjs.com",
+        "build:website": "cd website && rm -rf .umi dist && npm run build",
         "build": "rollup -c"
     },
     "publishConfig": {
