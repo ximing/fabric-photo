@@ -42,7 +42,7 @@ class WrapContainer extends Component {
         this.fp.once('loadImage', (oImage) => {
             this.fp.clearUndoStack();
         });
-        this.fp.loadImageFromURL('/images/demo.jpeg', 'image name');
+        this.fp.loadImageFromURL('images/demo.jpeg', 'image name');
         this.fp.on('selectObject', (obj) => {
             //console.log('selectObject--->',obj);
             if (obj.type === 'rect' || obj.type === 'circle' || obj.type === 'triangle') {
