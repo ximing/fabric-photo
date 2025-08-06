@@ -1,0 +1,6 @@
+{
+  "enabledPlugins": {
+    "ralph-skills@ralph-marketplace": true,
+    "ralph-wiggum@claude-code-plugins": true
+  }
+}
