@@ -1,0 +1,3 @@
+{
+  "reject": ["fabric", "react", "react-dom"]
+}

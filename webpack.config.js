@@ -1,8 +1,12 @@
 const { resolve } = require('path');
-const webpack = require('webpack');
 const path = require('path');
+const webpack = require('webpack');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const { HotModuleReplacementPlugin } = webpack;
+const { DefinePlugin } = webpack;
 
 module.exports = {
+    mode: 'development',
     entry: {
         index: ['./demo/index.js']
     },
@@ -10,18 +14,21 @@ module.exports = {
         filename: '[name].js',
         sourceMapFilename: '[file].map',
         path: resolve(__dirname, 'public'),
-        publicPath: '/public'
+        publicPath: '/public',
+        clean: true
     },
-    devtool: 'cheap-module-eval-source-map',
+    devtool: 'eval-cheap-module-source-map',
 
     devServer: {
-        contentBase: [path.join(__dirname, 'html'), path.join(__dirname, 'public')],
+        static: [
+            path.join(__dirname, 'html'),
+            path.join(__dirname, 'public'),
+            path.join(__dirname, 'demo')
+        ],
         compress: true,
         port: parseInt(process.env.PORT, 10) || 9876,
         host: '0.0.0.0',
         hot: true,
-        inline: true,
-        publicPath: '/dist/',
         historyApiFallback: {
             rewrites: [
                 {
@@ -29,8 +36,7 @@ module.exports = {
                     to: '/html/index.html'
                 }
             ]
-        },
-        watchContentBase: true
+        }
     },
     performance: {
         hints: false
@@ -56,7 +62,7 @@ module.exports = {
             },
             {
                 test: /\.(png|jpg|jpeg|gif|woff|svg|eot|ttf|woff2)$/i,
-                use: ['url-loader']
+                type: 'asset/resource'
             }
         ]
     },
@@ -64,5 +70,20 @@ module.exports = {
         jquery: 'jQuery',
         lodash: '_'
     },
-    plugins: [new webpack.HotModuleReplacementPlugin()]
+    resolve: {
+        fallback: {
+            url: false,
+            http: false,
+            https: false
+        }
+    },
+    plugins: [
+        new HotModuleReplacementPlugin(),
+        new HtmlWebpackPlugin({
+            template: './html/index.html'
+        }),
+        new DefinePlugin({
+            'process.env.NODE_ENV': JSON.stringify('development')
+        })
+    ]
 };
