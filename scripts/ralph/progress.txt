@@ -1,0 +1,362 @@
+# Ralph Progress Log
+Started: 2026年 2月15日 星期日 23时33分46秒 CST
+---
+
+## 2026-03-08 - SR US-009
+- Added `getDueCardsForAllSREnabledUsers()` to SpacedRepetitionService: queries all SR-enabled users, fetches their due cards (nextReviewAt <= now), groups by userId with srDailyLimit
+- Added `registerSpacedRepetitionPushTask()` to SchedulerService: registers daily 08:00 cron task
+- Added `sendSpacedRepetitionPush()` to SchedulerService: processes due cards per user, sends via external channels (Feishu/Meow) if push rules configured, always creates in-app notifications (type='spaced_repetition')
+- Push content format: `📚 复习提醒：《{memo.title}》\n{memo.content前100字}\n查看笔记：{appBaseUrl}/review`
+- All 30 tests pass, typecheck passes
+- Files changed:
+  - apps/server/src/services/spaced-repetition.service.ts (added getDueCardsForAllSREnabledUsers)
+  - apps/server/src/services/scheduler.service.ts (added SR push task + sendSpacedRepetitionPush)
+- **Learnings for future iterations:**
+  - `inArray()` from drizzle-orm is used for `WHERE col IN (...)` queries — import from 'drizzle-orm'
+  - When DB query returns a column with ambiguous type, use explicit `Map<string, number>` typing + `as number` cast
+  - SchedulerService injects services via `@Inject()` decorator — add new services to constructor params
+  - The appBaseUrl for push links comes from `config.cors.origin[0]`
+  - Push rules are fetched per-user via `pushRuleService.findByUid(userId)` — filter by `enabled` flag
+---
+
+## 2026-03-08 - SR US-008
+- Created apps/server/src/services/notification.service.ts with NotificationService (@Service() decorated)
+- Implemented getNotifications(userId): returns 50 most recent notifications, sorted by createdAt desc
+- Implemented markAsRead(notificationId, userId): verifies ownership, updates isRead=true, returns false if not found
+- Implemented getUnreadCount(userId): uses sql<number>`count(*)` aggregate query
+- Implemented createNotification(params): generates `notif` prefix ID, inserts and returns new record
+- Created apps/server/src/controllers/v1/notification.controller.ts with 3 endpoints
+- Added NOTIFICATION to OBJECT_TYPE constant and generateTypeId (generates `notif` prefix IDs)
+- Registered NotificationController in controllers/index.ts
+- All 30 tests pass, typecheck passes
+- Files changed:
+  - apps/server/src/services/notification.service.ts (new)
+  - apps/server/src/controllers/v1/notification.controller.ts (new)
+  - apps/server/src/controllers/index.ts (added NotificationController)
+  - apps/server/src/models/constant/type.ts (added NOTIFICATION)
+  - apps/server/src/utils/id.ts (added NOTIFICATION case generating `notif` prefix)
+- **Learnings for future iterations:**
+  - Notification IDs use `notif` prefix (e.g., `notif` + 23-char nanoid)
+  - GET /unread-count must be registered BEFORE /:id/read route to avoid route conflict (routing-controllers resolves routes in order)
+  - sql<number>`count(*)` template returns a string from MySQL — wrap with Number() for correct type
+  - Ownership check pattern: SELECT first, then UPDATE — avoids updating wrong user's records
+---
+
+## 2026-03-08 - SR US-007
+- Created apps/server/src/db/schema/in-app-notifications.ts with inAppNotifications table
+- Table fields: notificationId (PK), userId, type, title, body (TEXT), memoId (nullable), isRead (BOOLEAN DEFAULT false), createdAt
+- Added indexes: ian_user_id_idx on userId, ian_user_created_at_idx on (userId, createdAt)
+- Exported from apps/server/src/db/schema/index.ts
+- Generated migration: drizzle/0008_jazzy_stick.sql
+- Build and typecheck pass
+- Files changed:
+  - apps/server/src/db/schema/in-app-notifications.ts (new)
+  - apps/server/src/db/schema/index.ts (added export)
+  - apps/server/drizzle/0008_jazzy_stick.sql (generated migration)
+  - apps/server/drizzle/meta/_journal.json (updated)
+  - apps/server/drizzle/meta/0008_snapshot.json (new)
+- **Learnings for future iterations:**
+  - Index naming: use table prefix abbreviations (e.g., `ian_` for in_app_notifications) to avoid conflicts across tables
+  - TEXT columns use `text('col_name')` in Drizzle (no length parameter needed)
+  - Nullable columns: simply omit `.notNull()` — Drizzle treats columns as nullable by default
+---
+
+## 2026-03-08 - SR US-006
+- Added GET /api/v1/spaced-repetition/due endpoint to SpacedRepetitionController
+- Added POST /api/v1/spaced-repetition/cards/:cardId/review endpoint
+- Due cards endpoint fetches memo content inline (title from first line, content truncated to 200 chars)
+- Review endpoint maps quality strings (mastered/remembered/fuzzy/forgot/skip) to SM-2 numeric values
+- Skip returns current card unchanged; other qualities update via calculateNextReview + updateCardAfterReview
+- Cards whose memos have been deleted are filtered out from due list
+- All 30 tests pass, typecheck passes
+- Files changed:
+  - apps/server/src/controllers/v1/spaced-repetition.controller.ts (added 2 endpoints + imports)
+- **Learnings for future iterations:**
+  - Memo title is derived from first line of content (truncated to 50 chars) — no dedicated title field in memos table
+  - Due cards endpoint fetches memo data inline with Promise.all for parallel DB queries
+  - Quality string→number mapping: mastered=5, remembered=4, fuzzy=3, forgot=1
+  - Skip quality returns card as-is without any DB update
+---
+
+## 2026-03-08 - SR US-005
+- Created apps/server/src/controllers/v1/spaced-repetition.controller.ts with 5 endpoints
+- Added settings and rules management methods to SpacedRepetitionService
+- Added SR_RULE type to OBJECT_TYPE constant and generateTypeId (generates `srr` prefix IDs)
+- Registered SpacedRepetitionController in controllers/index.ts
+- All 30 tests pass, build and typecheck pass
+- Files changed:
+  - apps/server/src/controllers/v1/spaced-repetition.controller.ts (new)
+  - apps/server/src/controllers/index.ts (added SpacedRepetitionController)
+  - apps/server/src/services/spaced-repetition.service.ts (added getSettings, updateSettings, getRules, createRule, deleteRule)
+  - apps/server/src/models/constant/type.ts (added SR_RULE)
+  - apps/server/src/utils/id.ts (added SR_RULE case generating `srr` prefix)
+- **Learnings for future iterations:**
+  - SR settings live directly in the users table (srEnabled, srDailyLimit) — update via users table
+  - When adding new OBJECT_TYPE, also add a case in generateTypeId() in utils/id.ts
+  - Controller routes: use @Get('/settings') and @Put('/settings') within @JsonController('/api/v1/spaced-repetition')
+  - The `users` table import in spaced-repetition.service.ts comes from '../db/schema/users.js'
+---
+
+## 2026-03-08 - SR US-004
+- Extended SpacedRepetitionService with card lifecycle methods: createCardIfEligible, reevaluateCard, deleteCardsByMemo, getCardById, getDueCards, updateCardAfterReview
+- isMemoEligible: checks filter rules (exclude > include, no rules = all eligible), resolves tag names from tagIds
+- Hooked createCardIfEligible into MemoService.createMemo (fire-and-forget after memo created)
+- Hooked reevaluateCard into MemoService.updateMemo when categoryId or tags change
+- Hooked deleteCardsByMemo into MemoService.deleteMemo before soft-deleting memo
+- Added SpacedRepetitionService to MemoService constructor (TypeDI injection)
+- Updated test file to mock DB dependencies (getDatabase, config) so pure SM-2 tests still pass
+- All 30 tests pass, typecheck passes
+- Files changed:
+  - apps/server/src/services/spaced-repetition.service.ts (extended)
+  - apps/server/src/services/memo.service.ts (added SR hooks)
+  - apps/server/src/__tests__/spaced-repetition.service.test.ts (added DB mocks)
+- **Learnings for future iterations:**
+  - When adding DB dependencies to a service that was previously pure computation, update tests to mock DB modules
+  - Fire-and-forget pattern: call async side effects with `.catch()` to avoid blocking the main operation
+  - TypeDI auto-injects services in constructor — just add the parameter and TypeDI handles the rest
+  - Filter rule logic: exclude rules take priority over include rules; no rules = all eligible
+  - Tag filtering requires resolving tagIds → tag names since rules store tag names
+---
+
+## Codebase Patterns
+- LanceDB table schemas are defined in `apps/server/src/models/db/schema.ts` using Apache Arrow types
+- Migrations are created in `apps/server/src/migrations/scripts/` and registered in `index.ts`
+- Table schemas use `new Schema([...])` with `new Field(name, type, nullable)` definitions
+- TypeScript types for records are exported alongside schemas
+- Migration version numbers must be unique per table
+- Export new types from `lancedb.ts` for service layer access
+- LanceDB Query API: sorting is done in JavaScript via `.sort()` after `.toArray()`, not via `.orderBy()`
+- LanceDB `update()` takes `{ where: string, values: Record }` object format
+- TypeDI services are auto-injected into controllers via constructor injection
+- Table names use snake_case (e.g., `ai_conversations`)
+- Primary key fields use full name + Id (e.g., `conversationId`, not just `id`)
+- MySQL Drizzle schemas use `mysqlTable()` in `apps/server/src/db/schema/` — one file per table, exported from `schema/index.ts`
+- UserInfoDto uses `uid` (not `id`) for user identifier — always use `userDto.uid` in controllers
+- ErrorCode in `apps/server/src/constants/error-codes.ts` — add new codes there when needed
+- Always `pnpm build` in `apps/server` before `pnpm migrate:generate` (drizzle-kit reads from dist/)
+- Timestamps in Drizzle: `timestamp('col', { mode: 'date', fsp: 3 }).notNull().defaultNow()`
+- VARCHAR(191) for PK/FK columns (MySQL utf8mb4 index limit)
+
+## 2026-03-08 - SR US-002
+- Added srEnabled (BOOLEAN DEFAULT false) and srDailyLimit (INT DEFAULT 5) to the users table
+- Built server and generated migration: drizzle/0007_abnormal_black_crow.sql
+- Typecheck passes
+- Files changed:
+  - apps/server/src/db/schema/users.ts (added srEnabled, srDailyLimit fields + boolean import)
+  - apps/server/drizzle/0007_abnormal_black_crow.sql (generated migration)
+  - apps/server/drizzle/meta/_journal.json (updated)
+  - apps/server/drizzle/meta/0006_snapshot.json (new)
+  - apps/server/drizzle/meta/0007_snapshot.json (new)
+- **Learnings for future iterations:**
+  - SR settings live in the `users` table (no separate user_settings table exists)
+  - Use `boolean()` from drizzle-orm/mysql-core for BOOLEAN columns
+  - Adding fields to existing tables generates ALTER TABLE statements in migrations
+---
+
+## 2026-03-08 - SR US-001
+- Created spaced_repetition_cards and spaced_repetition_rules MySQL tables via Drizzle ORM
+- Fixed pre-existing TypeScript errors in user-model.controller.ts (userDto.id → userDto.uid) and added EXTERNAL_SERVICE_ERROR to ErrorCode
+- Files changed:
+  - apps/server/src/db/schema/spaced-repetition-cards.ts (new)
+  - apps/server/src/db/schema/spaced-repetition-rules.ts (new)
+  - apps/server/src/db/schema/index.ts (added exports)
+  - apps/server/drizzle/0006_salty_firestar.sql (generated migration)
+  - apps/server/src/constants/error-codes.ts (added EXTERNAL_SERVICE_ERROR)
+  - apps/server/src/controllers/v1/user-model.controller.ts (fixed userDto.uid)
+- **Learnings for future iterations:**
+  - UserInfoDto uses `uid` not `id` — use `userDto.uid` in controllers
+  - EXTERNAL_SERVICE_ERROR (5000) added to ErrorCode for external API failures
+  - Drizzle schema pattern: mysqlTable() with column types from drizzle-orm/mysql-core
+  - Index naming: use descriptive names like `user_id_idx`, `user_memo_idx`
+  - Float columns use `float('col_name')` not `decimal` for ease factor
+---
+
+## 2026-02-20 11:50:00 - US-001
+- Created ai_conversations and ai_messages table schemas in schema.ts
+- Created migration script 006-add-ai-conversations.ts
+- Registered migrations in migration index
+- Exported new types from lancedb.ts
+- Files changed:
+  - apps/server/src/models/db/schema.ts
+  - apps/server/src/migrations/scripts/006-add-ai-conversations.ts
+  - apps/server/src/migrations/scripts/index.ts
+  - apps/server/src/sources/lancedb.ts
+- **Learnings for future iterations:**
+  - Table names use snake_case (e.g., ai_conversations)
+  - Primary key fields use full name + Id (e.g., conversationId, not just id)
+  - Foreign keys reference parent table (e.g., conversationId in ai_messages)
+  - List/Struct types for complex fields like sources need proper Apache Arrow definitions
+  - Timestamps use `new Timestamp(TimeUnit.MILLISECOND)`
+  - Migrations use version 6 (following existing v1-v5 pattern)
+---
+
+## 2026-02-20 14:35:00 - US-002
+- Implemented backend API for conversation CRUD operations
+- Added conversation and message DTOs to packages/dto/src/explore.ts:
+  - AIMessageSourceDto, AIMessageDto, AIConversationDto, AIConversationDetailDto
+  - CreateConversationDto, UpdateConversationDto, AddMessageDto
+  - ConversationListResponseDto, ConversationListQueryDto
+- Created AIConversationService with methods:
+  - getConversations(uid) - sorted by updatedAt desc
+  - getConversation(id, uid) - with all messages
+  - createConversation(uid, data)
+  - updateConversation(id, uid, data) - rename title
+  - deleteConversation(id, uid) - also deletes all messages
+  - addMessage(conversationId, uid, data)
+  - getMostRecentConversation(uid)
+- Added REST endpoints to ExploreController:
+  - GET /api/v1/explore/conversations
+  - GET /api/v1/explore/conversations/:id
+  - POST /api/v1/explore/conversations
+  - PUT /api/v1/explore/conversations/:id
+  - DELETE /api/v1/explore/conversations/:id
+  - POST /api/v1/explore/conversations/:id/messages
+- Files changed:
+  - apps/server/src/services/ai-conversation.service.ts (new)
+  - apps/server/src/controllers/v1/explore.controller.ts
+  - packages/dto/src/explore.ts
+- **Learnings for future iterations:**
+  - LanceDB Query API doesn't support `.orderBy()` - sorting must be done in JavaScript after `.toArray()`
+  - LanceDB `update()` takes an object with `{ where: string, values: Record }` not positional args
+  - Use `.sort((a, b) => Number(b.updatedAt) - Number(a.updatedAt))` for timestamp sorting
+  - When adding messages, also update the conversation's updatedAt timestamp
+  - DTOs should extend base types (AIConversationDetailDto extends AIConversationDto)
+  - TypeDI services are auto-injected into controllers when declared in constructor
+---
+
+## 2026-02-20 16:15:00 - US-003
+- Created explore-conversation.ts API module with all conversation endpoints:
+  - getConversations, getConversation, createConversation, updateConversation, deleteConversation, addMessage
+- Refactored ExploreService to use backend API instead of localStorage:
+  - Added conversations array for storing conversation list
+  - Added currentConversationId for tracking selected conversation
+  - Added conversationsLoading and isOnline state
+  - Implemented loadConversations() to fetch list from API
+  - Implemented loadConversation() to fetch messages from API
+  - Implemented ensureConversation() to auto-create conversation on first message
+  - Implemented updateConversationTitle() to auto-generate title from first message
+  - Added conversation management methods: selectConversation, deleteConversation, renameConversation, refreshConversations
+  - Modified sendQuery() to persist messages to backend via addMessage API
+  - Modified newConversation() to create conversation via API
+- Added network error handling with isOnline flag
+- Maintained reactive state with @rabjs/react Service class
+- Files changed:
+  - apps/web/src/api/explore-conversation.ts (new)
+  - apps/web/src/services/explore.service.ts (refactored)
+- Build and lint pass successfully
+- **Learnings for future iterations:**
+  - When refactoring from localStorage to API, maintain the same reactive state interface to minimize UI changes
+  - Use private helper methods (ensureConversation, rebuildContext) to encapsulate complex logic
+  - Keep error handling consistent - set isOnline false on network errors, provide user-friendly error messages
+  - The Service class from @rabjs/react auto-triggers re-renders when observable properties change
+  - When converting API types to UI types, map carefully (e.g., AIMessageSourceDto -> ExploreSourceDto)
+  - Auto-generating conversation titles from first message provides better UX than default titles
+---
+
+## 2026-02-20 18:30:00 - US-004, US-005, US-007, US-008, US-009
+- Completely refactored AI Explore page layout:
+  - Removed top header from ai-explore.tsx
+  - Created left sidebar (280px fixed width) with conversation list
+  - Moved "AI 探索" title and Sparkles icon to sidebar header
+  - Added "返回首页" back button in sidebar
+  - Main content now takes full remaining width with no top padding
+- Implemented conversation list in sidebar (US-005):
+  - Displays conversations sorted by updatedAt (already sorted from API)
+  - Shows title and relative time (e.g., "2小时前")
+  - Highlights selected conversation with primary color background
+  - Click to switch conversations
+  - Added ChevronRight icon on hover for visual feedback
+- Added new topic button in sidebar (US-007):
+  - Plus icon button next to title
+  - Creates new conversation via API
+  - Auto-focuses input after creation
+- Implemented floating input box (US-008):
+  - Fixed at bottom with gradient fade background
+  - White background with shadow for visual separation
+  - Max-width constrained to match message area
+  - Added pb-32 to messages area to prevent content being hidden
+  - Uses left-[350px] to position correctly relative to sidebar (70px nav + 280px sidebar)
+- Added empty and loading states (US-009):
+  - Skeleton loading state for conversation list (3 placeholder items)
+  - Empty state with MessageSquare icon when no conversations
+  - Welcome screen when no conversation selected (with suggestion cards)
+  - Welcome state inside conversation when no messages yet
+- Added formatRelativeTime helper for displaying relative timestamps
+- Files changed:
+  - apps/web/src/pages/ai-explore/ai-explore.tsx (complete rewrite of layout)
+- Build and lint pass successfully
+- **Learnings for future iterations:**
+  - When using fixed positioning for the input area, account for the left sidebar width (350px = 70px nav + 280px sidebar)
+  - Use `pb-32` (padding-bottom) on scrollable content area to ensure content isn't hidden behind fixed input
+  - Gradient fade from background color helps blend fixed input with scrollable content
+  - For relative timestamps, use a simple helper function with time difference calculations
+  - The Layout component already provides a 70px left nav, so the sidebar is additional to that
+  - `min-w-0` on flex children prevents overflow issues with long content
+---
+
+## 2026-02-20 19:45:00 - US-006
+- Implemented conversation management features:
+  - Added hover menu (MoreVertical icon) that appears on conversation item hover
+  - Created dropdown menu with rename and delete options
+  - Implemented rename modal with input field and keyboard shortcuts (Enter to submit, Escape to cancel)
+  - Implemented delete confirmation modal with warning styling
+  - Delete automatically switches to the most recent conversation after deletion
+  - Rename updates the conversation list immediately after success
+- Used existing ExploreService methods (renameConversation, deleteConversation)
+- Added new state management for modals:
+  - activeMenuId: tracks which conversation's menu is open
+  - isRenameModalOpen, isDeleteModalOpen: modal visibility
+  - editingConversationId, editingTitle: form state
+- Files changed:
+  - apps/web/src/pages/ai-explore/ai-explore.tsx
+- Build and lint pass successfully
+- **Learnings for future iterations:**
+  - For hover menus, use a combination of `opacity-0 group-hover:opacity-100` with proper `z-index` management
+  - Click-outside handling for dropdowns can use a fixed overlay with `z-10` behind the menu
+  - Use `stopPropagation()` on menu buttons to prevent triggering the parent button click
+  - Keyboard shortcuts in modals: Enter to submit, Escape to cancel for better UX
+  - Position dropdown menus with `absolute right-0 top-full mt-1` for proper alignment
+---
+
+## 2026-03-08 - SR US-003
+- Created apps/server/src/services/spaced-repetition.service.ts with SpacedRepetitionService (@Service() decorated)
+- Implemented calculateNextReview(card, quality: 1|3|4|5) following SM-2 algorithm spec
+- Created apps/server/src/__tests__/spaced-repetition.service.test.ts with 21 tests covering all quality levels
+- All tests pass, typecheck passes
+- Files changed:
+  - apps/server/src/services/spaced-repetition.service.ts (new)
+  - apps/server/src/__tests__/spaced-repetition.service.test.ts (new)
+- **Learnings for future iterations:**
+  - SM-2 special rule: after repetitions reset (forgot), 1st=1day, 2nd=6days, then formula — this applies to ALL quality levels (3/4/5), not just after "forgot"
+  - The service has no external dependencies (no DB, no config) — it's pure computation, making it easy to test without mocks
+  - SpacedRepetitionService exported interfaces: SRCardState (input), SRNextReview (output) — import these for type safety in US-004+
+---
+
+## 2026-03-11 - US-001
+- Wrapped all /cards/* and /settings routes with Layout component in App.tsx
+- Imported Layout component and added to all protected routes
+- Layout component already uses useLocation() for navigation highlighting (isCardsPage, isSettingsPage)
+- TypeScript typecheck passes
+- ESLint passes for App.tsx (pre-existing lint errors in other files)
+- Files changed:
+  - apps/web/src/App.tsx (added Layout wrapper to all /cards/* and /settings routes)
+- **Learnings for future iterations:**
+  - Layout component already supports path-based navigation highlighting via location.pathname.startsWith() checks
+  - The Layout provides a 70px left sidebar that wraps the main content area
+  - ProtectedRoute wraps Layout, not the other way around (order: ProtectedRoute > Layout > Page)
+---
+
+## 2026-03-11 - US-002
+- Added Browse Cards navigation item to sidebar in Layout component
+- Sidebar now contains: Study/Review (Zap), My Decks (Layers), Browse Cards (Search)
+- Updated route detection: isStudyPage, isMyDecksPage, isBrowseCardsPage
+- Removed unused handleMemoClick function (no /home route exists)
+- TypeScript typecheck passes, build passes
+- Files changed:
+  - apps/web/src/components/layout.tsx (modified)
+- **Learnings for future iterations:**
+  - The sidebar navigation uses route-based highlighting with location.pathname.startsWith()
+  - isMyDecksPage specifically checks for exact '/cards' path, not startsWith('/cards')
+  - Browse Cards route is '/cards/browser' which is a separate page from My Decks
+  - No /home route exists in App.tsx - /cards serves as the main entry point
+---
