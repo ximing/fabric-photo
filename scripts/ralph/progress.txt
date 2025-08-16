@@ -399,3 +399,19 @@ Started: 2026年 2月15日 星期日 23时33分46秒 CST
   - 可以通过 import { Canvas, Object, Image } from '../types/fabric.js' 导入类型
   - 注意：导出时不能有重复的标识符，会导致 ESLint 报错
 ---
+
+## 2026-03-11 - US-004
+- 创建 src/command.ts TypeScript 版本，添加类型标注
+- 定义 CommandExecutor 接口和 CommandCreators 类型
+- 使用 import type 导入类型以避免运行时依赖
+- TypeScript 编译通过 (typecheck passes)
+- 构建通过 (build passes)
+- 保留 command.js 用于运行时（rollup 暂未配置 TypeScript 支持）
+- Files changed:
+  - src/command.ts (新建)
+- **Learnings for future iterations:**
+  - 使用 import type { Canvas } from './types/fabric.js' 导入类型，避免运行时导入
+  - 保留 .js 文件用于运行时是渐进式迁移的常见模式
+  - 当导入 ./consts.js 时，TypeScript 会自动查找 consts.ts（如果存在）
+  - 后续 US-023 会更新 rollup.config.js 以支持直接编译 .ts 文件
+---
