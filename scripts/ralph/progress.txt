@@ -2,6 +2,25 @@
 Started: 2026年 2月15日 星期日 23时33分46秒 CST
 ---
 
+## 2026-03-11 - US-009
+- 创建 src/lib/custom-event.ts TypeScript 版本，添加完整类型定义
+- 定义 HandlerItem 接口和 EventsMap 类型
+- 为所有事件方法添加适当的类型标注：on, once, off, fire, emit, invoke, hasListener, getListenerLength
+- 使用 native Array.forEach 和 Object.keys().forEach 替代 util.forEach 以避免类型推断问题
+- 为 _safeEvent 方法使用类型断言处理联合返回类型
+- TypeScript 编译通过 (typecheck passes)
+- 构建通过 (build passes)
+- 保留 custom-event.js 用于运行时（渐进式迁移模式）
+- Files changed:
+  - src/lib/custom-event.ts (新建)
+- **Learnings for future iterations:**
+  - 当函数返回联合类型时，在调用处使用类型断言（如 `as HandlerItem[]`）
+  - 使用 native Array.forEach 替代 util.forEach 可以避免复杂的类型推断问题
+  - _safeEvent 方法返回类型是 HandlerItem[] | EventsMap，需要根据传入的参数类型进行类型断言
+  - 保留 .js 文件用于运行时是渐进式迁移的常见模式
+  - CustomEvents 类使用 mixin 模式通过 Object.assign 将原型方法添加到其他类
+---
+
 ## 2026-03-11 - US-006
 - 创建 src/consts.ts TypeScript 版本，添加完整类型定义
 - 定义 KeyMirror 工具类型生成不可变的常量对象类型
