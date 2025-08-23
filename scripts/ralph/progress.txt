@@ -2,6 +2,24 @@
 Started: 2026年 2月15日 星期日 23时33分46秒 CST
 ---
 
+## 2026-03-11 - US-010
+- 创建 src/lib/canvas-to-blob.ts TypeScript 版本，添加完整类型定义
+- 定义 BlobBuilder、DataURLtoBlobFunction 接口类型
+- 为 canvas.toBlob polyfill 添加适当的类型标注
+- 使用 typeof window.atob === 'function' 等检查替代直接函数检查来解决 TypeScript 条件检查警告
+- 使用 try-catch 处理 Blob 构造函数检测
+- 使用 any 类型转换处理 HTMLCanvasElement.prototype 的 toBlob polyfill
+- TypeScript 编译通过 (typecheck passes)
+- 构建通过 (build passes)
+- 保留 canvas-to-blob.js 用于运行时（渐进式迁移模式）
+- Files changed:
+  - src/lib/canvas-to-blob.ts (新建)
+- **Learnings for future iterations:**
+  - 使用 typeof window.atob === 'function' 等显式检查可解决 TypeScript 的 "condition will always return true" 警告
+  - 使用 any 类型转换处理 HTMLCanvasElement.prototype 的扩展方法
+  - 保留 .js 文件用于运行时是渐进式迁移的常见模式
+  - 使用 try-catch 处理浏览器 API 的可用性检测
+
 ## 2026-03-11 - US-009
 - 创建 src/lib/custom-event.ts TypeScript 版本，添加完整类型定义
 - 定义 HandlerItem 接口和 EventsMap 类型
