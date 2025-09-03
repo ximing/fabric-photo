@@ -2,6 +2,26 @@
 Started: 2026年 2月15日 星期日 23时33分46秒 CST
 ---
 
+## 2026-03-11 - US-012
+- 创建 src/commands/add-object.ts、clear.ts、load-image.ts TypeScript 版本
+- 为所有命令函数添加适当的类型标注
+- 定义 ModuleMap 类型用于依赖注入
+- 定义 LoadImageStore 接口用于保存 canvas 状态
+- 更新 base.ts 的 CommandFunction 类型以支持带参数的函数
+- TypeScript 编译通过 (typecheck passes)
+- 构建通过 (build passes)
+- 保留 .js 文件用于运行时（渐进式迁移模式）
+- Files changed:
+  - src/commands/add-object.ts (新建)
+  - src/commands/clear.ts (新建)
+  - src/commands/load-image.ts (新建)
+  - src/commands/base.ts (更新类型定义)
+- **Learnings for future iterations:**
+  - CommandFunction 类型需要使用 `...args: any[]` 以支持不同参数类型的 execute/undo 函数
+  - 保留 .js 文件用于运行时是渐进式迁移的常见模式
+  - 使用类型断言 `as unknown as { store: ... }` 处理类内部的 store 属性
+  - ModuleMap 类型定义模块依赖注入结构
+
 ## 2026-03-11 - US-011
 - 创建 src/lib/shape-resize-helper.ts TypeScript 版本，添加完整类型定义
 - 定义 Point、OriginPositions 接口类型

@@ -171,7 +171,7 @@
         "运行时功能正常"
       ],
       "priority": 12,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
