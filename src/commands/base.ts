@@ -2,7 +2,11 @@
  * Base command class with execute/undo functionality
  */
 
-type CommandFunction = () => void;
+/**
+ * Generic command function type - accepts any function
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type CommandFunction = (...args: any[]) => any;
 
 /**
  * Actions interface for command execution
