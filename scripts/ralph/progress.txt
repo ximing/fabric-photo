@@ -620,3 +620,21 @@ Started: 2026年 2月15日 星期日 23时33分46秒 CST
   - Dimension 接口的 width/height 是可选的，使用明确的返回类型可以避免类型问题
   - 保留 .js 文件用于运行时是渐进式迁移的常见模式
 
+## 2026-03-12 - US-016
+- 创建 src/module.ts TypeScript 版本
+- 定义 ModuleBaseType、Command、ModuleMap 接口类型
+- 为所有属性和方法添加适当的类型标注
+- 修复 _fire 方法签名以匹配 fire(eventName: string, ...args: unknown[])
+- 修复 on 方法签名以匹配 on(eventName, handler?, context?)
+- TypeScript 编译通过 (typecheck passes)
+- 构建通过 (build passes)
+- 保留 module.js 用于运行时（渐进式迁移模式）
+- Files changed:
+  - src/module.ts (新建)
+- **Learnings for future iterations:**
+  - CustomEvents.fire 方法签名是 fire(eventName: string, ...args: unknown[])
+  - CustomEvents.on 方法签名是 on(eventName, handler?, context?)
+  - 使用 unknown[] 展开时需要显式构造数组 [eventName, ...args]
+  - 保留 .js 文件用于运行时是渐进式迁移的常见模式
+  - 模块接口需要定义 getName(): string 方法
+
