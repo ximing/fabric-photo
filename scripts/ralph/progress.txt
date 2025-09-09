@@ -580,3 +580,22 @@ Started: 2026年 2月15日 星期日 23时33分46秒 CST
   - 使用 `as RotationModule` 类型断言处理模块访问
   - 保留 .js 文件用于运行时是渐进式迁移的常见模式
   - CommandFunction 类型使用 `...args: any[]` 以支持不同参数类型的 execute/undo 函数
+---
+
+## 2026-03-12 - US-014
+- 创建 src/modules/base.ts TypeScript 版本
+- 定义 Dimension、ImagePropertiesSetting 接口类型
+- 定义 RootModule 接口描述根模块方法契约
+- 为所有方法添加适当的类型标注
+- 使用 `this.getRoot() as unknown as RootModule` 处理根模块返回类型
+- TypeScript 编译通过 (typecheck passes)
+- 构建通过 (build passes)
+- 保留 base.js 用于运行时（渐进式迁移模式）
+- Files changed:
+  - src/modules/base.ts (新建)
+- **Learnings for future iterations:**
+  - 根模块遍历使用 `getRoot()` 方法，需要使用类型断言处理返回类型
+  - 使用 `unknown` 和接口组合处理复杂的类型层级关系
+  - 保留 .js 文件用于运行时是渐进式迁移的常见模式
+  - 模块路径问题：src/modules/ 下的文件应使用 `../types/fabric.js` 而非 `./types/fabric.js`
+
