@@ -257,7 +257,7 @@
         "导出 API 功能正常"
       ],
       "priority": 18,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
