@@ -706,3 +706,27 @@ Started: 2026年 2月15日 星期日 23时33分46秒 CST
   - resizeHelper.resize 需要三个参数：obj, pointer, isScaling
   - Point 接口定义 {x: number, y: number} 用于坐标类型
   - 模块构造函数中定义 this._handlers 用于绑定事件处理函数
+---
+
+## 2026-03-12 - US-020
+- 创建 src/modules/mosaic.ts (canvas overlay 方法, dimensions: 8)
+- 创建 src/modules/mosaic.1.ts (individual rects 方法, dimensions: 16)
+- 创建 src/modules/mosaic.2.ts (MosaicShape 方法, dimensions: 20)
+- 定义 MosaicRect、MosaicSetting 接口类型
+- 为所有模块类和事件处理函数添加适当的类型标注
+- 使用 InstanceType<typeof MosaicShape> 处理 MosaicShape 类型
+- TypeScript 编译通过 (typecheck passes)
+- 构建通过 (build passes)
+- 保留 .js 文件用于运行时（渐进式迁移模式）
+- Files changed:
+  - src/modules/mosaic.ts (新建)
+  - src/modules/mosaic.1.ts (新建)
+  - src/modules/mosaic.2.ts (新建)
+  - scripts/ralph/prd.json (更新 passes: true)
+- **Learnings for future iterations:**
+  - 使用 InstanceType<typeof ClassName> 处理 createClass 创建的类类型
+  - 使用 `as unknown as { ... }` 类型断言处理类内部动态属性
+  - parseInt 需要第二个参数 10 指定十进制
+  - getContext('2d') 可能返回 null，需要 null 检查
+  - 保留 .js 文件用于运行时是渐进式迁移的常见模式
+  - MosaicShape.addMosicRectWithUpdate 方法用于动态添加马赛克矩形
