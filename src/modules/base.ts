@@ -34,6 +34,7 @@ interface RootModule {
     setCanvasCssDimension(dimension: Dimension): void;
     setCanvasBackstoreDimension(dimension: Dimension): void;
     adjustCanvasDimension(): void;
+    getZoom(): number;
 }
 
 /**
