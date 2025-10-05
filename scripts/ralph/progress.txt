@@ -758,3 +758,38 @@ Started: 2026年 2月15日 星期日 23时33分46秒 CST
   - Path 对象的 setOriginX/setOriginY 方法需要使用 originX/originY 属性替代
   - 需要在 base.ts 的 RootModule 接口中添加 getZoom() 方法
   - 保留 .js 文件用于运行时是渐进式迁移的常见模式
+---
+
+## 2026-03-12 - US-022
+- 创建 src/modules/cropper.ts、image-loader.ts、pan.ts、rotation.ts、text.ts TypeScript 版本
+- 定义 CropListeners、CroppedImageData、PanListeners、PanPointer、TextListeners、EditingObjInfos、TextStyleOptions、AddTextOptions 接口类型
+- 为所有模块类和事件处理函数添加适当的类型标注
+- 使用 InstanceType<typeof Cropzone> 处理 Cropzone 类类型
+- 使用 .bind(this) 而非 bind() 工具函数处理事件绑定（更好的类型推断）
+- 使用 local Point interface {x: number, y: number} 替代 fabric.Point（未导出）
+- 使用 any 类型处理 fabric.util.rotatePoint 参数（fabric.Point 未导出）
+- 修复 util.forEach 回调函数 key 参数类型（string | number）
+- 修复 textareaStyle CSS 属性索引表达式问题（使用 as any）
+- 修复 _setInitPos 中 position 可能为 undefined 的问题（使用临时变量）
+- 修复 TEXTAREA_STYLES 数值属性类型（添加引号转为字符串）
+- 修复 newText.on 事件绑定类型问题（使用 as any）
+- TypeScript 编译通过 (typecheck passes)
+- 构建通过 (build passes)
+- 保留 .js 文件用于运行时（渐进式迁移模式）
+- Files changed:
+  - src/modules/cropper.ts (新建)
+  - src/modules/image-loader.ts (新建)
+  - src/modules/pan.ts (新建)
+  - src/modules/rotation.ts (新建)
+  - src/modules/text.ts (新建)
+  - scripts/ralph/prd.json (更新 passes: true)
+- **Learnings for future iterations:**
+  - 使用 InstanceType<typeof ClassName> 处理 createClass 创建的类类型
+  - 事件绑定使用 .bind(this) 而非 bind() 工具函数可获得更好的类型推断
+  - fabric.Point 类型未从 @types/fabric 导出，使用 any 或本地接口替代
+  - util.forEach 回调函数 key 参数类型是 string | number，不是 string
+  - CSSStyleDeclaration 索引访问需要类型断言，如 (style as any)['font-size']
+  - 可选参数在赋值后仍可能为 undefined，需要使用临时变量处理
+  - TEXTAREA_STYLES 中的数值需要转为字符串类型
+  - fabric 对象的事件绑定如 .on() 需要使用 as any 类型断言
+  - 保留 .js 文件用于运行时是渐进式迁移的常见模式
