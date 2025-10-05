@@ -2,7 +2,7 @@
  * Add object command - adds an object to canvas
  */
 
-import type { Canvas, Object as FabricObject } from '../types/fabric.js';
+import type { Canvas, Object as FabricObject } from '../types/fabric';
 import util from '../lib/util';
 import BaseCommand from './base';
 import consts from '../consts';

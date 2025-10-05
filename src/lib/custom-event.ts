@@ -2,7 +2,7 @@
  * Custom event system implementation
  */
 
-import util from './util.js';
+import util from './util';
 
 const R_EVENTNAME_SPLIT = /\s+/g; // eslint-disable-line
 

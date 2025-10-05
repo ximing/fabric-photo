@@ -1,12 +1,12 @@
-import type { Canvas, Object as FabricObject } from './types/fabric.js';
-import consts from './consts.js';
+import type { Canvas, Object as FabricObject } from './types/fabric';
+import consts from './consts';
 
 import addObject from './commands/add-object';
 import remove from './commands/remove';
 import clear from './commands/clear';
-import loadImage from './commands/load-image.js';
-import zoom from './commands/zoom.js';
-import rotationImage from './commands/rotation-image.js';
+import loadImage from './commands/load-image';
+import zoom from './commands/zoom';
+import rotationImage from './commands/rotation-image';
 
 const { commandNames } = consts;
 

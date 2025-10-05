@@ -12,7 +12,7 @@ const { moduleNames } = consts;
  */
 interface RotationModule {
     getCurrentAngle: () => number;
-    rotate: (angle: number) => Promise<number | import('../types/fabric.js').Canvas>;
+    rotate: (angle: number) => Promise<number | import('../types/fabric').Canvas>;
     setAngle: (angle: number) => Promise<number>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any;
@@ -36,7 +36,7 @@ export default function rotationImage(type: string, angle: number): BaseCommand 
          * @param moduleMap - Modules injection
          * @returns Promise resolving to the rotation result
          */
-        execute(moduleMap: ModuleMap): Promise<number | import('../types/fabric.js').Canvas> {
+        execute(moduleMap: ModuleMap): Promise<number | import('../types/fabric').Canvas> {
             const rotationComp = moduleMap[moduleNames.ROTATION] as RotationModule;
             (this as unknown as { store: number }).store = rotationComp.getCurrentAngle();
             return rotationComp[type](angle);

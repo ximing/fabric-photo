@@ -3,7 +3,7 @@
  */
 
 import { fabric } from 'fabric';
-import type { Object } from '../types/fabric.js';
+import type { Object } from '../types/fabric';
 
 const Arrow = fabric.util.createClass(fabric.Path, {
     /**

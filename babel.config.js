@@ -10,7 +10,8 @@ module.exports = function(api) {
                     }
                 }
             ],
-            '@babel/preset-react'
+            '@babel/preset-react',
+            '@babel/preset-typescript'
         ],
         ignore: [],
         comments: false,

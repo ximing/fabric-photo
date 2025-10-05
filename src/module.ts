@@ -17,7 +17,7 @@ import Pan from './modules/pan';
 
 import consts from './consts';
 
-import util from './lib/util.js';
+import util from './lib/util';
 
 const { eventNames, rejectMessages } = consts;
 

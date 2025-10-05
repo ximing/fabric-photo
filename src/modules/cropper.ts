@@ -3,11 +3,11 @@
  * Provides cropping functionality on canvas
  */
 import { fabric } from 'fabric';
-import type { Canvas, Object as FabricObject } from '../types/fabric.js';
-import ModuleBase from './base.js';
+import type { Canvas, Object as FabricObject } from '../types/fabric';
+import ModuleBase from './base';
 import consts from '../consts';
-import Cropzone from '../shape/cropzone.js';
-import util from '../lib/util.js';
+import Cropzone from '../shape/cropzone';
+import util from '../lib/util';
 
 const { MOUSE_MOVE_THRESHOLD } = consts;
 const { clamp } = util;

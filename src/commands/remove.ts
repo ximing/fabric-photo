@@ -2,7 +2,7 @@
  * Remove command - removes an object from canvas
  */
 
-import type { Object as FabricObject } from '../types/fabric.js';
+import type { Object as FabricObject } from '../types/fabric';
 import BaseCommand from './base';
 import consts from '../consts';
 
@@ -13,7 +13,7 @@ const { MAIN } = moduleNames;
  * Module map type for dependency injection
  */
 type ModuleMap = Record<string, {
-    getCanvas: () => import('../types/fabric.js').Canvas;
+    getCanvas: () => import('../types/fabric').Canvas;
 }>;
 
 /**
