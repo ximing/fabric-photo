@@ -1,12 +1,12 @@
 /**
  * Main module - canvas editor board related settings
  */
-import type { Canvas, Image } from '../types/fabric.js';
-import { Dimension, ImagePropertiesSetting } from './base.js';
-import ModuleBase from './base.js';
+import type { Canvas, Image } from '../types/fabric';
+import { Dimension, ImagePropertiesSetting } from './base';
+import ModuleBase from './base';
 import consts from '../consts';
-import util from '../lib/util.js';
-import dataURLtoBlob from '../lib/canvas-to-blob.js';
+import util from '../lib/util';
+import dataURLtoBlob from '../lib/canvas-to-blob';
 import { fabric } from 'fabric';
 
 const DEFAULT_CSS_MAX_WIDTH = 700;

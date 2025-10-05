@@ -2,7 +2,7 @@
  * Shape resize helper functions for handling shape resizing and origin adjustments
  */
 
-import type { Object } from '../types/fabric.js';
+import type { Object } from '../types/fabric';
 
 /**
  * Point interface for coordinate values

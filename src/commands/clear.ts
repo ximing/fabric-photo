@@ -2,7 +2,7 @@
  * Clear command - clears all objects from canvas
  */
 
-import type { Canvas, Object as FabricObject } from '../types/fabric.js';
+import type { Canvas, Object as FabricObject } from '../types/fabric';
 import BaseCommand from './base';
 import consts from '../consts';
 

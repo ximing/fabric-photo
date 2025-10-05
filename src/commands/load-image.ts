@@ -2,7 +2,7 @@
  * Load image command - loads an image onto the canvas
  */
 
-import type { Canvas, Object as FabricObject, fabricImage } from '../types/fabric.js';
+import type { Canvas, Object as FabricObject, fabricImage } from '../types/fabric';
 import BaseCommand from './base';
 import consts from '../consts';
 

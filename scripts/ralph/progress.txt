@@ -793,3 +793,27 @@ Started: 2026年 2月15日 星期日 23时33分46秒 CST
   - TEXTAREA_STYLES 中的数值需要转为字符串类型
   - fabric 对象的事件绑定如 .on() 需要使用 as any 类型断言
   - 保留 .js 文件用于运行时是渐进式迁移的常见模式
+---
+
+## 2026-03-12 - US-023
+- 更新 rollup.config.js 使用 @rollup/plugin-typescript 替代 babel
+- 安装 @babel/preset-typescript 和 @rollup/plugin-typescript
+- 更新 babel.config.js 添加 @babel/preset-typescript 预设
+- 更新 tsconfig.json 使用 moduleResolution: "bundler"
+- 删除所有已重写的 .js 文件（共 34 个文件）
+- 修复所有 TypeScript 导入路径，移除 .js 扩展名
+- 将 fabric 库导入改为从 'fabric' 包直接导入
+- TypeScript 编译通过 (typecheck passes)
+- 构建通过 (build passes)
+- Files changed:
+  - rollup.config.js (更新 TypeScript 支持)
+  - babel.config.js (添加 preset-typescript)
+  - tsconfig.json (更新 moduleResolution)
+  - src/**/*.js (全部删除，共 34 个文件)
+  - src/**/*.ts (更新导入路径)
+- **Learnings for future iterations:**
+  - rollup-plugin-typescript 需要配置 tsconfig 选项
+  - TypeScript 导入路径不应包含 .js 扩展名
+  - fabric 库需要从 'fabric' 包导入，而不是从类型文件
+  - 模块解析使用 "bundler" 允许更灵活的导入方式
+  - 所有 .js 文件已删除，项目完全迁移到 TypeScript

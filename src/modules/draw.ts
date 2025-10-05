@@ -3,8 +3,8 @@
  * Provides free drawing mode on canvas
  */
 import { fabric } from 'fabric';
-import type { Canvas, Object as FabricObject } from '../types/fabric.js';
-import ModuleBase from './base.js';
+import type { Canvas, Object as FabricObject } from '../types/fabric';
+import ModuleBase from './base';
 import consts from '../consts';
 
 /**

@@ -3,7 +3,7 @@
  * Handles loading and setting background images on canvas
  */
 import { fabric } from 'fabric';
-import ModuleBase from './base.js';
+import ModuleBase from './base';
 import consts from '../consts';
 
 const { moduleNames, rejectMessages } = consts;

@@ -2,7 +2,7 @@
  * module base class
  * all modules should inherite this base class
  */
-import type { Canvas, Image } from '../types/fabric.js';
+import type { Canvas, Image } from '../types/fabric';
 
 /**
  * Dimension object for canvas sizing
