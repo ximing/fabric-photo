@@ -1,3 +1,6 @@
+@use "./variable" as *;
+@use "./theme/default" as *;
+
 .wrap_inner {
   width: 700px;
   height: 500px;
