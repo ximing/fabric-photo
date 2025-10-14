@@ -3,13 +3,13 @@
  */
 
 /**
- * Generic command function type - accepts any function
+ * Generic command function type.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type CommandFunction = (...args: any[]) => any;
 
 /**
- * Actions interface for command execution
+ * Actions interface for command execution.
  */
 interface CommandActions {
     execute: CommandFunction;
@@ -17,33 +17,22 @@ interface CommandActions {
 }
 
 /**
- * Callback type for execute/undo hooks
+ * Callback type for execute/undo hooks.
  */
-type CommandCallback = () => void;
+type CommandCallback = (...args: unknown[]) => unknown;
 
 export default class BaseCommand {
-    private readonly executeFn: CommandFunction;
-    private readonly undoFn: CommandFunction;
-    private executeCallback: CommandCallback | null;
-    private undoCallback: CommandCallback | null;
+    execute: CommandFunction;
+    undo: CommandFunction;
+    executeCallback: CommandCallback | null;
+    undoCallback: CommandCallback | null;
 
     constructor(actions: CommandActions) {
-        this.executeFn = actions.execute;
-        this.undoFn = actions.undo;
+        this.execute = actions.execute;
+        this.undo = actions.undo;
+
         this.executeCallback = null;
         this.undoCallback = null;
-    }
-
-    execute(): void {
-        if (this.executeCallback) {
-            this.executeCallback();
-        }
-    }
-
-    undo(): void {
-        if (this.undoCallback) {
-            this.undoCallback();
-        }
     }
 
     setExecuteCallback(callback: CommandCallback): this {

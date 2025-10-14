@@ -32,10 +32,10 @@ interface ModuleBaseType {
  * Command interface - execute and undo methods
  */
 interface Command {
-    execute(moduleMap: ModuleMap): Promise<unknown>;
-    undo(moduleMap: ModuleMap): Promise<unknown>;
-    executeCallback?: () => void;
-    undoCallback?: () => void;
+    execute(moduleMap: ModuleMap): Promise<unknown> | unknown;
+    undo(moduleMap: ModuleMap): Promise<unknown> | unknown;
+    executeCallback?: (...args: unknown[]) => unknown;
+    undoCallback?: (...args: unknown[]) => unknown;
 }
 
 /**
@@ -94,13 +94,12 @@ export default class {
     _invokeExecution(command: Command) {
         this.lock();
 
-        return command
-            .execute(this._moduleMap)
+        return Promise.resolve(command.execute(this._moduleMap))
             .then((value) => {
                 this.pushUndoStack(command);
                 this.unlock();
                 if (util.isFunction(command.executeCallback)) {
-                    command.executeCallback();
+                    command.executeCallback(value);
                 }
 
                 return value;
@@ -119,13 +118,12 @@ export default class {
     _invokeUndo(command: Command) {
         this.lock();
 
-        return command
-            .undo(this._moduleMap)
+        return Promise.resolve(command.undo(this._moduleMap))
             .then((value) => {
                 this.pushRedoStack(command);
                 this.unlock();
                 if (util.isFunction(command.undoCallback)) {
-                    command.undoCallback();
+                    command.undoCallback(value);
                 }
 
                 return value;
