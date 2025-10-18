@@ -21,7 +21,9 @@
     },
     "dependencies": {
         "classnames": "^2.5.1",
-        "fabric": "1.7.3"
+        "fabric": "1.7.3",
+        "lucide-react": "^0.344.0",
+        "tailwindcss": "^3.4.1"
     },
     "devDependencies": {
         "@babel/cli": "^7.28.6",
@@ -66,6 +68,8 @@
         "@rollup/plugin-replace": "^6.0.3",
         "@rollup/plugin-typescript": "^12.3.0",
         "@types/fabric": "^5.3.11",
+        "@types/react": "^16.14.69",
+        "@types/react-dom": "^16.9.25",
         "autoprefixer": "^10.4.27",
         "babel-loader": "^10.1.1",
         "babel-plugin-import": "^1.13.8",
@@ -101,6 +105,7 @@
         "postcss": "^8.5.8",
         "postcss-clearfix": "^2.0.1",
         "postcss-flexbugs-fixes": "^5.0.2",
+        "postcss-import": "^15.1.0",
         "postcss-loader": "^8.2.1",
         "postcss-position": "^1.1.0",
         "postcss-preset-env": "^11.2.0",

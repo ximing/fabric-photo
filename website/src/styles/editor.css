@@ -1,0 +1,204 @@
+/* Editor Container Styles */
+.editor-container {
+  @apply w-full max-w-5xl mx-auto p-4 sm:p-6 bg-white rounded-xl shadow-xl overflow-hidden border border-gray-100;
+  animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.editor-canvas {
+  @apply w-full rounded-lg border border-gray-200 overflow-hidden bg-white;
+}
+
+.canvas-wrapper {
+  @apply relative w-full h-96 sm:h-[500px] bg-gradient-to-b from-white to-gray-50 rounded-lg border border-gray-200 shadow-sm;
+}
+
+.upload-file-image-preview {
+  @apply w-full h-full text-center flex items-center justify-center bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 transition-all duration-300;
+}
+
+.upload-file-image-preview.has-image {
+  @apply border-solid border-gray-200;
+}
+
+.xm-fabric-photo-editor-canvas-container {
+  @apply inline-flex items-center justify-center;
+}
+
+/* Toolbar Styles */
+.editor-toolbar {
+  @apply w-full bg-gradient-to-r from-gray-50 to-gray-100 border-t border-gray-200 rounded-b-lg;
+}
+
+.toolbar-row {
+  @apply flex flex-wrap items-center gap-3 p-4 sm:gap-4 sm:p-5 first:pt-5;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.toolbar-row:last-child {
+  border-bottom: none;
+}
+
+.toolbar-section {
+  @apply flex items-center gap-2 sm:gap-3;
+}
+
+.toolbar-divider {
+  @apply w-px h-8 bg-gradient-to-b from-gray-300 via-gray-400 to-gray-300 opacity-60;
+}
+
+/* Button Styles */
+.toolbar-btn {
+  @apply inline-flex items-center justify-center p-2.5 rounded-lg transition-all duration-300 hover:bg-white hover:shadow-md cursor-pointer text-gray-600 hover:text-gray-900 active:scale-95;
+  position: relative;
+}
+
+.toolbar-btn::before {
+  content: '';
+  @apply absolute inset-0 rounded-lg opacity-0 transition-opacity duration-300;
+  background: radial-gradient(circle at center, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+}
+
+.toolbar-btn:hover::before {
+  @apply opacity-100;
+}
+
+.toolbar-btn:hover {
+  @apply text-blue-600 shadow-sm;
+}
+
+.toolbar-btn.active {
+  @apply bg-blue-50 text-blue-600 shadow-md border border-blue-200;
+}
+
+.toolbar-btn.text-only {
+  @apply px-3 py-2 text-sm font-medium bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:shadow-sm hover:border-gray-400 transition-all duration-200;
+}
+
+.toolbar-btn.icon {
+  @apply text-xl w-10 h-10;
+}
+
+/* Tools Panel */
+.tools-panel {
+  @apply fixed bg-white rounded-lg shadow-xl border border-gray-200 p-4 z-50 backdrop-blur-sm;
+  bottom: auto;
+  top: auto;
+  animation: slideDown 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.tools-panel-brush {
+  @apply flex items-center gap-3;
+}
+
+.brush-size {
+  @apply flex items-center justify-center p-2 rounded cursor-pointer transition-colors duration-200 hover:bg-gray-100;
+}
+
+.brush-size-indicator {
+  @apply rounded-full bg-gray-400;
+}
+
+.tools-panel-color {
+  @apply flex items-center gap-2 flex-wrap;
+}
+
+.color-swatch {
+  @apply w-5 h-5 rounded cursor-pointer border border-gray-300 transition-all duration-200 hover:scale-110 hover:border-gray-600;
+}
+
+.color-swatch.active {
+  @apply w-7 h-7 ring-2 ring-offset-2 ring-blue-400;
+}
+
+/* Color palette */
+.color-red {
+  @apply bg-red-500 hover:shadow-lg hover:shadow-red-500/50;
+}
+
+.color-yellow {
+  @apply bg-amber-400 hover:shadow-lg hover:shadow-amber-400/50;
+}
+
+.color-green {
+  @apply bg-green-500 hover:shadow-lg hover:shadow-green-500/50;
+}
+
+.color-blue {
+  @apply bg-cyan-500 hover:shadow-lg hover:shadow-cyan-500/50;
+}
+
+.color-grey {
+  @apply bg-gray-500 hover:shadow-lg hover:shadow-gray-500/50;
+}
+
+.color-black {
+  @apply bg-black hover:shadow-lg hover:shadow-black/50;
+}
+
+.color-white {
+  @apply bg-white border-2 border-gray-400 hover:shadow-lg hover:shadow-gray-400/50;
+}
+
+/* Zoom Controls */
+.zoom-controls {
+  @apply flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-lg;
+}
+
+.zoom-btn {
+  @apply inline-flex items-center justify-center w-8 h-8 rounded hover:bg-gray-200 transition-colors;
+}
+
+.zoom-display {
+  @apply text-sm font-medium text-gray-700 min-w-max;
+}
+
+/* State indicators */
+.state-indicator {
+  @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium;
+}
+
+.state-indicator.active {
+  @apply bg-blue-100 text-blue-700;
+}
+
+.state-indicator.inactive {
+  @apply bg-gray-100 text-gray-700;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .toolbar-row {
+    @apply gap-1 p-2;
+  }
+
+  .toolbar-btn {
+    @apply p-1.5 text-base;
+  }
+
+  .toolbar-section {
+    @apply gap-1;
+  }
+}
