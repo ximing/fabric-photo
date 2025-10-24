@@ -1,0 +1,38 @@
+# 项目指令
+
+## 项目概览
+
+- 仓库类型：单包 TypeScript 库（非 monorepo），npm 包名 `fabric-photo`
+- 定位：基于 Canvas（fabric.js 1.7.3）的纯前端图片编辑器，无后端依赖
+- 关键子系统：
+  - `src/` — 库源码（TypeScript，strict 模式），入口 `src/index.ts` 导出 `FabricPhoto` 与 `consts`
+  - `website/` — dumi 文档/演示站，独立 `package.json` 与 lockfile
+  - `scripts/ralph/` — 自主编码 agent 工作流，自带 `CLAUDE.md`
+  - `dist/` — 构建产物（rollup + tsc declaration），不要手改
+  - `html/`、`public/` — 本地 dev server 的演示页面
+
+## 全局规则
+
+- 包管理器统一使用 pnpm
+- `src/` 使用 TypeScript strict 模式；改动后必须通过 `pnpm typecheck`
+- fabric.js 版本锁定在 1.7.3，其 API 与新版差异很大，不要按 fabric 5/6 的写法改代码；类型声明见 `src/types/fabric.d.ts`
+- 核心架构是「模块 + 命令」模式：功能模块继承 `src/modules/base.ts` 的 `ModuleBase`，可撤销操作封装为 `src/commands/` 下的命令（execute/undo 成对）
+- 新增模块或命令需要多处注册（`src/consts.ts` 名称表 + `src/module.ts`/`src/command.ts` 工厂），详见对应目录的局部规则
+- 对外 API 只通过 `src/index.ts` 的 `FabricPhoto` 类暴露；新增公开方法需同步更新 `readme.md` 的 API 文档
+
+## 开发入口
+
+- 安装依赖：`pnpm install`
+- 本地开发（webpack dev server + 演示页）：`pnpm dev`
+- 构建库产物：`pnpm build`（rollup，输出到 `dist/`）
+- 类型检查：`pnpm typecheck`
+- 文档站：`pnpm install:website` / `pnpm build:website`（在 `website/` 内独立安装构建）
+
+## 局部规则导航
+
+- `src/CLAUDE.md` — 库源码整体架构（模块/命令/事件/状态机如何协作）
+- `src/modules/CLAUDE.md` — 功能模块的编写与注册约定
+- `src/commands/CLAUDE.md` — 命令（撤销/重做）的编写与注册约定
+- `website/CLAUDE.md` — 文档站的结构与构建约定
+- `scripts/ralph/CLAUDE.md` — Ralph 自主 agent 工作流（已有，独立维护）
+- `dist/**` 为构建产物的约束见 `.claude/rules/generated-dist.md`（CatPaw 对应 `.catpaw/rules/generated-dist.md`）
