@@ -79,7 +79,7 @@ export default class WrapContainer extends Component<Record<string, never>, Edit
     this.fp.once('loadImage', (_oImage: any) => {
       this.fp.clearUndoStack();
     });
-    this.fp.loadImageFromURL('/images/demo.jpeg', 'image name');
+    this.fp.loadImageFromURL('images/demo.jpeg', 'image name');
     this.fp.on('selectObject', (obj: any) => {
       if (obj.type === 'rect' || obj.type === 'circle' || obj.type === 'triangle') {
         this.setState({
