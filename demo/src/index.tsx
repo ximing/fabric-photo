@@ -1,5 +1,5 @@
-import '../styles/globals.css';
-import '../styles/editor.css';
+import './styles/globals.css';
+import './styles/editor.css';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Main from './main';

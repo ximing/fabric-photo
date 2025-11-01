@@ -19,9 +19,7 @@ import {
   Download
 } from 'lucide-react';
 
-import { FabricPhoto, consts } from '../../../src/index';
-
-declare const $: any;
+import { FabricPhoto, consts } from '../../src/index';
 
 interface EditorState {
   editState: string;
@@ -126,7 +124,10 @@ export default class WrapContainer extends Component<Record<string, never>, Edit
     if (this.fp) {
       this.fp.destory();
       this.fp = null;
-      $('#upload-file-image-preview-paper').empty();
+      const paper = document.querySelector('#upload-file-image-preview-paper');
+      if (paper) {
+        paper.innerHTML = '';
+      }
     }
   }
 
@@ -159,8 +160,8 @@ export default class WrapContainer extends Component<Record<string, never>, Edit
 
   getWindowViewPort() {
     return {
-      height: $(window).height(),
-      width: $(window).width()
+      height: window.innerHeight,
+      width: window.innerWidth
     };
   }
 
