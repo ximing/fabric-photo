@@ -7,7 +7,7 @@ on:
       - v1
     paths:
       - 'src/**'
-      - 'website/**'
+      - 'demo/**'
       - '.github/**'
   repository_dispatch:
 jobs:
@@ -16,34 +16,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout  🛎️
-        uses: actions/checkout@master
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Cache node modules
-        uses: actions/cache@v1
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
-      - name: use Node.js 10
-        uses: actions/setup-node@v1
-        with:
-          node-version: '10.x'
-      - name: npm script 🔧
+          node-version: '20'
+          cache: 'pnpm'
+      - name: Install & build 🔧
         run: |
-          npm install --registry=https://registry.npmjs.com
-          npm run install:website
-          npm run build:website
+          pnpm install --frozen-lockfile
+          pnpm build:demo
         env:
           CI: true
       - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@releases/v3
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-          BRANCH: gh-pages
-          FOLDER: website/dist
-          GIT_CONFIG_NAME: ${{ secrets.GIT_CONFIG_NAME}}
-          GIT_CONFIG_EMAIL: ${{ secrets.GIT_CONFIG_EMAIL}}
+          token: ${{ secrets.ACCESS_TOKEN }}
+          branch: gh-pages
+          folder: dist-demo
+          git-config-name: ${{ secrets.GIT_CONFIG_NAME }}
+          git-config-email: ${{ secrets.GIT_CONFIG_EMAIL }}
