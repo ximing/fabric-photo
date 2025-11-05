@@ -6,10 +6,10 @@
 - 定位：基于 Canvas（fabric.js 1.7.3）的纯前端图片编辑器，无后端依赖
 - 关键子系统：
   - `src/` — 库源码（TypeScript，strict 模式），入口 `src/index.ts` 导出 `FabricPhoto` 与 `consts`
-  - `website/` — dumi 文档/演示站，独立 `package.json` 与 lockfile
+  - `demo/` — Vite 演示页（React 16），本地 `pnpm dev` 与 GitHub Pages 同源，构建输出 `dist-demo/`
   - `scripts/ralph/` — 自主编码 agent 工作流，自带 `CLAUDE.md`
-  - `dist/` — 构建产物（rollup + tsc declaration），不要手改
-  - `html/`、`public/` — 本地 dev server 的演示页面
+  - `dist/` — 构建产物（tsup，cjs + esm + d.ts），不要手改
+  - `dist-demo/` — demo 站点构建产物（GitHub Pages 部署源），不要手改
 
 ## 全局规则
 
@@ -23,16 +23,15 @@
 ## 开发入口
 
 - 安装依赖：`pnpm install`
-- 本地开发（webpack dev server + 演示页）：`pnpm dev`
-- 构建库产物：`pnpm build`（rollup，输出到 `dist/`）
+- 本地开发（Vite dev server + 演示页，端口 9876）：`pnpm dev`
+- 构建库产物：`pnpm build`（tsup，输出到 `dist/`，cjs + esm + d.ts）
+- 构建 demo 站点：`pnpm build:demo`（Vite，输出到 `dist-demo/`）
 - 类型检查：`pnpm typecheck`
-- 文档站：`pnpm install:website` / `pnpm build:website`（在 `website/` 内独立安装构建）
 
 ## 局部规则导航
 
 - `src/CLAUDE.md` — 库源码整体架构（模块/命令/事件/状态机如何协作）
 - `src/modules/CLAUDE.md` — 功能模块的编写与注册约定
 - `src/commands/CLAUDE.md` — 命令（撤销/重做）的编写与注册约定
-- `website/CLAUDE.md` — 文档站的结构与构建约定
 - `scripts/ralph/CLAUDE.md` — Ralph 自主 agent 工作流（已有，独立维护）
 - `dist/**` 为构建产物的约束见 `.claude/rules/generated-dist.md`（CatPaw 对应 `.catpaw/rules/generated-dist.md`）

@@ -367,11 +367,14 @@ git clone https://github.com/ximing/fabric-photo.git
 # 安装依赖
 pnpm install
 
-# 启动开发服务器
+# 启动 demo 开发服务器（Vite，端口 9876）
 pnpm run dev
 
-# 构建
+# 构建库产物（tsup，输出 dist/）
 pnpm run build
+
+# 构建 demo 站点（输出 dist-demo/，即 GitHub Pages 内容）
+pnpm run build:demo
 ```
 
 ## 📱 在线演示
