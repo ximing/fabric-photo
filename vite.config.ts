@@ -1,9 +1,9 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-export default defineConfig(({ command }) => ({
+export default defineConfig(({ command, isPreview }) => ({
     root: 'demo',
-    base: command === 'build' ? '/fabric-photo/' : '/',
+    base: command === 'build' || isPreview ? '/fabric-photo/' : '/',
     plugins: [
         react({
             jsxRuntime: 'classic'

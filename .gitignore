@@ -2,3 +2,4 @@ node_modules
 .idea
 out
 dist
+dist-demo
