@@ -113,7 +113,7 @@ job 改为：
 4. `pnpm install --frozen-lockfile`
 5. `pnpm build:demo`
 6. `JamesIves/github-pages-deploy-action@v4`：
-   - `token: ${{ secrets.ACCESS_TOKEN }}`
+   - `token: ${{ secrets.GITHUB_TOKEN }}`（job 需 `permissions: contents: write`；原 ACCESS_TOKEN PAT 已失效，2026-08-01 首次 CI run 认证失败证实）
    - `branch: gh-pages`
    - `folder: dist-demo`
    - `git-config-name` / `git-config-email` 沿用现有 secrets

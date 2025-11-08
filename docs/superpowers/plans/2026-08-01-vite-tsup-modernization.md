@@ -552,6 +552,8 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout  🛎️
         uses: actions/checkout@v4
@@ -573,7 +575,7 @@ jobs:
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          token: ${{ secrets.ACCESS_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           branch: gh-pages
           folder: dist-demo
           git-config-name: ${{ secrets.GIT_CONFIG_NAME }}
