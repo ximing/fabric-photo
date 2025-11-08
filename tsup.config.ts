@@ -3,11 +3,11 @@ import { defineConfig } from 'tsup';
 import type { Plugin } from 'esbuild';
 
 /**
- * fabric 1.7.3 内嵌一段仅 Node 环境执行的代码
- * （由 `typeof document/window !== 'undefined'` 提前 return 保护），
- * 其中 require('canvas'/'xmldom'/'url'/'http'/'https'/'jsdom'/'fs')。
- * 浏览器产物不需要这些模块，且 canvas 是未编译的原生模块，
- * 直接 bundle 会失败——这里将它们打桩为空对象。
+ * fabric 1.7.3 内含仅 Node 环境执行的代码分支（if/else 的 else 分支，
+ * Node 下模块加载期会真实执行），其中 require('canvas'/'xmldom'/'url'/'http'/'https'/'jsdom'/'fs')。
+ * 浏览器运行时该分支不会执行，但打包器需要静态解析这些 specifier，
+ * 且 canvas 是未编译的原生模块，直接 bundle 会失败——这里将它们打桩为空对象。
+ * 注意：产物不支持在 Node 中直接 require。
  */
 const fabricNodeDepsStub: Plugin = {
     name: 'fabric-node-deps-stub',

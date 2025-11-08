@@ -8,7 +8,7 @@
   - `src/` — 库源码（TypeScript，strict 模式），入口 `src/index.ts` 导出 `FabricPhoto` 与 `consts`
   - `demo/` — Vite 演示页（React 16），本地 `pnpm dev` 与 GitHub Pages 同源，构建输出 `dist-demo/`
   - `scripts/ralph/` — 自主编码 agent 工作流，自带 `CLAUDE.md`
-  - `dist/` — 构建产物（tsup，cjs + esm + d.ts），不要手改
+  - `dist/` — 构建产物（tsup，cjs + esm + d.ts），不要手改；仅供浏览器/bundler 使用，不支持 Node 直接 require（fabric 1.7.3 加载期触碰 DOM）
   - `dist-demo/` — demo 站点构建产物（GitHub Pages 部署源），不要手改
 
 ## 全局规则
