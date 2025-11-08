@@ -83,7 +83,8 @@ type EditorObject =
   | { kind: 'shape'; shapeType: 'rect'|'circle'|'triangle'; id, left, top, width, height, angle, fill, ... }
   | { kind: 'text';  text, fontSize, fontFamily, fill, angle, ... }
   | { kind: 'path';  tool: 'freedraw'|'line'|'arrow'; points, stroke, strokeWidth, ... }
-  | { kind: 'mosaic'; rects: { x, y, size, color }[] };
+  | { kind: 'mosaic'; rects: { x, y, size, color }[] }
+  | { kind: 'image'; src, width, height, ... };
 ```
 
 ### State / Step / Transaction / Plugin
@@ -115,6 +116,7 @@ type EditorObject =
 | 旧 FabricPhoto API | 新 core 机制 | 备注 |
 |---|---|---|
 | loadImageFromURL / loadImageFromFile | `SetBackground` step | 可撤销 |
+| addImageObject（贴图到画布中心） | `ImageObject`（`kind: 'image'`）+ `AddObject` step | 可撤销 |
 | startCropping / endCropping | mode 切换 + crop controller + `SetBackground`（裁剪结果） | 可撤销 |
 | startCropByBoundInfo / endCropByBoundInfo | 同上，统一走 `SetBackground` | **行为统一：现状此路径会清空 undo/redo 栈，新架构统一为可撤销**（增强，在此声明） |
 | rotate / setAngle / getAngle | `TransformDoc` step（同步旋转全部对象） | 可撤销 |
