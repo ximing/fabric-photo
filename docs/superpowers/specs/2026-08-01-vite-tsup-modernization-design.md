@@ -139,7 +139,7 @@ job 改为：
 ## 验证计划
 
 1. `pnpm typecheck` 通过。
-2. `pnpm build` 成功，`dist/index.js` / `index.mjs` / `index.d.ts` 齐全；`node -e "const m = require('./dist/index.js'); console.log(Object.keys(m))"` 可加载且导出 `FabricPhoto`、`consts`。
+2. `pnpm build` 成功，`dist/index.js` / `index.mjs` / `index.d.ts` 齐全；静态校验：`node --check dist/index.js` 语法通过、`esbuild dist/index.mjs --bundle --platform=browser` 可解析、`dist/index.d.ts` 含 `FabricPhoto` 声明。注意：产物不支持在 Node 中直接 `require`（fabric 1.7.3 在模块加载期触碰 DOM，旧 rollup 产物同样如此，非回归），功能验证走浏览器冒烟。
 3. `pnpm dev` 启动 Vite，用 kimi-webbridge 打开 `http://localhost:9876`：编辑器渲染、示例图片加载、工具栏按钮点击无控制台报错。
 4. `pnpm build:demo` 后 `pnpm preview:demo`（`--base /fabric-photo/` 路径下），kimi-webbridge 验证子路径资源加载与页面展示正常。
 5. CI 无法本地完整验证：核对 action 版本、secrets 名称与现有仓库设置一致；合并后观察首次 run 结果。
