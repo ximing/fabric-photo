@@ -4,20 +4,8 @@
     "description": "web 图片编辑器",
     "repository": "",
     "author": "ximing",
+    "private": true,
     "packageManager": "pnpm@10.33.0",
-    "main": "./dist/index.js",
-    "module": "./dist/index.mjs",
-    "types": "./dist/index.d.ts",
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.mjs",
-            "require": "./dist/index.js"
-        }
-    },
-    "files": [
-        "dist"
-    ],
     "scripts": {
         "i": "pnpm install",
         "dev": "vite",
@@ -25,11 +13,10 @@
         "build:demo": "vite build",
         "preview:demo": "vite preview",
         "typecheck": "tsc --noEmit",
-        "tsc": "tsc"
-    },
-    "publishConfig": {
-        "access": "public",
-        "registry": "https://registry.npmjs.org/"
+        "tsc": "tsc",
+        "test": "pnpm -r test",
+        "build:packages": "pnpm -r --filter @gmi/* build",
+        "typecheck:all": "pnpm -r typecheck"
     },
     "dependencies": {
         "classnames": "^2.5.1",
