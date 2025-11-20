@@ -1,0 +1,73 @@
+import type { Editor } from '../editor';
+import type { Plugin } from './plugin';
+
+function isEditableTarget(target: EventTarget | null): boolean {
+    if (typeof HTMLElement === 'undefined' || !(target instanceof HTMLElement)) {
+        return false;
+    }
+    return target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+}
+
+/**
+ * 全局快捷键插件：监听 document.documentElement 的 keydown。
+ * - Mod+Z（metaKey||ctrlKey）→ undo；Mod+Shift+Z / Ctrl+Y → redo
+ * - Delete/Backspace → removeActiveObject（Task 10 接入；不存在时仅守卫跳过）
+ * 守卫：目标为 input/textarea/contenteditable 或编辑器处于文本编辑态时不触发。
+ * node 环境（无 document）下不挂监听，destroy 安全。
+ */
+export class Keymap implements Plugin {
+    readonly name = 'keymap';
+
+    private readonly handler: (event: KeyboardEvent) => void;
+    private attached = false;
+
+    constructor(private readonly editor: Editor) {
+        this.handler = (event) => this.onKeydown(event);
+        if (typeof document !== 'undefined') {
+            document.documentElement.addEventListener('keydown', this.handler);
+            this.attached = true;
+        }
+    }
+
+    private onKeydown(event: KeyboardEvent): void {
+        if (isEditableTarget(event.target)) {
+            return;
+        }
+        const editor = this.editor as unknown as { isTextEditing?: () => boolean };
+        if (typeof editor.isTextEditing === 'function' && editor.isTextEditing()) {
+            return;
+        }
+
+        const key = event.key.toLowerCase();
+        const mod = event.metaKey || event.ctrlKey;
+
+        if (mod && key === 'z') {
+            event.preventDefault();
+            if (event.shiftKey) {
+                this.editor.redo();
+            } else {
+                this.editor.undo();
+            }
+            return;
+        }
+        if (event.ctrlKey && key === 'y') {
+            event.preventDefault();
+            this.editor.redo();
+            return;
+        }
+        if (key === 'delete' || key === 'backspace') {
+            const remove = (this.editor as unknown as { removeActiveObject?: () => void }).removeActiveObject;
+            if (typeof remove === 'function') {
+                event.preventDefault();
+                remove.call(this.editor);
+            }
+        }
+    }
+
+    destroy(): void {
+        if (this.attached) {
+            document.documentElement.removeEventListener('keydown', this.handler);
+            this.attached = false;
+        }
+    }
+}
