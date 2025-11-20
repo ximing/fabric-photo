@@ -2,13 +2,17 @@ import { Emitter, type EditorEventMap } from './events';
 import { History } from './plugins/history';
 import { Keymap } from './plugins/keymap';
 import type { Plugin } from './plugins/plugin';
+import { FabricRenderer } from './render/fabric-renderer';
 import type { Renderer } from './render/renderer';
 import { EditorState, type EditorMode, type Viewport } from './state/editor-state';
 import { Transaction } from './transform/transaction';
 
 export interface EditorOptions {
+    container?: HTMLElement; // 传入时自动创建 FabricRenderer；缺省 + renderer 缺省 = 无头模式（测试）
+    cssMaxWidth?: number;
+    cssMaxHeight?: number;
     plugins?: Plugin[]; // 追加插件（history/keymap 始终默认注册）
-    renderer?: Renderer; // 缺省由 Task 7 改为 new FabricRenderer(...)
+    renderer?: Renderer; // 显式注入优先；缺省且给了 container 时自动 new FabricRenderer
 }
 
 function sameSelection(a: readonly string[], b: readonly string[]): boolean {
@@ -35,7 +39,15 @@ export class Editor {
     constructor(options: EditorOptions = {}) {
         this.currentState = new EditorState();
         this.historyPlugin = new History((sizes) => this.emitter.emit('historyChange', sizes));
-        this.renderer = options.renderer;
+        this.renderer =
+            options.renderer ??
+            (options.container !== undefined
+                ? new FabricRenderer({
+                      container: options.container,
+                      cssMaxWidth: options.cssMaxWidth,
+                      cssMaxHeight: options.cssMaxHeight
+                  })
+                : undefined);
         this.plugins = [this.historyPlugin, new Keymap(this), ...(options.plugins ?? [])];
     }
 
