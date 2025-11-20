@@ -104,6 +104,10 @@ export class FabricRenderer implements Renderer {
         for (const fObj of this.objectMap.values()) {
             this.applyInteractivity(fObj);
         }
+        // dispatch 顺序是 syncState → setMode：回到 normal 时把选中态补回来
+        if (this.lastState !== undefined) {
+            this.syncSelection(this.lastState);
+        }
         this.fabricCanvas.requestRenderAll();
     }
 
@@ -231,18 +235,19 @@ export class FabricRenderer implements Renderer {
 
     private syncSelection(state: EditorState): void {
         const canvas = this.fabricCanvas;
+        // 非 normal 模式不呈现选中态（selection 数据仍保留在 state 里）
         const targets: FabricObject[] = [];
-        for (const id of state.selection) {
-            const fObj = this.objectMap.get(id);
-            if (fObj !== undefined) {
-                targets.push(fObj);
+        if (this.mode === 'normal') {
+            for (const id of state.selection) {
+                const fObj = this.objectMap.get(id);
+                if (fObj !== undefined) {
+                    targets.push(fObj);
+                }
             }
         }
         const current = canvas.getActiveObjects();
-        if (
-            current.length === targets.length &&
-            current.every((fObj, i) => fObj === targets[i])
-        ) {
+        // 按集合比较：ActiveSelection 成员序与 state.selection 序可能不同，避免反复重建
+        if (current.length === targets.length && current.every((fObj) => targets.includes(fObj))) {
             return;
         }
         if (targets.length === 0) {
