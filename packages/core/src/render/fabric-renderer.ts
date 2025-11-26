@@ -261,8 +261,21 @@ export class FabricRenderer implements Renderer {
 
     /** vpt = [s,0,0,s,tx,ty]；s = fitScale × zoom；tx/ty = 容器居中 + pan。 */
     private applyViewport(state: EditorState): void {
+        if (this.canvasWidth <= 0 || this.canvasHeight <= 0) {
+            return;
+        }
         const bg = state.doc.background;
-        if (bg === null || this.canvasWidth <= 0 || this.canvasHeight <= 0) {
+        if (bg === null) {
+            // 无图语义：fit = 1，以容器中心为原点，避免清背景后残留旧 vpt
+            const s = state.viewport.zoom;
+            this.fabricCanvas.setViewportTransform([
+                s,
+                0,
+                0,
+                s,
+                this.canvasWidth / 2 + state.viewport.panX,
+                this.canvasHeight / 2 + state.viewport.panY
+            ]);
             return;
         }
         const s = this.fitScale(state) * state.viewport.zoom;
