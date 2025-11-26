@@ -1,7 +1,7 @@
 export const VERSION = '0.1.0';
 
 export { Editor } from './editor';
-export type { EditorOptions } from './editor';
+export type { EditorOptions, ViewportInfo } from './editor';
 
 export { EditorState, StepError } from './state/editor-state';
 export type { EditorMode, Viewport, EditorStateConfig } from './state/editor-state';

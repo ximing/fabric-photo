@@ -2,6 +2,7 @@ import { Emitter, type EditorEventMap } from './events';
 import { History } from './plugins/history';
 import { Keymap } from './plugins/keymap';
 import type { Plugin } from './plugins/plugin';
+import { exportDocBlob, exportDocDataURL, exportViewportImage, getViewportDocRect } from './render/exporter';
 import { FabricRenderer } from './render/fabric-renderer';
 import type { Renderer } from './render/renderer';
 import { EditorState, type EditorMode, type Viewport } from './state/editor-state';
@@ -13,6 +14,14 @@ export interface EditorOptions {
     cssMaxHeight?: number;
     plugins?: Plugin[]; // 追加插件（history/keymap 始终默认注册）
     renderer?: Renderer; // 显式注入优先；缺省且给了 container 时自动 new FabricRenderer
+}
+
+/** 容器可见区域在 doc 坐标系下的矩形（getViewPortInfo 返回值）。 */
+export interface ViewportInfo {
+    width: number;
+    height: number;
+    left: number;
+    top: number;
 }
 
 function sameSelection(a: readonly string[], b: readonly string[]): boolean {
@@ -35,6 +44,8 @@ export class Editor {
     private readonly plugins: Plugin[];
     private readonly historyPlugin: History;
     private readonly renderer?: Renderer;
+    /** renderer 为 FabricRenderer 时的具体引用（导出 API 需要访问 fabric canvas）。 */
+    private readonly fabricRenderer?: FabricRenderer;
 
     constructor(options: EditorOptions = {}) {
         this.currentState = new EditorState();
@@ -48,6 +59,7 @@ export class Editor {
                       cssMaxHeight: options.cssMaxHeight
                   })
                 : undefined);
+        this.fabricRenderer = this.renderer instanceof FabricRenderer ? this.renderer : undefined;
         this.plugins = [this.historyPlugin, new Keymap(this), ...(options.plugins ?? [])];
     }
 
@@ -186,6 +198,41 @@ export class Editor {
     /** 结束当前进行中的交互（裁剪/绘制等），回到 normal 模式。 */
     endAll(): void {
         this.dispatch(this.newTransaction().setMode('normal'));
+    }
+
+    // —— 导出 ——
+
+    private requireFabricRenderer(): FabricRenderer {
+        if (this.fabricRenderer === undefined) {
+            throw new Error('Export requires a FabricRenderer (unavailable in headless mode)');
+        }
+        return this.fabricRenderer;
+    }
+
+    /**
+     * 导出整图 dataURL（背景原始像素，不受 zoom/pan 影响）；无背景时导出当前画布现状。
+     * @param type - MIME 类型，如 'image/png'（默认）、'image/jpeg'、'image/webp'
+     */
+    toDataURL(type?: string): string {
+        return exportDocDataURL(this.requireFabricRenderer(), this.currentState.doc.background, type);
+    }
+
+    /** 导出整图 Blob，进制同 toDataURL。 */
+    toBlobData(type?: string): Promise<Blob | null> {
+        return exportDocBlob(this.requireFabricRenderer(), this.currentState.doc.background, type);
+    }
+
+    /** 当前视口可见区域（容器 CSS 像素）的 dataURL。 */
+    getViewPortImage(): string {
+        return exportViewportImage(this.requireFabricRenderer());
+    }
+
+    /** 容器可见区域在 doc 坐标系下的矩形；无头模式返回全 0。 */
+    getViewPortInfo(): ViewportInfo {
+        if (this.fabricRenderer === undefined) {
+            return { width: 0, height: 0, left: 0, top: 0 };
+        }
+        return getViewportDocRect(this.fabricRenderer);
     }
 
     destroy(): void {
