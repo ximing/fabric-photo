@@ -1,11 +1,16 @@
 import { Emitter, type EditorEventMap } from './events';
+import { createId } from './model/id';
+import type { ImageObject } from './model/doc';
 import { History } from './plugins/history';
 import { Keymap } from './plugins/keymap';
 import type { Plugin } from './plugins/plugin';
 import { exportDocBlob, exportDocDataURL, exportViewportImage, getViewportDocRect } from './render/exporter';
 import { FabricRenderer } from './render/fabric-renderer';
+import { preloadImage } from './render/object-factory';
 import type { Renderer } from './render/renderer';
 import { EditorState, type EditorMode, type Viewport } from './state/editor-state';
+import { SetBackground } from './steps/doc-steps';
+import { AddObject } from './steps/object-steps';
 import { Transaction } from './transform/transaction';
 
 export interface EditorOptions {
@@ -118,6 +123,10 @@ export class Editor {
         if (!sameViewport(newState.viewport, oldState.viewport)) {
             this.emitter.emit('change:viewport', { viewport: newState.viewport });
         }
+        // 背景从有到无（含 undo 加载/换图）→ clearImage
+        if (oldState.doc.background !== null && newState.doc.background === null) {
+            this.emitter.emit('clearImage', {});
+        }
         // ⑧ 其余插件 onTransaction
         for (const plugin of this.plugins) {
             if (plugin !== this.historyPlugin) {
@@ -183,6 +192,66 @@ export class Editor {
 
     isEdited(): boolean {
         return this.historyPlugin.undoSize > 0;
+    }
+
+    // —— 图片加载 ——
+
+    /**
+     * 从 URL 加载背景图：探测原始宽高 → dispatch SetBackground → fire loadImage。
+     * 加载失败 reject 且 state 不变。
+     */
+    async loadImageFromURL(url: string, imageName: string): Promise<void> {
+        if (!url || !imageName) {
+            throw new Error('loadImageFromURL requires both url and imageName');
+        }
+        const img = await preloadImage(url);
+        const width = img.naturalWidth || img.width;
+        const height = img.naturalHeight || img.height;
+        this.dispatch(
+            this.newTransaction().addStep(new SetBackground({ src: url, width, height, name: imageName, angle: 0 }))
+        );
+        this.emitter.emit('loadImage', { name: imageName, width, height });
+    }
+
+    /** 从 File 加载背景图：FileReader → dataURL → loadImageFromURL。 */
+    async loadImageFromFile(imgFile: File, imageName?: string): Promise<void> {
+        const dataURL = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = () => {
+                reject(reader.error ?? new Error('failed to read image file'));
+            };
+            reader.readAsDataURL(imgFile);
+        });
+        await this.loadImageFromURL(dataURL, imageName ?? imgFile.name);
+    }
+
+    /** 贴一张新图片对象到画布（背景）中心；对齐旧 addImageObject 语义（left/top = 中心点）。 */
+    async addImageObject(imgUrl: string): Promise<void> {
+        if (!imgUrl) {
+            throw new Error('addImageObject requires an image url');
+        }
+        const bg = this.currentState.doc.background;
+        if (bg === null) {
+            throw new Error('addImageObject requires a loaded background image');
+        }
+        const img = await preloadImage(imgUrl);
+        const width = img.naturalWidth || img.width;
+        const height = img.naturalHeight || img.height;
+        const object: ImageObject = {
+            id: createId(),
+            kind: 'image',
+            src: imgUrl,
+            width,
+            height,
+            left: bg.width / 2,
+            top: bg.height / 2,
+            angle: 0,
+            scaleX: 1,
+            scaleY: 1
+        };
+        this.dispatch(this.newTransaction().addStep(new AddObject(object)));
+        this.emitter.emit('objectAdded', { object });
     }
 
     // —— 便捷查询 ——

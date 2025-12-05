@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { Editor } from './editor';
 import { Keymap } from './plugins/keymap';
 import { AddObject } from './steps/object-steps';
+import { SetBackground } from './steps/doc-steps';
 import type { Plugin } from './plugins/plugin';
 import type { Renderer } from './render/renderer';
 import type { ShapeObject } from './model/doc';
@@ -184,5 +185,36 @@ describe('Editor', () => {
         expect(keymapDestroy).toHaveBeenCalled();
         expect(pluginDestroy).toHaveBeenCalledTimes(1);
         keymapDestroy.mockRestore();
+    });
+
+    it('背景从有到无时 fire clearImage（含 undo 加载）', () => {
+        const editor = new Editor();
+        const onClear = vi.fn();
+        editor.on('clearImage', onClear);
+
+        const bg = { src: 'data:,x', width: 10, height: 10, name: 'a', angle: 0 };
+        editor.dispatch(editor.newTransaction().addStep(new SetBackground(bg)));
+        expect(onClear).not.toHaveBeenCalled();
+
+        // undo 加载 → 背景变 null → clearImage
+        editor.undo();
+        expect(onClear).toHaveBeenCalledTimes(1);
+
+        // 无背景状态下再 dispatch 不重复 fire
+        editor.dispatch(editor.newTransaction().setMode('normal'));
+        expect(onClear).toHaveBeenCalledTimes(1);
+    });
+
+    it('loadImageFromURL 参数缺失时 reject 且 state 不变', async () => {
+        const editor = new Editor();
+        await expect(editor.loadImageFromURL('', 'a')).rejects.toThrow();
+        await expect(editor.loadImageFromURL('u', '')).rejects.toThrow();
+        expect(editor.state.doc.background).toBeNull();
+    });
+
+    it('addImageObject 无背景时 reject', async () => {
+        const editor = new Editor();
+        await expect(editor.addImageObject('data:,x')).rejects.toThrow('background');
+        await expect(editor.addImageObject('')).rejects.toThrow();
     });
 });
