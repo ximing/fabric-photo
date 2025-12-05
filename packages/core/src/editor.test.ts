@@ -205,6 +205,88 @@ describe('Editor', () => {
         expect(onClear).toHaveBeenCalledTimes(1);
     });
 
+    it('removeActiveObject 删除单个选中对象并 fire objectRemoved，可 undo', () => {
+        const editor = new Editor({ renderer: makeFakeRenderer() });
+        const onRemoved = vi.fn();
+        editor.on('objectRemoved', onRemoved);
+
+        editor.dispatch(editor.newTransaction().addStep(new AddObject(makeObject('a'))));
+        editor.dispatch(editor.newTransaction().setSelection(['a']));
+        const undoSizeBefore = editor.history.undoSize;
+
+        editor.removeActiveObject();
+        expect(editor.state.doc.objects).toHaveLength(0);
+        expect(editor.state.selection).toEqual([]);
+        expect(onRemoved).toHaveBeenCalledTimes(1);
+        expect(onRemoved).toHaveBeenCalledWith({ id: 'a' });
+        expect(editor.history.undoSize).toBe(undoSizeBefore + 1);
+
+        editor.undo();
+        expect(editor.state.doc.objects.map((o) => o.id)).toEqual(['a']);
+    });
+
+    it('removeActiveObject 多选逐个删除；空选中为 no-op', () => {
+        const editor = new Editor({ renderer: makeFakeRenderer() });
+        const onRemoved = vi.fn();
+        editor.on('objectRemoved', onRemoved);
+
+        // 空选中 no-op
+        editor.removeActiveObject();
+        expect(onRemoved).not.toHaveBeenCalled();
+
+        editor.dispatch(
+            editor.newTransaction().addStep(new AddObject(makeObject('a'))).addStep(new AddObject(makeObject('b')))
+        );
+        editor.dispatch(editor.newTransaction().setSelection(['a', 'b']));
+        const undoSizeBefore = editor.history.undoSize;
+
+        editor.removeActiveObject();
+        expect(editor.state.doc.objects).toHaveLength(0);
+        expect(editor.state.selection).toEqual([]);
+        expect(onRemoved).toHaveBeenCalledTimes(2);
+        // 同事务删除 → 只产生一条历史
+        expect(editor.history.undoSize).toBe(undoSizeBefore + 1);
+
+        editor.undo();
+        expect(editor.state.doc.objects.map((o) => o.id)).toEqual(['a', 'b']);
+    });
+
+    it('clearObjects 清空全部对象与选中，可 undo 恢复 z 序', () => {
+        const editor = new Editor({ renderer: makeFakeRenderer() });
+
+        // 空文档 no-op
+        editor.clearObjects();
+        expect(editor.history.undoSize).toBe(0);
+
+        editor.dispatch(
+            editor.newTransaction().addStep(new AddObject(makeObject('a'))).addStep(new AddObject(makeObject('b')))
+        );
+        editor.dispatch(editor.newTransaction().setSelection(['a']));
+
+        editor.clearObjects();
+        expect(editor.state.doc.objects).toHaveLength(0);
+        expect(editor.state.selection).toEqual([]);
+
+        editor.undo();
+        expect(editor.state.doc.objects.map((o) => o.id)).toEqual(['a', 'b']);
+    });
+
+    it('deactivateAll 清空选中且不进历史；空选中 no-op', () => {
+        const editor = new Editor({ renderer: makeFakeRenderer() });
+        editor.dispatch(editor.newTransaction().addStep(new AddObject(makeObject('a'))));
+        editor.dispatch(editor.newTransaction().setSelection(['a']));
+        const undoSizeBefore = editor.history.undoSize;
+
+        editor.deactivateAll();
+        expect(editor.state.selection).toEqual([]);
+        expect(editor.history.undoSize).toBe(undoSizeBefore);
+
+        // 空选中 no-op（不产生任何事务/事件）
+        const state = editor.state;
+        editor.deactivateAll();
+        expect(editor.state).toBe(state);
+    });
+
     it('loadImageFromURL 参数缺失时 reject 且 state 不变', async () => {
         const editor = new Editor();
         await expect(editor.loadImageFromURL('', 'a')).rejects.toThrow();

@@ -11,7 +11,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
 /**
  * 全局快捷键插件：监听 document.documentElement 的 keydown。
  * - Mod+Z（metaKey||ctrlKey）→ undo；Mod+Shift+Z / Ctrl+Y → redo
- * - Delete/Backspace → removeActiveObject（Task 10 接入；不存在时仅守卫跳过）
+ * - Delete/Backspace → editor.removeActiveObject()
  * 守卫：目标为 input/textarea/contenteditable 或编辑器处于文本编辑态时不触发。
  * node 环境（无 document）下不挂监听，destroy 安全。
  */
@@ -56,11 +56,8 @@ export class Keymap implements Plugin {
             return;
         }
         if (key === 'delete' || key === 'backspace') {
-            const remove = (this.editor as unknown as { removeActiveObject?: () => void }).removeActiveObject;
-            if (typeof remove === 'function') {
-                event.preventDefault();
-                remove.call(this.editor);
-            }
+            event.preventDefault();
+            this.editor.removeActiveObject();
         }
     }
 
