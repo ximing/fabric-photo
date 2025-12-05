@@ -1,6 +1,7 @@
 import { ActiveSelection, Canvas, FabricImage, type FabricObject } from 'fabric';
 import type { BackgroundImage, EditorObject } from '../model/doc';
 import type { EditorMode, EditorState } from '../state/editor-state';
+import type { Controller, ControllerContext } from './controllers/controller';
 import { createFabricObject, getCachedImage, preloadImage, updateFabricObject } from './object-factory';
 import type { Renderer } from './renderer';
 
@@ -38,6 +39,9 @@ export class FabricRenderer implements Renderer {
     private bgRef: BackgroundImage | null | undefined; // undefined = 从未同步
     private bgGeneration = 0;
     private mode: EditorMode = 'normal';
+    private readonly controllers = new Map<EditorMode, Controller>();
+    private controllerContext: ControllerContext | undefined;
+    private activeController: Controller | undefined;
     private lastState: EditorState | undefined;
     private destroyed = false;
     private canvasWidth = 0;
@@ -93,9 +97,28 @@ export class FabricRenderer implements Renderer {
         this.fabricCanvas.requestRenderAll();
     }
 
-    /** 本任务仅切换 selection 开关；controller 机制（Task 10）接入后与此协调。 */
+    /**
+     * 注册 mode 对应的 controller；若与当前 mode 一致且上下文已注入则立即激活
+     * （覆盖初始 mode 'normal' 的 select controller 激活路径）。
+     */
+    registerController(controller: Controller): void {
+        this.controllers.set(controller.mode, controller);
+        if (controller.mode === this.mode && this.controllerContext !== undefined && !this.destroyed) {
+            controller.activate(this.controllerContext);
+            this.activeController = controller;
+        }
+    }
+
+    /** 注入 controller 运行上下文（Editor 接管 renderer 时调用一次）。 */
+    setControllerContext(ctx: ControllerContext): void {
+        this.controllerContext = ctx;
+    }
+
+    /** mode 切换：先 deactivate 旧 controller，再切交互开关，最后 activate 新 controller。 */
     setMode(mode: EditorMode, _prevMode: EditorMode): void {
         this.mode = mode;
+        this.activeController?.deactivate();
+        this.activeController = undefined;
         const interactive = mode === 'normal';
         this.fabricCanvas.selection = interactive;
         if (!interactive) {
@@ -103,6 +126,11 @@ export class FabricRenderer implements Renderer {
         }
         for (const fObj of this.objectMap.values()) {
             this.applyInteractivity(fObj);
+        }
+        const next = this.controllers.get(mode);
+        if (next !== undefined && this.controllerContext !== undefined) {
+            next.activate(this.controllerContext);
+            this.activeController = next;
         }
         // dispatch 顺序是 syncState → setMode：回到 normal 时把选中态补回来
         if (this.lastState !== undefined) {
@@ -116,6 +144,8 @@ export class FabricRenderer implements Renderer {
             return;
         }
         this.destroyed = true;
+        this.activeController?.deactivate();
+        this.activeController = undefined;
         this.bgGeneration++; // 使进行中的背景加载失效
         this.fabricCanvas.destroy();
         this.canvasEl.remove();

@@ -1,8 +1,11 @@
+import * as fpCore from '../src/index';
 import { Editor } from '../src/index';
 
 const editor = new Editor({ container: document.getElementById('editor')! });
 
 (window as unknown as { editor: Editor }).editor = editor;
+// evaluate 驱动冒烟用：fp.editor / fp.AddObject / fp.createId / ...
+(window as unknown as { fp: typeof fpCore & { editor: Editor } }).fp = { ...fpCore, editor };
 
 function loadDemo(): void {
     editor.loadImageFromURL('./images/demo.jpeg', 'demo').catch((err: unknown) => {

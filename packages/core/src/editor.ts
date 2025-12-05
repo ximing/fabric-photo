@@ -5,12 +5,14 @@ import { History } from './plugins/history';
 import { Keymap } from './plugins/keymap';
 import type { Plugin } from './plugins/plugin';
 import { exportDocBlob, exportDocDataURL, exportViewportImage, getViewportDocRect } from './render/exporter';
+import type { ControllerContext } from './render/controllers/controller';
+import { SelectController } from './render/controllers/select';
 import { FabricRenderer } from './render/fabric-renderer';
 import { preloadImage } from './render/object-factory';
 import type { Renderer } from './render/renderer';
 import { EditorState, type EditorMode, type Viewport } from './state/editor-state';
 import { SetBackground } from './steps/doc-steps';
-import { AddObject } from './steps/object-steps';
+import { AddObject, ClearObjects, RemoveObject } from './steps/object-steps';
 import { Transaction } from './transform/transaction';
 
 export interface EditorOptions {
@@ -66,6 +68,19 @@ export class Editor {
                 : undefined);
         this.fabricRenderer = this.renderer instanceof FabricRenderer ? this.renderer : undefined;
         this.plugins = [this.historyPlugin, new Keymap(this), ...(options.plugins ?? [])];
+        if (this.fabricRenderer !== undefined) {
+            const ctx: ControllerContext = {
+                canvas: this.fabricRenderer.canvas,
+                getState: () => this.currentState,
+                dispatch: (tr) => this.dispatch(tr),
+                fire: (name, payload) => {
+                    this.emitter.emit(name, payload);
+                }
+            };
+            this.fabricRenderer.setControllerContext(ctx);
+            // select controller（mode 'normal'）注册即激活
+            this.fabricRenderer.registerController(new SelectController());
+        }
     }
 
     get state(): EditorState {
@@ -267,6 +282,47 @@ export class Editor {
     /** 结束当前进行中的交互（裁剪/绘制等），回到 normal 模式。 */
     endAll(): void {
         this.dispatch(this.newTransaction().setMode('normal'));
+    }
+
+    // —— 对象操作 ——
+
+    /** 删除当前选中对象（单选/多选逐个 RemoveObject，同事务）；每个被删对象 fire objectRemoved。 */
+    removeActiveObject(): void {
+        const selection = this.currentState.selection;
+        if (selection.length === 0) {
+            return;
+        }
+        const tr = this.newTransaction().setSelection([]);
+        const removed: string[] = [];
+        for (const id of selection) {
+            if (this.currentState.getObject(id) !== undefined) {
+                tr.addStep(new RemoveObject(id));
+                removed.push(id);
+            }
+        }
+        if (removed.length === 0) {
+            return;
+        }
+        this.dispatch(tr);
+        for (const id of removed) {
+            this.emitter.emit('objectRemoved', { id });
+        }
+    }
+
+    /** 清空全部对象（ClearObjects step，可撤销），同时清空选中。 */
+    clearObjects(): void {
+        if (this.currentState.doc.objects.length === 0) {
+            return;
+        }
+        this.dispatch(this.newTransaction().addStep(new ClearObjects()).setSelection([]));
+    }
+
+    /** 取消全部选中（dispatch setSelection([])，不进历史）。 */
+    deactivateAll(): void {
+        if (this.currentState.selection.length === 0) {
+            return;
+        }
+        this.dispatch(this.newTransaction().setSelection([]).setMeta('addToHistory', false));
     }
 
     // —— 导出 ——
