@@ -299,4 +299,95 @@ describe('Editor', () => {
         await expect(editor.addImageObject('data:,x')).rejects.toThrow('background');
         await expect(editor.addImageObject('')).rejects.toThrow();
     });
+
+    it('setZoom 更新 viewport 并入历史，undo 复原；getZoom 返回当前值', () => {
+        const editor = new Editor({ renderer: makeFakeRenderer() });
+        const onViewport = vi.fn();
+        editor.on('change:viewport', onViewport);
+        expect(editor.getZoom()).toBe(1);
+
+        editor.setZoom(2);
+        expect(editor.getZoom()).toBe(2);
+        expect(editor.history.undoSize).toBe(1);
+        expect(onViewport).toHaveBeenCalledWith({ viewport: { zoom: 2, panX: 0, panY: 0 } });
+
+        editor.undo();
+        expect(editor.getZoom()).toBe(1);
+        editor.redo();
+        expect(editor.getZoom()).toBe(2);
+    });
+
+    it('setZoom clamp 到 [0.05, 8]；同值 no-op（state 引用不变、无历史）', () => {
+        const editor = new Editor({ renderer: makeFakeRenderer() });
+
+        editor.setZoom(100);
+        expect(editor.getZoom()).toBe(8);
+        editor.setZoom(0);
+        expect(editor.getZoom()).toBe(0.05);
+        expect(editor.history.undoSize).toBe(2);
+
+        const state = editor.state;
+        editor.setZoom(0.05);
+        editor.setZoom(-1); // clamp 后仍是 0.05
+        expect(editor.state).toBe(state);
+        expect(editor.history.undoSize).toBe(2);
+    });
+
+    it('startPan/endPan 切换 mode 并同步 renderer，不进历史；重复调用 no-op', () => {
+        const renderer = makeFakeRenderer();
+        const editor = new Editor({ renderer });
+        const undoSizeBefore = editor.history.undoSize;
+
+        editor.startPan();
+        expect(editor.getCurrentState()).toBe('pan');
+        expect(renderer.setMode).toHaveBeenCalledWith('pan', 'normal');
+        expect(editor.history.undoSize).toBe(undoSizeBefore);
+
+        editor.startPan(); // 重复 no-op
+        expect(editor.getCurrentState()).toBe('pan');
+
+        editor.endPan();
+        expect(editor.getCurrentState()).toBe('normal');
+        expect(renderer.setMode).toHaveBeenLastCalledWith('normal', 'pan');
+        expect(editor.history.undoSize).toBe(undoSizeBefore);
+
+        editor.endPan(); // 非 pan 模式 no-op
+        expect(editor.getCurrentState()).toBe('normal');
+    });
+
+    it('pan 事务（addToHistory:false 的 viewport 更新）只改 state 不进历史', () => {
+        const editor = new Editor({ renderer: makeFakeRenderer() });
+        editor.dispatch(
+            editor.newTransaction().setViewport({ panX: 30, panY: -12 }).setMeta('addToHistory', false)
+        );
+        expect(editor.state.viewport).toEqual({ zoom: 1, panX: 30, panY: -12 });
+        expect(editor.history.undoSize).toBe(0);
+    });
+
+    it('adjustCanvasDimension 把 viewport 归位（refit）且不进历史；已归位时 no-op', () => {
+        const editor = new Editor({ renderer: makeFakeRenderer() });
+        editor.setZoom(3);
+        editor.dispatch(editor.newTransaction().setViewport({ panX: 10 }).setMeta('addToHistory', false));
+        const undoSizeBefore = editor.history.undoSize;
+
+        editor.adjustCanvasDimension();
+        expect(editor.state.viewport).toEqual({ zoom: 1, panX: 0, panY: 0 });
+        expect(editor.history.undoSize).toBe(undoSizeBefore);
+
+        const state = editor.state;
+        editor.adjustCanvasDimension();
+        expect(editor.state).toBe(state);
+    });
+
+    it('resizeCanvasDimension 缺省 no-op；传 dimension 时 refit（无头模式跳过 DOM 部分）', () => {
+        const editor = new Editor({ renderer: makeFakeRenderer() });
+        editor.setZoom(2);
+
+        const state = editor.state;
+        editor.resizeCanvasDimension();
+        expect(editor.state).toBe(state);
+
+        editor.resizeCanvasDimension({ width: 500, height: 300 });
+        expect(editor.state.viewport).toEqual({ zoom: 1, panX: 0, panY: 0 });
+    });
 });

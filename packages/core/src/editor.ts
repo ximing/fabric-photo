@@ -6,11 +6,12 @@ import { Keymap } from './plugins/keymap';
 import type { Plugin } from './plugins/plugin';
 import { exportDocBlob, exportDocDataURL, exportViewportImage, getViewportDocRect } from './render/exporter';
 import type { ControllerContext } from './render/controllers/controller';
+import { PanController } from './render/controllers/pan';
 import { SelectController } from './render/controllers/select';
 import { FabricRenderer } from './render/fabric-renderer';
 import { preloadImage } from './render/object-factory';
 import type { Renderer } from './render/renderer';
-import { EditorState, type EditorMode, type Viewport } from './state/editor-state';
+import { EditorState, ZOOM_MAX, ZOOM_MIN, type EditorMode, type Viewport } from './state/editor-state';
 import { SetBackground } from './steps/doc-steps';
 import { AddObject, ClearObjects, RemoveObject } from './steps/object-steps';
 import { Transaction } from './transform/transaction';
@@ -80,6 +81,7 @@ export class Editor {
             this.fabricRenderer.setControllerContext(ctx);
             // select controller（mode 'normal'）注册即激活
             this.fabricRenderer.registerController(new SelectController());
+            this.fabricRenderer.registerController(new PanController());
         }
     }
 
@@ -323,6 +325,67 @@ export class Editor {
             return;
         }
         this.dispatch(this.newTransaction().setSelection([]).setMeta('addToHistory', false));
+    }
+
+    // —— 视口（zoom/pan）——
+
+    /**
+     * 设置缩放倍率（clamp [0.05, 8]）；viewport 事务默认入历史（对齐现状可撤销）。
+     * 视觉上以容器中心为支点：applyViewport 的居中公式保证图像中心在 zoom 变化时不动。
+     */
+    setZoom(rate: number): void {
+        const zoom = Math.min(Math.max(rate, ZOOM_MIN), ZOOM_MAX);
+        if (zoom === this.currentState.viewport.zoom) {
+            return;
+        }
+        this.dispatch(this.newTransaction().setViewport({ zoom }));
+    }
+
+    getZoom(): number {
+        return this.currentState.viewport.zoom;
+    }
+
+    /** 进入平移模式（mode 'pan'，拖动画布平移，瞬时不入历史；光标 grab/grabbing）。 */
+    startPan(): void {
+        if (this.currentState.mode === 'pan') {
+            return;
+        }
+        this.dispatch(this.newTransaction().setMode('pan'));
+    }
+
+    /** 退出平移模式，回到 normal。 */
+    endPan(): void {
+        if (this.currentState.mode !== 'pan') {
+            return;
+        }
+        this.dispatch(this.newTransaction().setMode('normal'));
+    }
+
+    /**
+     * 调整 fit 上限与容器尺寸（对齐旧 resizeCanvasDimension：setCssMaxDimension + refit）。
+     * dimension 缺省时 no-op；refit 不进历史。
+     */
+    resizeCanvasDimension(dimension?: { width?: number; height?: number }): void {
+        if (dimension === undefined) {
+            return;
+        }
+        this.fabricRenderer?.setCssMaxDimension(dimension);
+        this.refitViewport();
+    }
+
+    /** refit：viewport 归位（zoom 1、pan 0），fitScale 随 cssMax 重算、图像重新居中；不进历史。 */
+    adjustCanvasDimension(): void {
+        this.refitViewport();
+    }
+
+    private refitViewport(): void {
+        const vp = this.currentState.viewport;
+        if (vp.zoom === 1 && vp.panX === 0 && vp.panY === 0) {
+            return;
+        }
+        this.dispatch(
+            this.newTransaction().setViewport({ zoom: 1, panX: 0, panY: 0 }).setMeta('addToHistory', false)
+        );
     }
 
     // —— 导出 ——

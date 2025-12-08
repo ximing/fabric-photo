@@ -21,6 +21,10 @@ export class StepError extends Error {}
 
 const DEFAULT_VIEWPORT: Viewport = { zoom: 1, panX: 0, panY: 0 };
 
+/** zoom 取值范围（setZoom/滚轮缩放共用 clamp）。 */
+export const ZOOM_MIN = 0.05;
+export const ZOOM_MAX = 8;
+
 /** 不可变编辑器状态；所有变更通过 apply(Transaction) 产出新实例。 */
 export class EditorState {
     readonly doc: Doc;
