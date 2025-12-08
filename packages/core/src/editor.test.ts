@@ -364,7 +364,7 @@ describe('Editor', () => {
         expect(editor.history.undoSize).toBe(0);
     });
 
-    it('adjustCanvasDimension 把 viewport 归位（refit）且不进历史；已归位时 no-op', () => {
+    it('adjustCanvasDimension 把 viewport 归位（refit）且不进历史', () => {
         const editor = new Editor({ renderer: makeFakeRenderer() });
         editor.setZoom(3);
         editor.dispatch(editor.newTransaction().setViewport({ panX: 10 }).setMeta('addToHistory', false));
@@ -373,10 +373,40 @@ describe('Editor', () => {
         editor.adjustCanvasDimension();
         expect(editor.state.viewport).toEqual({ zoom: 1, panX: 0, panY: 0 });
         expect(editor.history.undoSize).toBe(undoSizeBefore);
+    });
 
-        const state = editor.state;
+    it('refit 在 viewport 已归位时仍 dispatch 触发 renderer 重算（cssMax/尺寸变更后视觉需刷新）', () => {
+        const renderer = makeFakeRenderer();
+        const editor = new Editor({ renderer });
+        const onViewport = vi.fn();
+        editor.on('change:viewport', onViewport);
+
         editor.adjustCanvasDimension();
-        expect(editor.state).toBe(state);
+        expect(renderer.syncState).toHaveBeenCalledTimes(1);
+        expect(editor.state.viewport).toEqual({ zoom: 1, panX: 0, panY: 0 });
+        // viewport 内容未变：不发 change:viewport、不进历史
+        expect(onViewport).not.toHaveBeenCalled();
+        expect(editor.history.undoSize).toBe(0);
+
+        editor.resizeCanvasDimension({ width: 500 });
+        expect(renderer.syncState).toHaveBeenCalledTimes(2);
+        expect(editor.history.undoSize).toBe(0);
+    });
+
+    it('setZoom 带 pan 时按 zoom 比例补偿 pan（支点为容器中心），undo 一并回滚', () => {
+        const editor = new Editor({ renderer: makeFakeRenderer() });
+        editor.dispatch(editor.newTransaction().setViewport({ panX: 40, panY: -20 }).setMeta('addToHistory', false));
+
+        editor.setZoom(2);
+        expect(editor.state.viewport).toEqual({ zoom: 2, panX: 80, panY: -40 });
+
+        editor.setZoom(0.5);
+        expect(editor.state.viewport).toEqual({ zoom: 0.5, panX: 20, panY: -10 });
+
+        editor.undo();
+        expect(editor.state.viewport).toEqual({ zoom: 2, panX: 80, panY: -40 });
+        editor.undo();
+        expect(editor.state.viewport).toEqual({ zoom: 1, panX: 40, panY: -20 });
     });
 
     it('resizeCanvasDimension 缺省 no-op；传 dimension 时 refit（无头模式跳过 DOM 部分）', () => {

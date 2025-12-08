@@ -331,14 +331,17 @@ export class Editor {
 
     /**
      * 设置缩放倍率（clamp [0.05, 8]）；viewport 事务默认入历史（对齐现状可撤销）。
-     * 视觉上以容器中心为支点：applyViewport 的居中公式保证图像中心在 zoom 变化时不动。
+     * 支点恒为容器中心：pan 按 zoom 比例同步缩放（pan' = pan·zoom'/zoom），
+     * 使容器中心下的 doc 点在缩放前后不动（有图/无图均成立，居中项随 s 线性）。
      */
     setZoom(rate: number): void {
         const zoom = Math.min(Math.max(rate, ZOOM_MIN), ZOOM_MAX);
-        if (zoom === this.currentState.viewport.zoom) {
+        const vp = this.currentState.viewport;
+        if (zoom === vp.zoom) {
             return;
         }
-        this.dispatch(this.newTransaction().setViewport({ zoom }));
+        const ratio = zoom / vp.zoom; // vp.zoom ∈ [0.05, 8]，不会为 0
+        this.dispatch(this.newTransaction().setViewport({ zoom, panX: vp.panX * ratio, panY: vp.panY * ratio }));
     }
 
     getZoom(): number {
@@ -378,11 +381,12 @@ export class Editor {
         this.refitViewport();
     }
 
+    /**
+     * refit 始终 dispatch：即使 viewport 已是 {1,0,0}（setCssMaxDimension 改过 cssMax/尺寸后
+     * 视觉仍需重算），也要触发 syncState → syncCanvasSize + applyViewport。viewport 内容
+     * 不变时 sameViewport 抑制 change:viewport，不发历史、无可见副作用。
+     */
     private refitViewport(): void {
-        const vp = this.currentState.viewport;
-        if (vp.zoom === 1 && vp.panX === 0 && vp.panY === 0) {
-            return;
-        }
         this.dispatch(
             this.newTransaction().setViewport({ zoom: 1, panX: 0, panY: 0 }).setMeta('addToHistory', false)
         );
