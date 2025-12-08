@@ -23,6 +23,23 @@ document.getElementById('btn-export')!.addEventListener('click', () => {
         console.error('export failed', err);
     }
 });
+document.getElementById('btn-zoom-in')!.addEventListener('click', () => editor.setZoom(editor.getZoom() * 1.25));
+document.getElementById('btn-zoom-out')!.addEventListener('click', () => editor.setZoom(editor.getZoom() / 1.25));
+const panBtn = document.getElementById('btn-pan')!;
+panBtn.addEventListener('click', () => {
+    if (editor.getCurrentState() === 'pan') {
+        editor.endPan();
+    } else {
+        editor.startPan();
+    }
+});
+const zoomLabel = document.getElementById('zoom-label')!;
+editor.on('change:viewport', ({ viewport }) => {
+    zoomLabel.textContent = `zoom: ${viewport.zoom.toFixed(2)} pan: ${viewport.panX.toFixed(0)},${viewport.panY.toFixed(0)}`;
+});
+editor.on('change:mode', ({ mode }) => {
+    panBtn.textContent = mode === 'pan' ? '退出 pan' : 'pan';
+});
 
 editor.on('loadImage', ({ name, width, height }) => {
     console.log('loadImage', name, width, height);
