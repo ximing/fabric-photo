@@ -14,6 +14,12 @@ export interface ControllerContext {
     fire<K extends keyof EditorEventMap>(name: K, payload: EditorEventMap[K]): void;
 }
 
+/** 绘制类 controller 共用的笔刷配置（width 线宽、color 颜色）。 */
+export interface BrushSetting {
+    width?: number;
+    color?: string;
+}
+
 /**
  * 交互控制器：每个 EditorMode 对应一个（mode 'normal' 为 select controller）。
  * renderer.setMode 时 deactivate 旧 controller、activate 新 controller；

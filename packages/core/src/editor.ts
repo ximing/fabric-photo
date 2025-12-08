@@ -6,6 +6,9 @@ import { Keymap } from './plugins/keymap';
 import type { Plugin } from './plugins/plugin';
 import { exportDocBlob, exportDocDataURL, exportViewportImage, getViewportDocRect } from './render/exporter';
 import type { ControllerContext } from './render/controllers/controller';
+import { ArrowController } from './render/controllers/arrow';
+import { DrawController } from './render/controllers/draw';
+import { LineController } from './render/controllers/line';
 import { PanController } from './render/controllers/pan';
 import { SelectController } from './render/controllers/select';
 import { FabricRenderer } from './render/fabric-renderer';
@@ -13,7 +16,7 @@ import { preloadImage } from './render/object-factory';
 import type { Renderer } from './render/renderer';
 import { EditorState, ZOOM_MAX, ZOOM_MIN, type EditorMode, type Viewport } from './state/editor-state';
 import { SetBackground } from './steps/doc-steps';
-import { AddObject, ClearObjects, RemoveObject } from './steps/object-steps';
+import { AddObject, ClearObjects, RemoveObject, UpdateObject, type ObjectAttrs } from './steps/object-steps';
 import { Transaction } from './transform/transaction';
 
 export interface EditorOptions {
@@ -54,6 +57,10 @@ export class Editor {
     private readonly renderer?: Renderer;
     /** renderer 为 FabricRenderer 时的具体引用（导出 API 需要访问 fabric canvas）。 */
     private readonly fabricRenderer?: FabricRenderer;
+    /** 绘制三件套 controller（仅 FabricRenderer 存在时创建；无头模式下对应 API 仅切 mode）。 */
+    private readonly drawController?: DrawController;
+    private readonly lineController?: LineController;
+    private readonly arrowController?: ArrowController;
 
     constructor(options: EditorOptions = {}) {
         this.currentState = new EditorState();
@@ -82,6 +89,12 @@ export class Editor {
             // select controller（mode 'normal'）注册即激活
             this.fabricRenderer.registerController(new SelectController());
             this.fabricRenderer.registerController(new PanController());
+            this.drawController = new DrawController();
+            this.lineController = new LineController();
+            this.arrowController = new ArrowController();
+            this.fabricRenderer.registerController(this.drawController);
+            this.fabricRenderer.registerController(this.lineController);
+            this.fabricRenderer.registerController(this.arrowController);
         }
     }
 
@@ -362,6 +375,122 @@ export class Editor {
             return;
         }
         this.dispatch(this.newTransaction().setMode('normal'));
+    }
+
+    // —— 绘制（freedraw / line / arrow）——
+
+    /**
+     * 进入自由绘制模式（mode 'freedraw'）；setting 先写入 controller 再切 mode。
+     * 已在 freedraw 模式时为 no-op（对齐旧 startFreeDrawing）。
+     */
+    startFreeDrawing(setting?: { width?: number; color?: string }): void {
+        if (this.currentState.mode === 'freedraw') {
+            return;
+        }
+        if (setting !== undefined) {
+            this.drawController?.setBrush(setting);
+        }
+        this.dispatch(this.newTransaction().setMode('freedraw'));
+    }
+
+    /** 退出自由绘制模式，回到 normal。 */
+    endFreeDrawing(): void {
+        if (this.currentState.mode !== 'freedraw') {
+            return;
+        }
+        this.dispatch(this.newTransaction().setMode('normal'));
+    }
+
+    /** 进入直线绘制模式（mode 'line'）。 */
+    startLineDrawing(setting?: { width?: number; color?: string }): void {
+        if (this.currentState.mode === 'line') {
+            return;
+        }
+        if (setting !== undefined) {
+            this.lineController?.setBrush(setting);
+        }
+        this.dispatch(this.newTransaction().setMode('line'));
+    }
+
+    /** 退出直线绘制模式，回到 normal。 */
+    endLineDrawing(): void {
+        if (this.currentState.mode !== 'line') {
+            return;
+        }
+        this.dispatch(this.newTransaction().setMode('normal'));
+    }
+
+    /** 进入箭头绘制模式（mode 'arrow'）。 */
+    startArrowDrawing(setting?: { width?: number; color?: string }): void {
+        if (this.currentState.mode === 'arrow') {
+            return;
+        }
+        if (setting !== undefined) {
+            this.arrowController?.setBrush(setting);
+        }
+        this.dispatch(this.newTransaction().setMode('arrow'));
+    }
+
+    /** 退出箭头绘制模式，回到 normal。 */
+    endArrowDrawing(): void {
+        if (this.currentState.mode !== 'arrow') {
+            return;
+        }
+        this.dispatch(this.newTransaction().setMode('normal'));
+    }
+
+    /** 按当前 mode 路由 setBrush 到 draw/line/arrow controller；非绘制模式 no-op。 */
+    setBrush(setting: { width?: number; color?: string }): void {
+        switch (this.currentState.mode) {
+            case 'freedraw':
+                this.drawController?.setBrush(setting);
+                break;
+            case 'line':
+                this.lineController?.setBrush(setting);
+                break;
+            case 'arrow':
+                this.arrowController?.setBrush(setting);
+                break;
+        }
+    }
+
+    /** 修改选中 freedraw 路径的样式（stroke/strokeWidth，可撤销）。 */
+    changeFreeDrawingPathStyle(setting?: { width?: number; color?: string }): void {
+        this.changeSelectedPathStyle('freedraw', setting);
+    }
+
+    /** 修改选中 arrow 路径的样式（stroke/strokeWidth，可撤销）。 */
+    changeArrowStyle(setting?: { width?: number; color?: string }): void {
+        this.changeSelectedPathStyle('arrow', setting);
+    }
+
+    /** 对当前选中且 kind==='path' 且 tool 匹配的对象 dispatch UpdateObject。 */
+    private changeSelectedPathStyle(tool: 'freedraw' | 'arrow', setting?: { width?: number; color?: string }): void {
+        if (setting === undefined) {
+            return;
+        }
+        const attrs: ObjectAttrs = {};
+        if (setting.color !== undefined) {
+            attrs.stroke = setting.color;
+        }
+        if (setting.width !== undefined) {
+            attrs.strokeWidth = setting.width;
+        }
+        if (Object.keys(attrs).length === 0) {
+            return;
+        }
+        const tr = this.newTransaction();
+        let changed = false;
+        for (const id of this.currentState.selection) {
+            const obj = this.currentState.getObject(id);
+            if (obj !== undefined && obj.kind === 'path' && obj.tool === tool) {
+                tr.addStep(new UpdateObject(id, attrs));
+                changed = true;
+            }
+        }
+        if (changed) {
+            this.dispatch(tr);
+        }
     }
 
     /**
