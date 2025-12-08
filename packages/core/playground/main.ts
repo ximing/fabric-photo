@@ -33,6 +33,16 @@ panBtn.addEventListener('click', () => {
         editor.startPan();
     }
 });
+document.getElementById('btn-freedraw')!.addEventListener('click', () =>
+    editor.startFreeDrawing({ width: 4, color: 'red' })
+);
+document.getElementById('btn-line')!.addEventListener('click', () =>
+    editor.startLineDrawing({ width: 4, color: 'red' })
+);
+document.getElementById('btn-arrow')!.addEventListener('click', () =>
+    editor.startArrowDrawing({ width: 4, color: 'red' })
+);
+document.getElementById('btn-end')!.addEventListener('click', () => editor.endAll());
 const zoomLabel = document.getElementById('zoom-label')!;
 editor.on('change:viewport', ({ viewport }) => {
     zoomLabel.textContent = `zoom: ${viewport.zoom.toFixed(2)} pan: ${viewport.panX.toFixed(0)},${viewport.panY.toFixed(0)}`;

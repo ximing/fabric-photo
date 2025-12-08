@@ -5,7 +5,7 @@ import { AddObject } from './steps/object-steps';
 import { SetBackground } from './steps/doc-steps';
 import type { Plugin } from './plugins/plugin';
 import type { Renderer } from './render/renderer';
-import type { ShapeObject } from './model/doc';
+import type { PathObject, ShapeObject } from './model/doc';
 import { Transaction } from './transform/transaction';
 import type { EditorState } from './state/editor-state';
 
@@ -419,5 +419,95 @@ describe('Editor', () => {
 
         editor.resizeCanvasDimension({ width: 500, height: 300 });
         expect(editor.state.viewport).toEqual({ zoom: 1, panX: 0, panY: 0 });
+    });
+
+    function makePath(id: string, tool: 'freedraw' | 'line' | 'arrow'): PathObject {
+        return {
+            id,
+            kind: 'path',
+            tool,
+            path: 'M 0 0 L 10 10',
+            left: 0,
+            top: 0,
+            angle: 0,
+            scaleX: 1,
+            scaleY: 1,
+            stroke: 'red',
+            strokeWidth: 4,
+            fill: ''
+        };
+    }
+
+    it('startFreeDrawing/startLineDrawing/startArrowDrawing 切 mode，对应 end 回 normal；endAll 通吃', () => {
+        const editor = new Editor({ renderer: makeFakeRenderer() });
+
+        editor.startFreeDrawing({ width: 4, color: 'red' });
+        expect(editor.getCurrentState()).toBe('freedraw');
+        editor.startFreeDrawing(); // 重复进入 no-op
+        expect(editor.getCurrentState()).toBe('freedraw');
+        editor.endFreeDrawing();
+        expect(editor.getCurrentState()).toBe('normal');
+
+        editor.startLineDrawing();
+        expect(editor.getCurrentState()).toBe('line');
+        editor.endLineDrawing();
+        expect(editor.getCurrentState()).toBe('normal');
+
+        editor.startArrowDrawing();
+        expect(editor.getCurrentState()).toBe('arrow');
+        editor.endAll();
+        expect(editor.getCurrentState()).toBe('normal');
+
+        editor.endArrowDrawing(); // 已 normal，no-op
+        expect(editor.getCurrentState()).toBe('normal');
+    });
+
+    it('setBrush 无头模式按 mode 路由，不抛错', () => {
+        const editor = new Editor({ renderer: makeFakeRenderer() });
+        editor.setBrush({ width: 8 }); // normal 模式 no-op
+        editor.startFreeDrawing();
+        editor.setBrush({ width: 8, color: '#00f' });
+        expect(editor.getCurrentState()).toBe('freedraw');
+    });
+
+    it('changeFreeDrawingPathStyle 只改选中且 tool=freedraw 的 path，undo 可回滚', () => {
+        const editor = new Editor({ renderer: makeFakeRenderer() });
+        editor.dispatch(
+            editor
+                .newTransaction()
+                .addStep(new AddObject(makePath('p1', 'freedraw')))
+                .addStep(new AddObject(makePath('p2', 'arrow')))
+                .setSelection(['p1', 'p2'])
+        );
+
+        editor.changeFreeDrawingPathStyle({ color: '#00f', width: 9 });
+        const p1 = editor.state.getObject('p1') as PathObject;
+        const p2 = editor.state.getObject('p2') as PathObject;
+        expect(p1.stroke).toBe('#00f');
+        expect(p1.strokeWidth).toBe(9);
+        expect(p2.stroke).toBe('red'); // tool 不匹配不动
+
+        editor.undo();
+        expect((editor.state.getObject('p1') as PathObject).stroke).toBe('red');
+    });
+
+    it('changeArrowStyle 只改选中且 tool=arrow 的 path；无匹配对象不产生历史', () => {
+        const editor = new Editor({ renderer: makeFakeRenderer() });
+        editor.dispatch(
+            editor
+                .newTransaction()
+                .addStep(new AddObject(makePath('p1', 'freedraw')))
+                .addStep(new AddObject(makePath('p2', 'arrow')))
+                .setSelection(['p1', 'p2'])
+        );
+        const before = editor.history.undoSize;
+
+        editor.changeArrowStyle({ color: '#0f0' });
+        expect((editor.state.getObject('p2') as PathObject).stroke).toBe('#0f0');
+        expect((editor.state.getObject('p1') as PathObject).stroke).toBe('red');
+
+        editor.changeFreeDrawingPathStyle(); // 缺省 no-op
+        editor.changeArrowStyle({}); // 空 attrs no-op
+        expect(editor.history.undoSize).toBe(before + 1);
     });
 });

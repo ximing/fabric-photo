@@ -99,8 +99,20 @@ function pathAttrs(obj: PathObject): Record<string, unknown> {
         stroke: obj.stroke,
         strokeWidth: obj.strokeWidth,
         // 自由绘制/线条类路径无填充；空串交给 fabric 会得到非法 Color，显式转 transparent
-        fill: obj.fill === '' ? 'transparent' : obj.fill
+        fill: obj.fill === '' ? 'transparent' : obj.fill,
+        // 对齐旧 freedraw 笔迹（PencilBrush 产出的 path 默认 round 端点/拐角）
+        ...(obj.tool === 'freedraw' ? { strokeLineCap: 'round', strokeLineJoin: 'round' } : {})
     };
+}
+
+/**
+ * 由 path 字符串探测 fabric 自动定位后的 left/top（bbox 原点语义）。
+ * line/arrow controller 落盘 PathObject 时调用：保证 createFabricObject
+ * 以显式 left/top 重建后与预览几何完全一致。
+ */
+export function probePathPosition(pathData: string): { left: number; top: number } {
+    const probe = new Path(pathData);
+    return { left: probe.left, top: probe.top };
 }
 
 function imageAttrs(obj: ImageObject): Record<string, unknown> {
