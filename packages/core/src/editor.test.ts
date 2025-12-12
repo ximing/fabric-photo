@@ -5,7 +5,7 @@ import { AddObject } from './steps/object-steps';
 import { SetBackground } from './steps/doc-steps';
 import type { Plugin } from './plugins/plugin';
 import type { Renderer } from './render/renderer';
-import type { PathObject, ShapeObject } from './model/doc';
+import type { PathObject, ShapeObject, TextObject } from './model/doc';
 import { Transaction } from './transform/transaction';
 import type { EditorState } from './state/editor-state';
 
@@ -599,6 +599,150 @@ describe('Editor', () => {
         editor.dispatch(editor.newTransaction().setSelection([]));
         editor.changeShape({ fill: '#f00' }); // 无选中 no-op
         // 第一次 changeShape 已 undo（undoSize 回落），后续均为 no-op；setSelection 不入历史
+        expect(editor.history.undoSize).toBe(before);
+    });
+
+    function makeText(id: string, overrides: Partial<TextObject> = {}): TextObject {
+        return {
+            id,
+            kind: 'text',
+            text: 'hello',
+            left: 0,
+            top: 0,
+            angle: 0,
+            scaleX: 1,
+            scaleY: 1,
+            fontSize: 50,
+            fontFamily: 'sans-serif',
+            fill: '#000000',
+            fontWeight: 'normal',
+            fontStyle: '',
+            textDecoration: '',
+            textAlign: 'left',
+            ...overrides
+        };
+    }
+
+    it('startTextMode/endTextMode 切 mode；重复调用 no-op；endAll 通吃', () => {
+        const editor = new Editor({ renderer: makeFakeRenderer() });
+
+        editor.startTextMode();
+        expect(editor.getCurrentState()).toBe('text');
+        editor.startTextMode(); // 重复进入 no-op
+        expect(editor.getCurrentState()).toBe('text');
+        editor.endTextMode();
+        expect(editor.getCurrentState()).toBe('normal');
+
+        editor.startTextMode();
+        editor.endAll();
+        expect(editor.getCurrentState()).toBe('normal');
+
+        editor.endTextMode(); // 已 normal，no-op
+        expect(editor.getCurrentState()).toBe('normal');
+    });
+
+    it('addText 落 TextObject（默认文案/样式/位置），fire objectAdded，可 undo；无头 defaultEdit 不抛错', () => {
+        const editor = new Editor({ renderer: makeFakeRenderer() });
+        const added: TextObject[] = [];
+        editor.on('objectAdded', ({ object }) => {
+            added.push(object as TextObject);
+        });
+
+        editor.addText('hi', { styles: { fontWeight: 'bold', fontSize: 30 }, position: { x: 10, y: 20 } }, true);
+        const obj = editor.state.doc.objects[0] as TextObject;
+        expect(obj).toMatchObject({
+            kind: 'text',
+            text: 'hi',
+            left: 10,
+            top: 20,
+            fontWeight: 'bold',
+            fontSize: 30,
+            fill: '#000000',
+            fontFamily: 'sans-serif',
+            fontStyle: '',
+            textDecoration: '',
+            textAlign: 'left'
+        });
+        expect(added).toHaveLength(1);
+        expect(added[0].id).toBe(obj.id);
+        // 对齐旧 addText：非 text 模式调用时顺带切到 text 模式
+        expect(editor.getCurrentState()).toBe('text');
+        expect(editor.isTextEditing()).toBe(false); // 无头模式无 controller，defaultEdit 为 no-op
+
+        editor.addText(); // 缺省：默认文案「双击编辑」，无头 viewport info 全 0 → left/top = 0
+        const def = editor.state.doc.objects[1] as TextObject;
+        expect(def).toMatchObject({ text: '双击编辑', left: 0, top: 0, fontSize: 50 });
+
+        editor.undo();
+        editor.undo();
+        expect(editor.state.doc.objects).toHaveLength(0);
+        editor.redo();
+        editor.redo();
+        expect(editor.state.doc.objects).toHaveLength(2);
+    });
+
+    it('changeText 只改选中且 kind=text 的对象，undo 可回滚；无目标 no-op', () => {
+        const editor = new Editor({ renderer: makeFakeRenderer() });
+        editor.dispatch(
+            editor
+                .newTransaction()
+                .addStep(new AddObject(makeText('t1')))
+                .addStep(new AddObject(makeObject('s1')))
+                .setSelection(['t1', 's1'])
+        );
+        const before = editor.history.undoSize;
+
+        editor.changeText('改后');
+        expect((editor.state.getObject('t1') as TextObject).text).toBe('改后');
+        expect(editor.state.getObject('s1')).toMatchObject({ kind: 'shape' }); // 非 text 不动
+
+        editor.undo();
+        expect((editor.state.getObject('t1') as TextObject).text).toBe('hello');
+
+        editor.changeText('hello'); // 与当前值相同 → no-op
+        editor.dispatch(editor.newTransaction().setSelection([]));
+        editor.changeText('x'); // 无选中 no-op
+        expect(editor.history.undoSize).toBe(before);
+    });
+
+    it('changeTextStyle toggle：异值设置、同值重置默认；多字段混合；undo 可回滚', () => {
+        const editor = new Editor({ renderer: makeFakeRenderer() });
+        editor.dispatch(
+            editor
+                .newTransaction()
+                .addStep(new AddObject(makeText('t1', { fontWeight: 'bold', fontSize: 80 })))
+                .addStep(new AddObject(makeText('t2')))
+                .setSelection(['t1', 't2'])
+        );
+
+        // t1.fontWeight 已是 bold → toggle 重置 'normal'；t2 不是 → 设为 bold
+        editor.changeTextStyle({ fontWeight: 'bold' });
+        expect((editor.state.getObject('t1') as TextObject).fontWeight).toBe('normal');
+        expect((editor.state.getObject('t2') as TextObject).fontWeight).toBe('bold');
+
+        // fontSize：t1 当前 80 → 重置默认 50；t2 当前 50 → 设为 80
+        editor.changeTextStyle({ fontSize: 80 });
+        expect((editor.state.getObject('t1') as TextObject).fontSize).toBe(50);
+        expect((editor.state.getObject('t2') as TextObject).fontSize).toBe(80);
+
+        // 多字段混合 + 未涉及字段不动
+        editor.changeTextStyle({ fontStyle: 'italic', fill: '#000000' });
+        const t2 = editor.state.getObject('t2') as TextObject;
+        expect(t2.fontStyle).toBe('italic'); // '' → italic
+        expect(t2.fill).toBe('#000000'); // 已是 '#000000' → toggle 重置仍是 '#000000'
+        expect(t2.fontFamily).toBe('sans-serif');
+
+        editor.undo();
+        editor.undo();
+        editor.undo();
+        expect((editor.state.getObject('t1') as TextObject).fontWeight).toBe('bold');
+        expect((editor.state.getObject('t1') as TextObject).fontSize).toBe(80);
+
+        const before = editor.history.undoSize;
+        editor.changeTextStyle(); // 缺省 no-op
+        editor.changeTextStyle({}); // 空配置 no-op
+        editor.dispatch(editor.newTransaction().setSelection([]));
+        editor.changeTextStyle({ fontWeight: 'bold' }); // 无选中 no-op
         expect(editor.history.undoSize).toBe(before);
     });
 });

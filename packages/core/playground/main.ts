@@ -52,6 +52,17 @@ document.getElementById('btn-triangle')!.addEventListener('click', () => startSh
 document.getElementById('btn-add-shape')!.addEventListener('click', () =>
     editor.addShape('rect', { width: 120, height: 80, fill: 'rgba(0, 0, 255, 0.3)', stroke: 'blue', strokeWidth: 2 })
 );
+const textBtn = document.getElementById('btn-text')!;
+textBtn.addEventListener('click', () => {
+    if (editor.getCurrentState() === 'text') {
+        editor.endTextMode();
+    } else {
+        editor.startTextMode();
+    }
+});
+document.getElementById('btn-text-bold')!.addEventListener('click', () =>
+    editor.changeTextStyle({ fontWeight: 'bold' })
+);
 document.getElementById('btn-end')!.addEventListener('click', () => editor.endAll());
 const zoomLabel = document.getElementById('zoom-label')!;
 editor.on('change:viewport', ({ viewport }) => {
@@ -59,6 +70,7 @@ editor.on('change:viewport', ({ viewport }) => {
 });
 editor.on('change:mode', ({ mode }) => {
     panBtn.textContent = mode === 'pan' ? '退出 pan' : 'pan';
+    textBtn.textContent = mode === 'text' ? '退出 text' : 'text';
 });
 
 editor.on('loadImage', ({ name, width, height }) => {
