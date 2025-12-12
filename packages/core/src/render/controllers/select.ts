@@ -20,20 +20,31 @@ function readGeometry(fObj: FabricObject): Record<string, number> {
  * object:modified 提交属性（按 kind 分派）：
  * shape 把 scale 折算回 width/height 并归一 scaleX/scaleY（移植自旧 shape-resize-helper
  * 的 adjustDimensionOnScaling；doc 模型中 circle 以 width/height 存储，渲染时再折算
- * rx/ry，故 rect/circle/triangle 共用同一折算公式），其余 kind 只读回几何。
+ * rx/ry，故 rect/circle/triangle 共用同一折算公式）；
+ * text 把 scale 折算进 fontSize 并归一 scaleX/scaleY（对齐旧 _onFabricScaling 的
+ * fontSize × scaleY——中点控制点已隐藏，角点缩放近似等比，只取 scaleY）；
+ * 其余 kind 只读回几何。
  */
 function readCommittedAttrs(obj: EditorObject, fObj: FabricObject): Record<string, number> {
     const geometry = readGeometry(fObj);
-    if (obj.kind !== 'shape') {
-        return geometry;
+    if (obj.kind === 'shape') {
+        return {
+            ...geometry,
+            width: obj.width * fObj.scaleX,
+            height: obj.height * fObj.scaleY,
+            scaleX: 1,
+            scaleY: 1
+        };
     }
-    return {
-        ...geometry,
-        width: obj.width * fObj.scaleX,
-        height: obj.height * fObj.scaleY,
-        scaleX: 1,
-        scaleY: 1
-    };
+    if (obj.kind === 'text') {
+        return {
+            ...geometry,
+            fontSize: obj.fontSize * fObj.scaleY,
+            scaleX: 1,
+            scaleY: 1
+        };
+    }
+    return geometry;
 }
 
 function sameAttrs(obj: EditorObject, attrs: Record<string, number>): boolean {

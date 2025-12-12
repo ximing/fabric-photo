@@ -12,6 +12,8 @@ import { LineController } from './render/controllers/line';
 import { PanController } from './render/controllers/pan';
 import { SelectController } from './render/controllers/select';
 import { ShapeController } from './render/controllers/shape';
+import { DEFAULT_TEXT, TEXT_STYLE_DEFAULTS, TextController, createTextObject } from './render/controllers/text';
+import type { TextStyleOptions } from './render/controllers/text';
 import { FabricRenderer } from './render/fabric-renderer';
 import { preloadImage } from './render/object-factory';
 import type { Renderer } from './render/renderer';
@@ -64,6 +66,8 @@ export class Editor {
     private readonly arrowController?: ArrowController;
     /** shape controller（同上，仅 FabricRenderer 存在时创建）。 */
     private readonly shapeController?: ShapeController;
+    /** text controller（同上，仅 FabricRenderer 存在时创建）。 */
+    private readonly textController?: TextController;
 
     constructor(options: EditorOptions = {}) {
         this.currentState = new EditorState();
@@ -96,10 +100,12 @@ export class Editor {
             this.lineController = new LineController();
             this.arrowController = new ArrowController();
             this.shapeController = new ShapeController();
+            this.textController = new TextController();
             this.fabricRenderer.registerController(this.drawController);
             this.fabricRenderer.registerController(this.lineController);
             this.fabricRenderer.registerController(this.arrowController);
             this.fabricRenderer.registerController(this.shapeController);
+            this.fabricRenderer.registerController(this.textController);
         }
     }
 
@@ -557,6 +563,120 @@ export class Editor {
         if (changed) {
             this.dispatch(tr);
         }
+    }
+
+    // —— 文本（IText 原地编辑）——
+
+    /** 进入文本模式（mode 'text'）：点击画布空白在该点新建文本并进入编辑，双击已有文本再编辑。 */
+    startTextMode(): void {
+        if (this.currentState.mode === 'text') {
+            return;
+        }
+        this.dispatch(this.newTransaction().setMode('text'));
+    }
+
+    /** 退出文本模式，回到 normal（编辑中的文本先提交）。 */
+    endTextMode(): void {
+        if (this.currentState.mode !== 'text') {
+            return;
+        }
+        this.dispatch(this.newTransaction().setMode('normal'));
+    }
+
+    /**
+     * 添加文本对象（可撤销）并 fire objectAdded；非 text 模式时顺带切到 text 模式（对齐旧 addText）。
+     * text 缺省「双击编辑」；position 缺省画布中心（doc 坐标，无头模式退化到 0,0）；
+     * defaultEdit=true 时创建后立即进入编辑（无头模式为 no-op）。
+     */
+    addText(
+        text?: string,
+        options?: { styles?: TextStyleOptions; position?: { x: number; y: number } },
+        defaultEdit = false
+    ): void {
+        let left: number;
+        let top: number;
+        if (options?.position !== undefined) {
+            left = options.position.x;
+            top = options.position.y;
+        } else {
+            const info = this.getViewPortInfo();
+            left = info.left + info.width / 2;
+            top = info.top + info.height / 2;
+        }
+        const object = createTextObject(text ?? DEFAULT_TEXT, left, top, options?.styles);
+        const tr = this.newTransaction().addStep(new AddObject(object));
+        if (this.currentState.mode !== 'text') {
+            tr.setMode('text');
+        }
+        this.dispatch(tr);
+        this.emitter.emit('objectAdded', { object });
+        if (defaultEdit) {
+            this.textController?.editObject(object.id);
+        }
+    }
+
+    /** 修改选中文本（含编辑中的文本）的内容（可撤销）；无目标或内容未变为 no-op。 */
+    changeText(text: string): void {
+        const tr = this.newTransaction();
+        let changed = false;
+        for (const id of this.textTargetIds()) {
+            const obj = this.currentState.getObject(id);
+            if (obj !== undefined && obj.kind === 'text' && obj.text !== text) {
+                tr.addStep(new UpdateObject(id, { text }));
+                changed = true;
+            }
+        }
+        if (changed) {
+            this.dispatch(tr);
+        }
+    }
+
+    /**
+     * 修改选中文本（含编辑中的文本）的样式（可撤销），toggle 语义（对齐旧 setStyle）：
+     * 传入值与该字段当前值相同 → 重置为该字段默认值（TEXT_STYLE_DEFAULTS）；否则设为传入值。
+     */
+    changeTextStyle(styleObj?: TextStyleOptions): void {
+        if (styleObj === undefined) {
+            return;
+        }
+        const tr = this.newTransaction();
+        let changed = false;
+        for (const id of this.textTargetIds()) {
+            const obj = this.currentState.getObject(id);
+            if (obj === undefined || obj.kind !== 'text') {
+                continue;
+            }
+            const attrs: ObjectAttrs = {};
+            for (const key of Object.keys(styleObj) as (keyof TextStyleOptions)[]) {
+                const value = styleObj[key];
+                if (value === undefined) {
+                    continue;
+                }
+                attrs[key] = obj[key] === value ? TEXT_STYLE_DEFAULTS[key] : value;
+            }
+            if (Object.keys(attrs).length > 0) {
+                tr.addStep(new UpdateObject(id, attrs));
+                changed = true;
+            }
+        }
+        if (changed) {
+            this.dispatch(tr);
+        }
+    }
+
+    /** 是否有文本正处于编辑态（keymap 的 Delete 守卫通过鸭子类型调用）。 */
+    isTextEditing(): boolean {
+        return this.textController?.isEditing() ?? false;
+    }
+
+    /** changeText/changeTextStyle 的目标集：选中文本 + 编辑中的文本（对齐旧「作用于 active 文本」）。 */
+    private textTargetIds(): string[] {
+        const ids = [...this.currentState.selection];
+        const editingId = this.textController?.getEditingId();
+        if (editingId !== undefined && !ids.includes(editingId)) {
+            ids.push(editingId);
+        }
+        return ids;
     }
 
     /** 对当前选中且 kind==='path' 且 tool 匹配的对象 dispatch UpdateObject。 */

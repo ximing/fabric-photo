@@ -134,10 +134,19 @@ export function createFabricObject(obj: EditorObject): FabricObject {
                 fObj = new Triangle({ ...baseAttrs(obj), width: obj.width, height: obj.height, ...shapeAttrs(obj) });
             }
             break;
-        case 'text':
-            // editable 初始关闭，进入文本编辑由 text controller（Task 14）接管
-            fObj = new IText(obj.text, { ...baseAttrs(obj), ...textAttrs(obj), editable: false });
+        case 'text': {
+            // editable 初始关闭，进入文本编辑由 text controller 显式驱动；
+            // objectCaching:false + 隐藏中点控制点（对齐旧 text 模块渲染参数）
+            const itext = new IText(obj.text, {
+                ...baseAttrs(obj),
+                ...textAttrs(obj),
+                editable: false,
+                objectCaching: false
+            });
+            itext.setControlsVisibility({ mb: false, ml: false, mr: false, mt: false });
+            fObj = itext;
             break;
+        }
         case 'path':
             fObj = new Path(obj.path, { ...baseAttrs(obj), ...pathAttrs(obj) });
             break;
