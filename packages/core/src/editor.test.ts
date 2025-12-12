@@ -510,4 +510,95 @@ describe('Editor', () => {
         editor.changeArrowStyle({}); // 空 attrs no-op
         expect(editor.history.undoSize).toBe(before + 1);
     });
+
+    it('startDrawingShapeMode/endDrawingShapeMode 切 mode；重复调用 no-op；endAll 通吃', () => {
+        const editor = new Editor({ renderer: makeFakeRenderer() });
+
+        editor.startDrawingShapeMode();
+        expect(editor.getCurrentState()).toBe('shape');
+        editor.startDrawingShapeMode(); // 重复进入 no-op
+        expect(editor.getCurrentState()).toBe('shape');
+        editor.endDrawingShapeMode();
+        expect(editor.getCurrentState()).toBe('normal');
+
+        editor.startDrawingShapeMode();
+        editor.endAll();
+        expect(editor.getCurrentState()).toBe('normal');
+
+        editor.endDrawingShapeMode(); // 已 normal，no-op
+        expect(editor.getCurrentState()).toBe('normal');
+    });
+
+    it('setDrawingShape 无头模式不抛错', () => {
+        const editor = new Editor({ renderer: makeFakeRenderer() });
+        editor.setDrawingShape('circle', { fill: 'red', stroke: 'blue', strokeWidth: 3 });
+        editor.startDrawingShapeMode();
+        editor.setDrawingShape('triangle');
+        expect(editor.getCurrentState()).toBe('shape');
+    });
+
+    it('addShape 显式 left/top 落 ShapeObject 并 fire objectAdded，可 undo；缺省 left/top 无头落 0,0', () => {
+        const editor = new Editor({ renderer: makeFakeRenderer() });
+        const added: ShapeObject[] = [];
+        editor.on('objectAdded', ({ object }) => {
+            added.push(object as ShapeObject);
+        });
+
+        editor.addShape('rect', { left: 10, top: 20, width: 30, height: 40, fill: 'red', stroke: 'blue', strokeWidth: 2 });
+        const obj = editor.state.doc.objects[0] as ShapeObject;
+        expect(obj).toMatchObject({
+            kind: 'shape',
+            shapeType: 'rect',
+            left: 10,
+            top: 20,
+            width: 30,
+            height: 40,
+            fill: 'red',
+            stroke: 'blue',
+            strokeWidth: 2,
+            scaleX: 1,
+            scaleY: 1
+        });
+        expect(added).toHaveLength(1);
+        expect(added[0].id).toBe(obj.id);
+
+        editor.addShape('circle'); // 缺省：无头 viewport info 全 0 → left/top = 0，宽高 100
+        const circle = editor.state.doc.objects[1] as ShapeObject;
+        expect(circle).toMatchObject({ shapeType: 'circle', left: 0, top: 0, width: 100, height: 100 });
+
+        editor.undo();
+        editor.undo();
+        expect(editor.state.doc.objects).toHaveLength(0);
+        editor.redo();
+        editor.redo();
+        expect(editor.state.doc.objects).toHaveLength(2);
+    });
+
+    it('changeShape 只改选中且 kind=shape 的对象，undo 可回滚；无匹配/空配置不产生历史', () => {
+        const editor = new Editor({ renderer: makeFakeRenderer() });
+        editor.dispatch(
+            editor
+                .newTransaction()
+                .addStep(new AddObject(makeObject('s1')))
+                .addStep(new AddObject(makePath('p1', 'freedraw')))
+                .setSelection(['s1', 'p1'])
+        );
+        const before = editor.history.undoSize;
+
+        editor.changeShape({ fill: '#0f0', strokeWidth: 5 });
+        const s1 = editor.state.getObject('s1') as ShapeObject;
+        expect(s1.fill).toBe('#0f0');
+        expect(s1.strokeWidth).toBe(5);
+        expect(s1.stroke).toBe('#000'); // 未指定不动
+        expect((editor.state.getObject('p1') as PathObject).fill).toBe(''); // 非 shape 不动
+
+        editor.undo();
+        expect((editor.state.getObject('s1') as ShapeObject).fill).toBe('#000');
+
+        editor.changeShape({}); // 空 attrs no-op
+        editor.dispatch(editor.newTransaction().setSelection([]));
+        editor.changeShape({ fill: '#f00' }); // 无选中 no-op
+        // 第一次 changeShape 已 undo（undoSize 回落），后续均为 no-op；setSelection 不入历史
+        expect(editor.history.undoSize).toBe(before);
+    });
 });

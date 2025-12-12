@@ -6,8 +6,6 @@ import { getFpId } from '../object-factory';
 import type { Controller, ControllerContext } from './controller';
 
 /** 拖拽/缩放/旋转结束后需要读回的几何字段。 */
-const GEOMETRY_KEYS = ['left', 'top', 'angle', 'scaleX', 'scaleY'] as const;
-
 function readGeometry(fObj: FabricObject): Record<string, number> {
     return {
         left: fObj.left,
@@ -18,9 +16,29 @@ function readGeometry(fObj: FabricObject): Record<string, number> {
     };
 }
 
-function sameGeometry(obj: EditorObject, attrs: Record<string, number>): boolean {
+/**
+ * object:modified 提交属性（按 kind 分派）：
+ * shape 把 scale 折算回 width/height 并归一 scaleX/scaleY（移植自旧 shape-resize-helper
+ * 的 adjustDimensionOnScaling；doc 模型中 circle 以 width/height 存储，渲染时再折算
+ * rx/ry，故 rect/circle/triangle 共用同一折算公式），其余 kind 只读回几何。
+ */
+function readCommittedAttrs(obj: EditorObject, fObj: FabricObject): Record<string, number> {
+    const geometry = readGeometry(fObj);
+    if (obj.kind !== 'shape') {
+        return geometry;
+    }
+    return {
+        ...geometry,
+        width: obj.width * fObj.scaleX,
+        height: obj.height * fObj.scaleY,
+        scaleX: 1,
+        scaleY: 1
+    };
+}
+
+function sameAttrs(obj: EditorObject, attrs: Record<string, number>): boolean {
     const record = obj as unknown as Record<string, unknown>;
-    return GEOMETRY_KEYS.every((key) => record[key] === attrs[key]);
+    return Object.keys(attrs).every((key) => record[key] === attrs[key]);
 }
 
 function sameIdSet(a: readonly string[], b: readonly string[]): boolean {
@@ -84,8 +102,8 @@ export class SelectController implements Controller {
         if (obj === undefined) {
             return;
         }
-        const attrs = readGeometry(target);
-        if (sameGeometry(obj, attrs)) {
+        const attrs = readCommittedAttrs(obj, target);
+        if (sameAttrs(obj, attrs)) {
             return; // 无实际位移（如原地点击控制点），不产生空历史
         }
         ctx.dispatch(new Transaction(ctx.getState()).addStep(new UpdateObject(fpId, attrs)));
@@ -140,8 +158,8 @@ export class SelectController implements Controller {
                 if (obj === undefined) {
                     continue;
                 }
-                const attrs = readGeometry(member);
-                if (!sameGeometry(obj, attrs)) {
+                const attrs = readCommittedAttrs(obj, member);
+                if (!sameAttrs(obj, attrs)) {
                     tr.addStep(new UpdateObject(fpId, attrs));
                 }
             }
