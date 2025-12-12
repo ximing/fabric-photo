@@ -80,7 +80,11 @@ export class ShapeController implements Controller {
         }
     }
 
-    /** 由起点与当前指针计算落盘几何（含 Shift 等比）；left/top 为 bbox 左上角。 */
+    /**
+     * 由起点与当前指针计算落盘几何（含 Shift 等比）；left/top 为 bbox 左上角。
+     * 锚定起点角（对齐旧 adjustOriginByMovingPointer 的 isRegular 语义）：box 沿拖动
+     * 方向从起点延伸；Shift 等比放大时短轴方向也不越过起点线（非 Shift 时退化为 min）。
+     */
     private geometryAt(
         x: number,
         y: number
@@ -92,8 +96,8 @@ export class ShapeController implements Controller {
             height = this.type === 'triangle' ? (Math.sqrt(3) / 2) * width : width;
         }
         return {
-            left: Math.min(this.startX, x),
-            top: Math.min(this.startY, y),
+            left: x >= this.startX ? this.startX : this.startX - width,
+            top: y >= this.startY ? this.startY : this.startY - height,
             width,
             height
         };
