@@ -42,6 +42,16 @@ document.getElementById('btn-line')!.addEventListener('click', () =>
 document.getElementById('btn-arrow')!.addEventListener('click', () =>
     editor.startArrowDrawing({ width: 4, color: 'red' })
 );
+function startShape(type: 'rect' | 'circle' | 'triangle'): void {
+    editor.setDrawingShape(type, { fill: 'rgba(255, 0, 0, 0.3)', stroke: 'red', strokeWidth: 2 });
+    editor.startDrawingShapeMode();
+}
+document.getElementById('btn-rect')!.addEventListener('click', () => startShape('rect'));
+document.getElementById('btn-circle')!.addEventListener('click', () => startShape('circle'));
+document.getElementById('btn-triangle')!.addEventListener('click', () => startShape('triangle'));
+document.getElementById('btn-add-shape')!.addEventListener('click', () =>
+    editor.addShape('rect', { width: 120, height: 80, fill: 'rgba(0, 0, 255, 0.3)', stroke: 'blue', strokeWidth: 2 })
+);
 document.getElementById('btn-end')!.addEventListener('click', () => editor.endAll());
 const zoomLabel = document.getElementById('zoom-label')!;
 editor.on('change:viewport', ({ viewport }) => {

@@ -1,6 +1,6 @@
 import { Emitter, type EditorEventMap } from './events';
 import { createId } from './model/id';
-import type { ImageObject } from './model/doc';
+import type { ImageObject, ShapeObject } from './model/doc';
 import { History } from './plugins/history';
 import { Keymap } from './plugins/keymap';
 import type { Plugin } from './plugins/plugin';
@@ -11,6 +11,7 @@ import { DrawController } from './render/controllers/draw';
 import { LineController } from './render/controllers/line';
 import { PanController } from './render/controllers/pan';
 import { SelectController } from './render/controllers/select';
+import { ShapeController } from './render/controllers/shape';
 import { FabricRenderer } from './render/fabric-renderer';
 import { preloadImage } from './render/object-factory';
 import type { Renderer } from './render/renderer';
@@ -61,6 +62,8 @@ export class Editor {
     private readonly drawController?: DrawController;
     private readonly lineController?: LineController;
     private readonly arrowController?: ArrowController;
+    /** shape controller（同上，仅 FabricRenderer 存在时创建）。 */
+    private readonly shapeController?: ShapeController;
 
     constructor(options: EditorOptions = {}) {
         this.currentState = new EditorState();
@@ -92,9 +95,11 @@ export class Editor {
             this.drawController = new DrawController();
             this.lineController = new LineController();
             this.arrowController = new ArrowController();
+            this.shapeController = new ShapeController();
             this.fabricRenderer.registerController(this.drawController);
             this.fabricRenderer.registerController(this.lineController);
             this.fabricRenderer.registerController(this.arrowController);
+            this.fabricRenderer.registerController(this.shapeController);
         }
     }
 
@@ -462,6 +467,96 @@ export class Editor {
     /** 修改选中 arrow 路径的样式（stroke/strokeWidth，可撤销）。 */
     changeArrowStyle(setting?: { width?: number; color?: string }): void {
         this.changeSelectedPathStyle('arrow', setting);
+    }
+
+    // —— 形状（rect / circle / triangle）——
+
+    /** 进入形状绘制模式（mode 'shape'）；形状类型与样式由 setDrawingShape 预设。 */
+    startDrawingShapeMode(): void {
+        if (this.currentState.mode === 'shape') {
+            return;
+        }
+        this.dispatch(this.newTransaction().setMode('shape'));
+    }
+
+    /** 退出形状绘制模式，回到 normal。 */
+    endDrawingShapeMode(): void {
+        if (this.currentState.mode !== 'shape') {
+            return;
+        }
+        this.dispatch(this.newTransaction().setMode('normal'));
+    }
+
+    /** 记录当前绘制形状的类型与样式（影响下一次拖出的对象）；无头模式为 no-op。 */
+    setDrawingShape(
+        type: ShapeObject['shapeType'],
+        options?: { fill?: string; stroke?: string; strokeWidth?: number }
+    ): void {
+        this.shapeController?.setShape(type, options);
+    }
+
+    /**
+     * 直接添加一个形状对象（可撤销）并 fire objectAdded。
+     * left/top 缺省取画布中心（doc 坐标；对齐旧 addShape 的 canvas.getCenter 语义，
+     * 无头模式退化到 0,0）；width/height 缺省 100，样式缺省 白底/黑边/1px。
+     */
+    addShape(
+        type: ShapeObject['shapeType'],
+        options?: Partial<Pick<ShapeObject, 'left' | 'top' | 'width' | 'height' | 'fill' | 'stroke' | 'strokeWidth'>>
+    ): void {
+        let left = options?.left;
+        let top = options?.top;
+        if (left === undefined || top === undefined) {
+            const info = this.getViewPortInfo();
+            left ??= info.left + info.width / 2;
+            top ??= info.top + info.height / 2;
+        }
+        const object: ShapeObject = {
+            id: createId(),
+            kind: 'shape',
+            shapeType: type,
+            left,
+            top,
+            width: options?.width ?? 100,
+            height: options?.height ?? 100,
+            angle: 0,
+            scaleX: 1,
+            scaleY: 1,
+            fill: options?.fill ?? '#ffffff',
+            stroke: options?.stroke ?? '#000000',
+            strokeWidth: options?.strokeWidth ?? 1
+        };
+        this.dispatch(this.newTransaction().addStep(new AddObject(object)));
+        this.emitter.emit('objectAdded', { object });
+    }
+
+    /** 修改选中 shape 对象的样式（fill/stroke/strokeWidth，可撤销）；无匹配对象或空配置为 no-op。 */
+    changeShape(options: { fill?: string; stroke?: string; strokeWidth?: number }): void {
+        const attrs: ObjectAttrs = {};
+        if (options.fill !== undefined) {
+            attrs.fill = options.fill;
+        }
+        if (options.stroke !== undefined) {
+            attrs.stroke = options.stroke;
+        }
+        if (options.strokeWidth !== undefined) {
+            attrs.strokeWidth = options.strokeWidth;
+        }
+        if (Object.keys(attrs).length === 0) {
+            return;
+        }
+        const tr = this.newTransaction();
+        let changed = false;
+        for (const id of this.currentState.selection) {
+            const obj = this.currentState.getObject(id);
+            if (obj !== undefined && obj.kind === 'shape') {
+                tr.addStep(new UpdateObject(id, attrs));
+                changed = true;
+            }
+        }
+        if (changed) {
+            this.dispatch(tr);
+        }
     }
 
     /** 对当前选中且 kind==='path' 且 tool 匹配的对象 dispatch UpdateObject。 */
