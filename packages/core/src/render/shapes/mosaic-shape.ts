@@ -7,7 +7,8 @@ export type MosaicShapeProps = TFabricObjectProps & {
 
 /**
  * 马赛克自定义对象（移植自旧 src/shape/mosaic.ts 到 fabric 6 类体系）：
- * - 渲染语义：对象 left/top 为外接框中心（fabric 6 默认 center origin），
+ * - 渲染语义：对象 left/top 为外接框中心（object-factory 创建时显式设置
+ *   originX/originY: 'center'；fabric 6 默认是 left/top origin），
  *   rects 的 x/y 在 add 时已归一化到外接框左上角（0..width / 0..height），
  *   _render 减 width/2、height/2 换算到中心原点逐块 fillRect
  * - objectCaching:false（对齐旧实现：取色内容不进入对象缓存）
