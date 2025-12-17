@@ -52,6 +52,14 @@ document.getElementById('btn-triangle')!.addEventListener('click', () => startSh
 document.getElementById('btn-add-shape')!.addEventListener('click', () =>
     editor.addShape('rect', { width: 120, height: 80, fill: 'rgba(0, 0, 255, 0.3)', stroke: 'blue', strokeWidth: 2 })
 );
+const mosaicBtn = document.getElementById('btn-mosaic')!;
+mosaicBtn.addEventListener('click', () => {
+    if (editor.getCurrentState() === 'mosaic') {
+        editor.endMosaicDrawing();
+    } else {
+        editor.startMosaicDrawing({ dimensions: 12 });
+    }
+});
 const textBtn = document.getElementById('btn-text')!;
 textBtn.addEventListener('click', () => {
     if (editor.getCurrentState() === 'text') {
@@ -71,6 +79,7 @@ editor.on('change:viewport', ({ viewport }) => {
 editor.on('change:mode', ({ mode }) => {
     panBtn.textContent = mode === 'pan' ? '退出 pan' : 'pan';
     textBtn.textContent = mode === 'text' ? '退出 text' : 'text';
+    mosaicBtn.textContent = mode === 'mosaic' ? '退出 mosaic' : 'mosaic';
 });
 
 editor.on('loadImage', ({ name, width, height }) => {

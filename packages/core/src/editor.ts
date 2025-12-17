@@ -9,6 +9,7 @@ import type { ControllerContext } from './render/controllers/controller';
 import { ArrowController } from './render/controllers/arrow';
 import { DrawController } from './render/controllers/draw';
 import { LineController } from './render/controllers/line';
+import { MosaicController } from './render/controllers/mosaic';
 import { PanController } from './render/controllers/pan';
 import { SelectController } from './render/controllers/select';
 import { ShapeController } from './render/controllers/shape';
@@ -68,6 +69,8 @@ export class Editor {
     private readonly shapeController?: ShapeController;
     /** text controller（同上，仅 FabricRenderer 存在时创建）。 */
     private readonly textController?: TextController;
+    /** mosaic controller（同上，仅 FabricRenderer 存在时创建）。 */
+    private readonly mosaicController?: MosaicController;
 
     constructor(options: EditorOptions = {}) {
         this.currentState = new EditorState();
@@ -101,11 +104,13 @@ export class Editor {
             this.arrowController = new ArrowController();
             this.shapeController = new ShapeController();
             this.textController = new TextController();
+            this.mosaicController = new MosaicController();
             this.fabricRenderer.registerController(this.drawController);
             this.fabricRenderer.registerController(this.lineController);
             this.fabricRenderer.registerController(this.arrowController);
             this.fabricRenderer.registerController(this.shapeController);
             this.fabricRenderer.registerController(this.textController);
+            this.fabricRenderer.registerController(this.mosaicController);
         }
     }
 
@@ -563,6 +568,30 @@ export class Editor {
         if (changed) {
             this.dispatch(tr);
         }
+    }
+
+    // —— 马赛克（涂抹取平均色）——
+
+    /**
+     * 进入马赛克涂抹模式（mode 'mosaic'）；dimensions 为涂抹块边长（doc 像素，默认 8，
+     * 对齐旧 startMosaicDrawing 缺省）。已在 mosaic 模式时为 no-op（对齐旧实现）。
+     */
+    startMosaicDrawing(setting?: { dimensions?: number }): void {
+        if (this.currentState.mode === 'mosaic') {
+            return;
+        }
+        if (setting !== undefined) {
+            this.mosaicController?.setDimensions(setting.dimensions);
+        }
+        this.dispatch(this.newTransaction().setMode('mosaic'));
+    }
+
+    /** 退出马赛克涂抹模式，回到 normal。 */
+    endMosaicDrawing(): void {
+        if (this.currentState.mode !== 'mosaic') {
+            return;
+        }
+        this.dispatch(this.newTransaction().setMode('normal'));
     }
 
     // —— 文本（IText 原地编辑）——
