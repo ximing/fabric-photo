@@ -1,5 +1,6 @@
 import { Ellipse, FabricImage, IText, Path, Rect, Triangle, util, type FabricObject } from 'fabric';
 import type { EditorObject, ImageObject, PathObject, ShapeObject, TextObject } from '../model/doc';
+import { MosaicShape } from './shapes/mosaic-shape';
 
 /**
  * fabric 6.9.1 的类型声明里没有 FabricObject.data（运行时有），
@@ -159,8 +160,9 @@ export function createFabricObject(obj: EditorObject): FabricObject {
             break;
         }
         case 'mosaic':
-            // Task 15 补齐
-            throw new Error('mosaic renderer not implemented');
+            // rects 已归一化到外接框左上角；left/top 为外接框中心（center origin）
+            fObj = new MosaicShape({ ...baseAttrs(obj), width: obj.width, height: obj.height, mosaicRects: obj.rects });
+            break;
     }
     setFpId(fObj, obj.id);
     return fObj;
@@ -196,7 +198,9 @@ export function updateFabricObject(fObj: FabricObject, obj: EditorObject): void 
             break;
         }
         case 'mosaic':
-            throw new Error('mosaic renderer not implemented');
+            // 马赛克内容绘制后不可变（对齐 path），仅覆盖几何
+            fObj.set({ ...baseAttrs(obj), width: obj.width, height: obj.height, mosaicRects: obj.rects });
+            break;
     }
     fObj.setCoords();
 }
