@@ -160,8 +160,17 @@ export function createFabricObject(obj: EditorObject): FabricObject {
             break;
         }
         case 'mosaic':
-            // rects 已归一化到外接框左上角；left/top 为外接框中心（center origin）
-            fObj = new MosaicShape({ ...baseAttrs(obj), width: obj.width, height: obj.height, mosaicRects: obj.rects });
+            // rects 已归一化到外接框左上角；doc 的 left/top 为外接框中心。
+            // fabric 6 默认 originX:'left'/originY:'top'，必须显式 center origin，
+            // 否则命中框/选框相对可见内容偏移 (+w/2, +h/2)
+            fObj = new MosaicShape({
+                ...baseAttrs(obj),
+                originX: 'center',
+                originY: 'center',
+                width: obj.width,
+                height: obj.height,
+                mosaicRects: obj.rects
+            });
             break;
     }
     setFpId(fObj, obj.id);
