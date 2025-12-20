@@ -745,4 +745,82 @@ describe('Editor', () => {
         editor.changeTextStyle({ fontWeight: 'bold' }); // 无选中 no-op
         expect(editor.history.undoSize).toBe(before);
     });
+
+    it('getAngle 无背景返回 0；setAngle/rotate 无背景为 no-op', () => {
+        const renderer = makeFakeRenderer();
+        const editor = new Editor({ renderer });
+        expect(editor.getAngle()).toBe(0);
+
+        editor.setAngle(90);
+        editor.rotate(90);
+        expect(editor.getAngle()).toBe(0);
+        expect(editor.history.undoSize).toBe(0);
+        expect(renderer.syncState).not.toHaveBeenCalled();
+    });
+
+    it('setAngle 绝对角度 %360：背景 angle + 外接框宽高 + 对象随转，可 undo', () => {
+        const editor = new Editor();
+        editor.dispatch(
+            editor.newTransaction().addStep(new SetBackground({ src: 'data:,x', width: 200, height: 100, name: 'a', angle: 0 }))
+        );
+        editor.dispatch(
+            editor.newTransaction().addStep(new AddObject({ ...makeObject('a'), left: 200, top: 100 }))
+        );
+        const undoSizeBefore = editor.history.undoSize;
+
+        editor.setAngle(90);
+        const bg = editor.state.doc.background!;
+        expect(editor.getAngle()).toBe(90);
+        expect(bg.width).toBeCloseTo(100);
+        expect(bg.height).toBeCloseTo(200);
+        const obj = editor.state.getObject('a')!;
+        // (200,100) 绕旧中心 (100,50) 转 90° → (50,150)；中心差 (-50,+50) 平移 → (0,200)
+        expect(obj.left).toBeCloseTo(0);
+        expect(obj.top).toBeCloseTo(200);
+        expect(obj.angle).toBe(90);
+        expect(editor.history.undoSize).toBe(undoSizeBefore + 1);
+
+        editor.undo();
+        expect(editor.getAngle()).toBe(0);
+        expect(editor.state.doc.background!.width).toBe(200);
+        expect(editor.state.doc.background!.height).toBe(100);
+        expect(editor.state.getObject('a')!.angle).toBe(0);
+    });
+
+    it('setAngle 归一化：450 → 90；-90 → 270；角度未变 no-op', () => {
+        const editor = new Editor();
+        editor.dispatch(
+            editor.newTransaction().addStep(new SetBackground({ src: 'data:,x', width: 200, height: 100, name: 'a', angle: 0 }))
+        );
+
+        editor.setAngle(450);
+        expect(editor.getAngle()).toBe(90);
+
+        editor.setAngle(-90);
+        expect(editor.getAngle()).toBe(270);
+
+        const undoSizeBefore = editor.history.undoSize;
+        editor.setAngle(270); // 未变
+        editor.setAngle(630); // 630 % 360 = 270 未变
+        expect(editor.getAngle()).toBe(270);
+        expect(editor.history.undoSize).toBe(undoSizeBefore);
+    });
+
+    it('rotate 相对累加；连续 4 次 rotate(90) 回到原状（宽高复原）', () => {
+        const editor = new Editor();
+        editor.dispatch(
+            editor.newTransaction().addStep(new SetBackground({ src: 'data:,x', width: 200, height: 100, name: 'a', angle: 0 }))
+        );
+
+        editor.rotate(90);
+        expect(editor.getAngle()).toBe(90);
+        editor.rotate(90);
+        expect(editor.getAngle()).toBe(180);
+        editor.rotate(90);
+        expect(editor.getAngle()).toBe(270);
+        editor.rotate(90);
+        expect(editor.getAngle()).toBe(0);
+        expect(editor.state.doc.background!.width).toBeCloseTo(200);
+        expect(editor.state.doc.background!.height).toBeCloseTo(100);
+    });
 });

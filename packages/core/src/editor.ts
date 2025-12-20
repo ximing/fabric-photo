@@ -20,7 +20,7 @@ import { FabricRenderer } from './render/fabric-renderer';
 import { preloadImage } from './render/object-factory';
 import type { Renderer } from './render/renderer';
 import { EditorState, ZOOM_MAX, ZOOM_MIN, type EditorMode, type Viewport } from './state/editor-state';
-import { SetBackground } from './steps/doc-steps';
+import { SetBackground, TransformDoc } from './steps/doc-steps';
 import { AddObject, ClearObjects, RemoveObject, UpdateObject, type ObjectAttrs } from './steps/object-steps';
 import { Transaction } from './transform/transaction';
 
@@ -318,6 +318,36 @@ export class Editor {
     /** 结束当前进行中的交互（裁剪/绘制等），回到 normal 模式。 */
     endAll(): void {
         this.dispatch(this.newTransaction().setMode('normal'));
+    }
+
+    // —— 旋转（TransformDoc，可撤销）——
+
+    /** 当前背景角度（度）；无背景返回 0。 */
+    getAngle(): number {
+        return this.currentState.doc.background?.angle ?? 0;
+    }
+
+    /**
+     * 旋转到绝对角度（%360 归一，可撤销）：dispatch TransformDoc，
+     * 背景 angle + 外接框宽高与全部对象随转。无背景或归一后角度未变为 no-op
+     * （对齐旧 setAngle 的 reject 语义，改为静默 no-op）。
+     * rotateImage 事件语义由 change + change:viewport 覆盖，不单独设事件。
+     */
+    setAngle(angle: number): void {
+        const bg = this.currentState.doc.background;
+        if (bg === null) {
+            return;
+        }
+        const target = ((angle % 360) + 360) % 360;
+        if (target === bg.angle) {
+            return;
+        }
+        this.dispatch(this.newTransaction().addStep(new TransformDoc(target)));
+    }
+
+    /** 相对旋转 delta 度：setAngle(getAngle() + delta)（对齐旧 rotate 语义）。 */
+    rotate(delta: number): void {
+        this.setAngle(this.getAngle() + delta);
     }
 
     // —— 对象操作 ——
