@@ -25,6 +25,7 @@ document.getElementById('btn-export')!.addEventListener('click', () => {
 });
 document.getElementById('btn-zoom-in')!.addEventListener('click', () => editor.setZoom(editor.getZoom() * 1.25));
 document.getElementById('btn-zoom-out')!.addEventListener('click', () => editor.setZoom(editor.getZoom() / 1.25));
+document.getElementById('btn-rotate90')!.addEventListener('click', () => editor.rotate(90));
 const panBtn = document.getElementById('btn-pan')!;
 panBtn.addEventListener('click', () => {
     if (editor.getCurrentState() === 'pan') {
