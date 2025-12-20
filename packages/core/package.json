@@ -29,6 +29,8 @@
     "fabric": "^6"
   },
   "devDependencies": {
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
     "vite": "^8.2.0",
     "vitest": "^4.1.10"
   }

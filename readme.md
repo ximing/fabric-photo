@@ -2,6 +2,8 @@
 
 🎨 基于 Canvas 的纯前端图片编辑器，无需后端支持，提供丰富的图片编辑功能。
 
+> **🚧 v2 重构进行中**：本仓库正在改造为 monorepo。新一代内核 [`@gmi/fp-core`](packages/core)（ProseMirror 式 state/step/transaction 架构 + fabric 6）已可用，React 组件包 `@gmi/fp-react` 与新 demo 在路上。当前 npm 包 `fabric-photo`（本目录 `src/`）进入维护状态，不再新增功能。
+
 ![截图](./assets/main.png)
 
 ## ✨ 功能特性
