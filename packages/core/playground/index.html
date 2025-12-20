@@ -1,38 +1,68 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>fp-core playground</title>
+    <style>
+        body { font-family: sans-serif; font-size: 13px; margin: 12px; }
+        button { margin: 2px; padding: 3px 8px; cursor: pointer; }
+        button:disabled { cursor: default; opacity: 0.4; }
+        button.active { background: #1677ff; color: #fff; }
+        .row { margin-bottom: 6px; display: flex; align-items: center; flex-wrap: wrap; }
+        .row .label { width: 56px; color: #666; flex: none; }
+        .swatch {
+            display: inline-block; width: 22px; height: 22px; margin: 2px;
+            border: 2px solid #999; border-radius: 3px; cursor: pointer; box-sizing: border-box;
+        }
+        .swatch.active { border-color: #1677ff; box-shadow: 0 0 0 2px #1677ff55; }
+        #statusbar {
+            margin-top: 6px; padding: 4px 8px; background: #f0f0f0;
+            border: 1px solid #ddd; font-family: monospace; white-space: pre;
+        }
+        #zoom-label { display: inline-block; min-width: 52px; text-align: center; }
+    </style>
 </head>
 <body>
-    <div id="toolbar" style="margin-bottom:8px;">
-        <button id="btn-load">加载示例图</button>
-        <button id="btn-undo">undo</button>
-        <button id="btn-redo">redo</button>
-        <button id="btn-export">导出</button>
-        <button id="btn-zoom-in">zoom+</button>
-        <button id="btn-zoom-out">zoom-</button>
-        <button id="btn-rotate90">rotate90</button>
-        <button id="btn-pan">pan</button>
-        <button id="btn-freedraw">freedraw</button>
-        <button id="btn-line">line</button>
-        <button id="btn-arrow">arrow</button>
-        <button id="btn-rect">rect</button>
-        <button id="btn-circle">circle</button>
-        <button id="btn-triangle">triangle</button>
+    <div class="row" id="tools">
+        <span class="label">工具</span>
+        <button id="btn-select" data-mode="normal">选择</button>
+        <button id="btn-pan" data-mode="pan">平移</button>
+        <button id="btn-crop" data-mode="crop">裁剪</button>
+        <button id="btn-crop-apply">裁剪 Apply</button>
+        <button id="btn-crop-cancel">裁剪 Cancel</button>
+        <button id="btn-rotate90">旋转 90°</button>
+        <button id="btn-freedraw" data-mode="freedraw">画笔</button>
+        <button id="btn-line" data-mode="line">直线</button>
+        <button id="btn-arrow" data-mode="arrow">箭头</button>
+        <button id="btn-rect" data-mode="shape">矩形</button>
+        <button id="btn-circle" data-mode="shape">圆形</button>
+        <button id="btn-triangle" data-mode="shape">三角形</button>
+        <button id="btn-text" data-mode="text">文字</button>
+        <button id="btn-text-bold">文字加粗</button>
+        <button id="btn-mosaic" data-mode="mosaic">马赛克</button>
+    </div>
+    <div class="row" id="palette-row">
+        <span class="label">色板</span>
+        <span id="palette"></span>
+    </div>
+    <div class="row" id="ops">
+        <span class="label">操作</span>
+        <button id="btn-zoom-out">-</button>
+        <span id="zoom-label">100%</span>
+        <button id="btn-zoom-in">+</button>
+        <button id="btn-undo" disabled>undo</button>
+        <button id="btn-redo" disabled>redo</button>
+        <button id="btn-clear">清空对象</button>
+        <button id="btn-remove">删除选中</button>
+        <button id="btn-export">导出 PNG</button>
+        <button id="btn-load-file">换图…</button>
+        <input id="file-input" type="file" accept="image/*" style="display:none" />
+        <button id="btn-add-image">贴图</button>
         <button id="btn-add-shape">addShape</button>
-        <button id="btn-mosaic">mosaic</button>
-        <button id="btn-crop">crop</button>
-        <button id="btn-crop-apply">crop apply</button>
-        <button id="btn-crop-cancel">crop cancel</button>
-        <button id="btn-crop-bound">cropByBound(100x100)</button>
-        <button id="btn-text">text</button>
-        <button id="btn-text-bold">bold toggle</button>
-        <button id="btn-end">endAll</button>
-        <span id="zoom-label" style="margin-left:8px;">zoom: 1</span>
     </div>
     <div id="editor" style="width:900px;height:600px;background:#e5e5e5;"></div>
+    <div id="statusbar">mode: normal | objects: 0 | undo: 0 | redo: 0</div>
     <script type="module" src="./main.ts"></script>
 </body>
 </html>
