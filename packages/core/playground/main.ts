@@ -7,95 +7,167 @@ const editor = new Editor({ container: document.getElementById('editor')! });
 // evaluate 驱动冒烟用：fp.editor / fp.AddObject / fp.createId / ...
 (window as unknown as { fp: typeof fpCore & { editor: Editor } }).fp = { ...fpCore, editor };
 
-function loadDemo(): void {
-    editor.loadImageFromURL('./images/demo.jpeg', 'demo').catch((err: unknown) => {
-        console.error('loadImageFromURL failed', err);
-    });
+function $(id: string): HTMLElement {
+    return document.getElementById(id)!;
+}
+function onClick(id: string, handler: () => void): void {
+    $(id).addEventListener('click', handler);
 }
 
-document.getElementById('btn-load')!.addEventListener('click', loadDemo);
-document.getElementById('btn-undo')!.addEventListener('click', () => editor.undo());
-document.getElementById('btn-redo')!.addEventListener('click', () => editor.redo());
-document.getElementById('btn-export')!.addEventListener('click', () => {
-    try {
-        console.log('export dataURL length:', editor.toDataURL().length);
-    } catch (err) {
-        console.error('export failed', err);
+// —— 色板 ——
+
+const PALETTE: Array<{ name: string; hex: string }> = [
+    { name: '红', hex: '#ff0000' },
+    { name: '黄', hex: '#ffcc00' },
+    { name: '绿', hex: '#00aa44' },
+    { name: '蓝', hex: '#1677ff' },
+    { name: '灰', hex: '#888888' },
+    { name: '黑', hex: '#000000' },
+    { name: '白', hex: '#ffffff' }
+];
+let currentColor = PALETTE[0].hex;
+
+const paletteEl = $('palette');
+for (const { name, hex } of PALETTE) {
+    const sw = document.createElement('span');
+    sw.className = 'swatch' + (hex === currentColor ? ' active' : '');
+    sw.title = name;
+    sw.dataset.color = hex;
+    sw.style.background = hex;
+    sw.addEventListener('click', () => applyColor(hex));
+    paletteEl.appendChild(sw);
+}
+
+/** 对当前工具（setBrush）与选中对象（shape/path/text 样式）同时生效。 */
+function applyColor(hex: string): void {
+    currentColor = hex;
+    for (const sw of Array.from(paletteEl.querySelectorAll<HTMLElement>('.swatch'))) {
+        sw.classList.toggle('active', sw.dataset.color === hex);
     }
-});
-document.getElementById('btn-zoom-in')!.addEventListener('click', () => editor.setZoom(editor.getZoom() * 1.25));
-document.getElementById('btn-zoom-out')!.addEventListener('click', () => editor.setZoom(editor.getZoom() / 1.25));
-document.getElementById('btn-rotate90')!.addEventListener('click', () => editor.rotate(90));
-const panBtn = document.getElementById('btn-pan')!;
-panBtn.addEventListener('click', () => {
+    editor.setBrush({ color: hex }); // 按当前 mode 路由到 draw/line/arrow
+    editor.changeShape({ fill: `${hex}4d`, stroke: hex }); // 选中 shape
+    editor.changeFreeDrawingPathStyle({ color: hex }); // 选中 freedraw 路径
+    editor.changeArrowStyle({ color: hex }); // 选中 arrow 路径
+    editor.changeTextStyle({ fill: hex }); // 选中/编辑中的文本
+}
+
+// —— 工具 ——
+
+onClick('btn-select', () => editor.endAll());
+onClick('btn-pan', () => {
     if (editor.getCurrentState() === 'pan') {
         editor.endPan();
     } else {
         editor.startPan();
     }
 });
-document.getElementById('btn-freedraw')!.addEventListener('click', () =>
-    editor.startFreeDrawing({ width: 4, color: 'red' })
-);
-document.getElementById('btn-line')!.addEventListener('click', () =>
-    editor.startLineDrawing({ width: 4, color: 'red' })
-);
-document.getElementById('btn-arrow')!.addEventListener('click', () =>
-    editor.startArrowDrawing({ width: 4, color: 'red' })
-);
-function startShape(type: 'rect' | 'circle' | 'triangle'): void {
-    editor.setDrawingShape(type, { fill: 'rgba(255, 0, 0, 0.3)', stroke: 'red', strokeWidth: 2 });
-    editor.startDrawingShapeMode();
-}
-document.getElementById('btn-rect')!.addEventListener('click', () => startShape('rect'));
-document.getElementById('btn-circle')!.addEventListener('click', () => startShape('circle'));
-document.getElementById('btn-triangle')!.addEventListener('click', () => startShape('triangle'));
-document.getElementById('btn-add-shape')!.addEventListener('click', () =>
-    editor.addShape('rect', { width: 120, height: 80, fill: 'rgba(0, 0, 255, 0.3)', stroke: 'blue', strokeWidth: 2 })
-);
-const mosaicBtn = document.getElementById('btn-mosaic')!;
-mosaicBtn.addEventListener('click', () => {
-    if (editor.getCurrentState() === 'mosaic') {
-        editor.endMosaicDrawing();
-    } else {
-        editor.startMosaicDrawing({ dimensions: 12 });
-    }
-});
-const cropBtn = document.getElementById('btn-crop')!;
-cropBtn.addEventListener('click', () => {
+onClick('btn-crop', () => {
     if (editor.getCurrentState() === 'crop') {
         editor.endCropping(false);
     } else {
         editor.startCropping();
     }
 });
-document.getElementById('btn-crop-apply')!.addEventListener('click', () => editor.endCropping(true));
-document.getElementById('btn-crop-cancel')!.addEventListener('click', () => editor.endCropping(false));
-document.getElementById('btn-crop-bound')!.addEventListener('click', () => {
-    editor.startCropByBoundInfo();
-    editor.endCropByBoundInfo({ left: 0, top: 0, width: 100, height: 100 });
-});
-const textBtn = document.getElementById('btn-text')!;
-textBtn.addEventListener('click', () => {
+onClick('btn-crop-apply', () => editor.endCropping(true));
+onClick('btn-crop-cancel', () => editor.endCropping(false));
+onClick('btn-rotate90', () => editor.rotate(90));
+onClick('btn-freedraw', () => editor.startFreeDrawing({ width: 4, color: currentColor }));
+onClick('btn-line', () => editor.startLineDrawing({ width: 4, color: currentColor }));
+onClick('btn-arrow', () => editor.startArrowDrawing({ width: 4, color: currentColor }));
+
+function startShape(type: 'rect' | 'circle' | 'triangle'): void {
+    editor.setDrawingShape(type, { fill: `${currentColor}4d`, stroke: currentColor, strokeWidth: 2 });
+    editor.startDrawingShapeMode();
+}
+onClick('btn-rect', () => startShape('rect'));
+onClick('btn-circle', () => startShape('circle'));
+onClick('btn-triangle', () => startShape('triangle'));
+
+onClick('btn-text', () => {
     if (editor.getCurrentState() === 'text') {
         editor.endTextMode();
     } else {
         editor.startTextMode();
     }
 });
-document.getElementById('btn-text-bold')!.addEventListener('click', () =>
-    editor.changeTextStyle({ fontWeight: 'bold' })
-);
-document.getElementById('btn-end')!.addEventListener('click', () => editor.endAll());
-const zoomLabel = document.getElementById('zoom-label')!;
-editor.on('change:viewport', ({ viewport }) => {
-    zoomLabel.textContent = `zoom: ${viewport.zoom.toFixed(2)} pan: ${viewport.panX.toFixed(0)},${viewport.panY.toFixed(0)}`;
+onClick('btn-text-bold', () => editor.changeTextStyle({ fontWeight: 'bold' }));
+onClick('btn-mosaic', () => {
+    if (editor.getCurrentState() === 'mosaic') {
+        editor.endMosaicDrawing();
+    } else {
+        editor.startMosaicDrawing({ dimensions: 12 });
+    }
 });
+
+// —— 操作 ——
+
+const zoomLabel = $('zoom-label');
+function refreshZoom(): void {
+    zoomLabel.textContent = `${Math.round(editor.getZoom() * 100)}%`;
+}
+onClick('btn-zoom-in', () => editor.setZoom(editor.getZoom() * 1.25));
+onClick('btn-zoom-out', () => editor.setZoom(editor.getZoom() / 1.25));
+onClick('btn-undo', () => editor.undo());
+onClick('btn-redo', () => editor.redo());
+onClick('btn-clear', () => editor.clearObjects());
+onClick('btn-remove', () => editor.removeActiveObject());
+onClick('btn-export', () => {
+    try {
+        const a = document.createElement('a');
+        a.href = editor.toDataURL('image/png');
+        a.download = 'fp-export.png';
+        a.click();
+        console.log('export png, dataURL length:', a.href.length);
+    } catch (err) {
+        console.error('export failed', err);
+    }
+});
+onClick('btn-load-file', () => ($('file-input') as HTMLInputElement).click());
+($('file-input') as HTMLInputElement).addEventListener('change', (event) => {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (file !== undefined) {
+        editor.loadImageFromFile(file).catch((err: unknown) => {
+            console.error('loadImageFromFile failed', err);
+        });
+    }
+    (event.target as HTMLInputElement).value = '';
+});
+onClick('btn-add-image', () => {
+    editor.addImageObject('./images/demo.jpeg').catch((err: unknown) => {
+        console.error('addImageObject failed', err);
+    });
+});
+onClick('btn-add-shape', () =>
+    editor.addShape('rect', { width: 120, height: 80, fill: `${currentColor}4d`, stroke: currentColor, strokeWidth: 2 })
+);
+
+// —— 状态条 / undo-redo 禁用态 / 工具高亮 ——
+
+const statusbar = $('statusbar');
+let undoSize = 0;
+let redoSize = 0;
+function refreshStatus(): void {
+    statusbar.textContent =
+        `mode: ${editor.getCurrentState()} | objects: ${editor.state.doc.objects.length} | ` +
+        `undo: ${undoSize} | redo: ${redoSize}`;
+    ($('btn-undo') as HTMLButtonElement).disabled = undoSize === 0;
+    ($('btn-redo') as HTMLButtonElement).disabled = redoSize === 0;
+}
+
+const toolButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('#tools button[data-mode]'));
 editor.on('change:mode', ({ mode }) => {
-    panBtn.textContent = mode === 'pan' ? '退出 pan' : 'pan';
-    textBtn.textContent = mode === 'text' ? '退出 text' : 'text';
-    mosaicBtn.textContent = mode === 'mosaic' ? '退出 mosaic' : 'mosaic';
-    cropBtn.textContent = mode === 'crop' ? '退出 crop' : 'crop';
+    for (const btn of toolButtons) {
+        // shape 三按钮共用 mode 'shape'，全部高亮由「最后点击的形状」不可靠，统一按 mode 高亮
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+    }
+    refreshStatus();
+});
+editor.on('change', () => refreshStatus());
+editor.on('change:viewport', () => refreshZoom());
+editor.on('historyChange', (sizes) => {
+    undoSize = sizes.undoSize;
+    redoSize = sizes.redoSize;
+    refreshStatus();
 });
 
 editor.on('loadImage', ({ name, width, height }) => {
@@ -106,4 +178,8 @@ editor.on('clearImage', () => {
 });
 
 // 启动自动加载示例图
-loadDemo();
+editor.loadImageFromURL('./images/demo.jpeg', 'demo').catch((err: unknown) => {
+    console.error('loadImageFromURL failed', err);
+});
+refreshZoom();
+refreshStatus();
