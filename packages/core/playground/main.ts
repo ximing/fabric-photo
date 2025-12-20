@@ -60,6 +60,20 @@ mosaicBtn.addEventListener('click', () => {
         editor.startMosaicDrawing({ dimensions: 12 });
     }
 });
+const cropBtn = document.getElementById('btn-crop')!;
+cropBtn.addEventListener('click', () => {
+    if (editor.getCurrentState() === 'crop') {
+        editor.endCropping(false);
+    } else {
+        editor.startCropping();
+    }
+});
+document.getElementById('btn-crop-apply')!.addEventListener('click', () => editor.endCropping(true));
+document.getElementById('btn-crop-cancel')!.addEventListener('click', () => editor.endCropping(false));
+document.getElementById('btn-crop-bound')!.addEventListener('click', () => {
+    editor.startCropByBoundInfo();
+    editor.endCropByBoundInfo({ left: 0, top: 0, width: 100, height: 100 });
+});
 const textBtn = document.getElementById('btn-text')!;
 textBtn.addEventListener('click', () => {
     if (editor.getCurrentState() === 'text') {
@@ -80,6 +94,7 @@ editor.on('change:mode', ({ mode }) => {
     panBtn.textContent = mode === 'pan' ? '退出 pan' : 'pan';
     textBtn.textContent = mode === 'text' ? '退出 text' : 'text';
     mosaicBtn.textContent = mode === 'mosaic' ? '退出 mosaic' : 'mosaic';
+    cropBtn.textContent = mode === 'crop' ? '退出 crop' : 'crop';
 });
 
 editor.on('loadImage', ({ name, width, height }) => {

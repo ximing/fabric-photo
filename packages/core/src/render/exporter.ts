@@ -27,8 +27,8 @@ function toImageFormat(type?: string): ImageFormat {
     return 'png';
 }
 
-/** 以 identity vpt 同步执行 fn，finally 中恢复原 vpt。 */
-function withIdentityViewport<T>(canvas: Canvas, fn: () => T): T {
+/** 以 identity vpt 同步执行 fn，finally 中恢复原 vpt（裁剪矩形导出复用，见 CropController.applyCrop）。 */
+export function withIdentityViewport<T>(canvas: Canvas, fn: () => T): T {
     const saved = [...canvas.viewportTransform] as TMat2D;
     canvas.setViewportTransform([...IDENTITY_VPT]);
     try {

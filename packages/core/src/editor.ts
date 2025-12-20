@@ -7,6 +7,7 @@ import type { Plugin } from './plugins/plugin';
 import { exportDocBlob, exportDocDataURL, exportViewportImage, getViewportDocRect } from './render/exporter';
 import type { ControllerContext } from './render/controllers/controller';
 import { ArrowController } from './render/controllers/arrow';
+import { CropController } from './render/controllers/crop';
 import { DrawController } from './render/controllers/draw';
 import { LineController } from './render/controllers/line';
 import { MosaicController } from './render/controllers/mosaic';
@@ -71,6 +72,8 @@ export class Editor {
     private readonly textController?: TextController;
     /** mosaic controller（同上，仅 FabricRenderer 存在时创建）。 */
     private readonly mosaicController?: MosaicController;
+    /** crop controller（同上，仅 FabricRenderer 存在时创建）。 */
+    private readonly cropController?: CropController;
 
     constructor(options: EditorOptions = {}) {
         this.currentState = new EditorState();
@@ -105,12 +108,14 @@ export class Editor {
             this.shapeController = new ShapeController();
             this.textController = new TextController();
             this.mosaicController = new MosaicController();
+            this.cropController = new CropController();
             this.fabricRenderer.registerController(this.drawController);
             this.fabricRenderer.registerController(this.lineController);
             this.fabricRenderer.registerController(this.arrowController);
             this.fabricRenderer.registerController(this.shapeController);
             this.fabricRenderer.registerController(this.textController);
             this.fabricRenderer.registerController(this.mosaicController);
+            this.fabricRenderer.registerController(this.cropController);
         }
     }
 
@@ -592,6 +597,64 @@ export class Editor {
             return;
         }
         this.dispatch(this.newTransaction().setMode('normal'));
+    }
+
+    // —— 裁剪（cropzone 蚂蚁线 + 矩形直裁，两条路径统一可撤销）——
+
+    /**
+     * 进入裁剪模式（mode 'crop'）：出现背景图 80% 的蚂蚁线裁剪框，可拖动/缩放
+     * （clamp 在背景范围内），Shift 拖空白重画锁正方形。已在 crop 模式时为 no-op。
+     */
+    startCropping(): void {
+        if (this.currentState.mode === 'crop') {
+            return;
+        }
+        this.dispatch(this.newTransaction().setMode('crop'));
+    }
+
+    /**
+     * 结束裁剪。isApplying=true（默认）：cropzone 无效（isValid false）→ 直接退出；
+     * 有效 → 导出裁剪矩形为新背景（SetBackground，可撤销；对象清空对齐旧换图语义）。
+     * isApplying=false：丢弃裁剪框退出。endCropping 语义由 change:mode 事件覆盖。
+     */
+    endCropping(isApplying = true): void {
+        if (this.currentState.mode !== 'crop') {
+            return;
+        }
+        const cropInfo = isApplying ? this.cropController?.getCropInfo() : undefined;
+        if (cropInfo === undefined) {
+            this.dispatch(this.newTransaction().setMode('normal'));
+            return;
+        }
+        this.cropController?.applyCrop(cropInfo);
+    }
+
+    /**
+     * 进入无 UI 的矩形裁剪模式（对齐旧 startCropByBoundInfo：仅切 mode，不出裁剪框）；
+     * 配合 endCropByBoundInfo(cropInfo) 使用。已在 crop 模式时为 no-op。
+     */
+    startCropByBoundInfo(): void {
+        if (this.currentState.mode === 'crop') {
+            return;
+        }
+        this.cropController?.suppressCropzoneUI();
+        this.dispatch(this.newTransaction().setMode('crop'));
+    }
+
+    /**
+     * 按 cropInfo（doc 坐标，缺省 = 整图）裁剪：与 endCropping(true) 同一
+     * SetBackground 落盘路径，可撤销。无背景或无头模式下仅退出模式。
+     */
+    endCropByBoundInfo(cropInfo?: { left: number; top: number; width: number; height: number }): void {
+        if (this.currentState.mode !== 'crop') {
+            return;
+        }
+        const bg = this.currentState.doc.background;
+        if (this.cropController === undefined || bg === null) {
+            this.dispatch(this.newTransaction().setMode('normal'));
+            return;
+        }
+        this.cropController.applyCrop(cropInfo ?? { left: 0, top: 0, width: bg.width, height: bg.height });
     }
 
     // —— 文本（IText 原地编辑）——

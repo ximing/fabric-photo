@@ -303,7 +303,11 @@ export class FabricRenderer implements Renderer {
                 }
             }
         }
-        const current = canvas.getActiveObjects();
+        // fpInternal 标记的渲染层内部对象（cropzone）不参与选中态同步：
+        // 非 normal 模式 targets 恒为空，不豁免会被 discardActiveObject 打掉激活态
+        const current = canvas
+            .getActiveObjects()
+            .filter((fObj) => (fObj as Partial<{ fpInternal: string }>).fpInternal === undefined);
         // 按集合比较：ActiveSelection 成员序与 state.selection 序可能不同，避免反复重建
         if (current.length === targets.length && current.every((fObj) => targets.includes(fObj))) {
             return;
