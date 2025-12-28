@@ -809,6 +809,10 @@ export class Editor {
         const attrs: ObjectAttrs = {};
         if (setting.color !== undefined) {
             attrs.stroke = setting.color;
+            if (tool === 'arrow') {
+                // 箭头头部为填充三角（对齐旧实心行为），换色需同步 fill，否则头部滞留旧色
+                attrs.fill = setting.color;
+            }
         }
         if (setting.width !== undefined) {
             attrs.strokeWidth = setting.width;

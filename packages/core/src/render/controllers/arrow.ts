@@ -96,7 +96,7 @@ export class ArrowController implements Controller {
         return new Path(path, {
             stroke: this.color,
             strokeWidth: this.width,
-            fill: 'transparent',
+            fill: this.color,
             selectable: false,
             evented: false
         });
@@ -168,7 +168,7 @@ export class ArrowController implements Controller {
             scaleY: 1,
             stroke: this.color,
             strokeWidth: this.width,
-            fill: ''
+            fill: this.color
         };
         ctx.dispatch(new Transaction(ctx.getState()).addStep(new AddObject(object)));
         ctx.fire('objectAdded', { object });
