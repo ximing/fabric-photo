@@ -21,6 +21,8 @@ vi.mock('@gmi/fp-core', async (importOriginal) => {
     const actual = await importOriginal<typeof import('@gmi/fp-core')>();
     class FakeEditor {
         readonly options: Record<string, unknown>;
+        // 缺省 children 含 Toolbar（useEditorState 读 editor.state），FakeEditor 需给出最小 state
+        readonly state = new actual.EditorState();
         loadImageFromURL = vi.fn(async () => undefined);
         subscribe = vi.fn(() => vi.fn());
         destroy = vi.fn();
@@ -89,19 +91,23 @@ describe('FabricPhotoEditor', () => {
         expect(onReady).toHaveBeenCalledTimes(1);
         expect(onReady).toHaveBeenCalledWith(ed);
 
-        // grid 骨架（TopBar/Toolbar/PropertiesPanel 由 T4-T6 插入）
+        // grid 骨架（TopBar/PropertiesPanel 由 T5/T6 插入）
         const root = container.firstElementChild as HTMLElement;
         expect(root.className).toContain('fp-editor');
         expect(root.className).toContain('custom');
         expect(root.style.display).toBe('grid');
-        expect(root.style.gridTemplateAreas).toBe('"top top top" "tools canvas props"');
-        expect(root.style.gridTemplateRows).toBe('48px 1fr');
+        expect(root.style.gridTemplateAreas).toBe('"top top top" "opts opts opts" "tools canvas props"');
+        expect(root.style.gridTemplateRows).toBe('48px auto 1fr');
         expect(root.style.gridTemplateColumns).toBe('48px 1fr 240px');
     });
 
-    it('缺省 children 渲染 CanvasView（灰底容器）', () => {
+    it('缺省 children 渲染 ToolOptionBar + Toolbar + CanvasView（灰底容器）', () => {
         const { container } = render(<FabricPhotoEditor />);
         expect(container.querySelector('.fp-canvas-view')).not.toBeNull();
+        expect(container.querySelector('.fp-toolbar')).not.toBeNull();
+        expect(container.querySelector('.fp-option-bar')).not.toBeNull();
+        // Toolbar 10 个工具按钮经 EditorProvider context 渲染
+        expect(container.querySelectorAll('.fp-toolbar .fp-tool-btn')).toHaveLength(10);
     });
 
     it('src 存在时 loadImageFromURL(src, imageName 缺省 image)；显式 imageName 透传', () => {
@@ -122,8 +128,8 @@ describe('FabricPhotoEditor', () => {
         const onChange = vi.fn();
         render(<FabricPhotoEditor onChange={onChange} />);
         const ed = fakeEditorAt(0);
-        expect(ed.subscribe).toHaveBeenCalledTimes(1);
-
+        // 首个订阅是 FabricPhotoEditor 的 onChange（创建 Editor 的 effect 先行）；
+        // 缺省 children 的 Toolbar/ToolOptionBar 经 useEditorState 追加订阅
         const listener = ed.subscribe.mock.calls[0][0] as (state: EditorState, prev: EditorState) => void;
         const fakeState = {} as EditorState;
         act(() => {
@@ -141,6 +147,7 @@ describe('FabricPhotoEditor', () => {
         );
         expect(queryByTestId('custom-child')).not.toBeNull();
         expect(container.querySelector('.fp-canvas-view')).toBeNull();
+        expect(container.querySelector('.fp-toolbar')).toBeNull();
         // 挂载容器始终存在（Editor 的 DOM 依赖）
         expect(container.querySelector('.fp-canvas-mount')).not.toBeNull();
     });
