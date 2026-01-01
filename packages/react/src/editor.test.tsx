@@ -27,6 +27,11 @@ vi.mock('@gmi/fp-core', async (importOriginal) => {
         subscribe = vi.fn(() => vi.fn());
         destroy = vi.fn();
         notifyResize = vi.fn();
+        // 缺省 children 含 TopBar：historyChange 订阅 + undo/redo 初值取栈空态
+        on = vi.fn();
+        off = vi.fn();
+        isEmptyUndoStack = vi.fn(() => true);
+        isEmptyRedoStack = vi.fn(() => true);
         constructor(options: Record<string, unknown> = {}) {
             this.options = options;
             mocks.createdEditors.push(this);
@@ -91,7 +96,7 @@ describe('FabricPhotoEditor', () => {
         expect(onReady).toHaveBeenCalledTimes(1);
         expect(onReady).toHaveBeenCalledWith(ed);
 
-        // grid 骨架（TopBar/PropertiesPanel 由 T5/T6 插入）
+        // grid 骨架（PropertiesPanel 由 T6 插入）
         const root = container.firstElementChild as HTMLElement;
         expect(root.className).toContain('fp-editor');
         expect(root.className).toContain('custom');
@@ -101,9 +106,10 @@ describe('FabricPhotoEditor', () => {
         expect(root.style.gridTemplateColumns).toBe('48px 1fr 240px');
     });
 
-    it('缺省 children 渲染 ToolOptionBar + Toolbar + CanvasView（灰底容器）', () => {
+    it('缺省 children 渲染 TopBar + ToolOptionBar + Toolbar + CanvasView（灰底容器）', () => {
         const { container } = render(<FabricPhotoEditor />);
         expect(container.querySelector('.fp-canvas-view')).not.toBeNull();
+        expect(container.querySelector('.fp-topbar')).not.toBeNull();
         expect(container.querySelector('.fp-toolbar')).not.toBeNull();
         expect(container.querySelector('.fp-option-bar')).not.toBeNull();
         // Toolbar 10 个工具按钮经 EditorProvider context 渲染
