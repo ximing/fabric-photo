@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties, type JSX, type ReactNo
 import { Editor, type EditorState } from '@gmi/fp-core';
 import { CanvasView } from './canvas-view';
 import { EditorProvider } from './provider';
+import { PropertiesPanel } from './properties-panel';
 import { Toolbar } from './toolbar';
 import { ToolOptionBar } from './tool-option-bar';
 import { TopBar } from './top-bar';
@@ -14,7 +15,7 @@ export interface FabricPhotoEditorProps {
     onReady?: (editor: Editor) => void;
     onChange?: (state: EditorState) => void;
     className?: string;
-    children?: ReactNode; // 缺省 TopBar + ToolOptionBar + Toolbar + CanvasView（PropertiesPanel 后续任务插入）
+    children?: ReactNode; // 缺省 TopBar + ToolOptionBar + Toolbar + CanvasView + PropertiesPanel
 }
 
 /** Figma 骨架：上顶栏 / 选项条 / 左工具栏 + 中画布 + 右属性面板。 */
@@ -39,8 +40,8 @@ const MOUNT_STYLE = {
  * src 存在时 loadImageFromURL → onReady(editor) → subscribe(onChange)；
  * cleanup 退订 + destroy。挂载容器始终渲染（自定义 children 时 Editor 仍需要 DOM）；
  * children 整体包在 EditorProvider 内（Toolbar/ToolOptionBar 等子组件经 context 取 editor
- * 与 toolSettings），缺省 children 为 TopBar + ToolOptionBar + Toolbar + CanvasView，
- * PropertiesPanel 由 T6 带 gridArea 样式插入。
+ * 与 toolSettings），缺省 children 为 TopBar + ToolOptionBar + Toolbar + CanvasView +
+ * PropertiesPanel（各带 gridArea 样式落入 GRID_STYLE 的命名区域）。
  */
 export function FabricPhotoEditor(props: FabricPhotoEditorProps): JSX.Element {
     const { src, imageName = 'image', cssMaxWidth, cssMaxHeight, onReady, onChange, className, children } = props;
@@ -84,6 +85,7 @@ export function FabricPhotoEditor(props: FabricPhotoEditorProps): JSX.Element {
                             <ToolOptionBar />
                             <Toolbar />
                             <CanvasView editor={editor} />
+                            <PropertiesPanel />
                         </>
                     )}
                 </EditorProvider>

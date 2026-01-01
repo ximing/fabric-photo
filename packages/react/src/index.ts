@@ -13,4 +13,5 @@ export { Toolbar, TOOLS } from './toolbar';
 export type { ToolDef } from './toolbar';
 export { ToolOptionBar } from './tool-option-bar';
 export { TopBar } from './top-bar';
+export { PropertiesPanel } from './properties-panel';
 export type { EditorUIState } from './context';
