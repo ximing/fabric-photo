@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState, type CSSProperties, type JSX, type ReactNode } from 'react';
 import { Editor, type EditorState } from '@gmi/fp-core';
 import { CanvasView } from './canvas-view';
+import { EditorProvider } from './provider';
+import { Toolbar } from './toolbar';
+import { ToolOptionBar } from './tool-option-bar';
 
 export interface FabricPhotoEditorProps {
     src?: string;
@@ -10,14 +13,14 @@ export interface FabricPhotoEditorProps {
     onReady?: (editor: Editor) => void;
     onChange?: (state: EditorState) => void;
     className?: string;
-    children?: ReactNode; // 缺省 <CanvasView editor={editor}/>（TopBar/Toolbar/PropertiesPanel 后续任务插入）
+    children?: ReactNode; // 缺省 ToolOptionBar + Toolbar + CanvasView（TopBar/PropertiesPanel 后续任务插入）
 }
 
-/** Figma 骨架：上顶栏 / 左工具栏 / 中画布 / 右属性面板（选项条行在 T4 插入）。 */
+/** Figma 骨架：上顶栏 / 选项条 / 左工具栏 + 中画布 + 右属性面板。 */
 const GRID_STYLE = {
     display: 'grid',
-    gridTemplateAreas: '"top top top" "tools canvas props"',
-    gridTemplateRows: '48px 1fr',
+    gridTemplateAreas: '"top top top" "opts opts opts" "tools canvas props"',
+    gridTemplateRows: '48px auto 1fr',
     gridTemplateColumns: '48px 1fr 240px',
     width: '100%',
     height: '100%'
@@ -34,8 +37,9 @@ const MOUNT_STYLE = {
  * 组合骨架：ref 回调拿容器 div（useState 持有）→ effect 创建 Editor →
  * src 存在时 loadImageFromURL → onReady(editor) → subscribe(onChange)；
  * cleanup 退订 + destroy。挂载容器始终渲染（自定义 children 时 Editor 仍需要 DOM）；
- * 缺省 children 只有 CanvasView（灰底 + ResizeObserver），TopBar/Toolbar/PropertiesPanel
- * 由 T4-T6 各自带 gridArea 样式插入。
+ * children 整体包在 EditorProvider 内（Toolbar/ToolOptionBar 等子组件经 context 取 editor
+ * 与 toolSettings），缺省 children 为 ToolOptionBar + Toolbar + CanvasView，
+ * TopBar/PropertiesPanel 由 T5/T6 各自带 gridArea 样式插入。
  */
 export function FabricPhotoEditor(props: FabricPhotoEditorProps): JSX.Element {
     const { src, imageName = 'image', cssMaxWidth, cssMaxHeight, onReady, onChange, className, children } = props;
@@ -71,7 +75,17 @@ export function FabricPhotoEditor(props: FabricPhotoEditorProps): JSX.Element {
     const rootClassName = className === undefined ? 'fp-editor' : `fp-editor ${className}`;
     return (
         <div className={rootClassName} style={GRID_STYLE}>
-            {editor !== null ? (children ?? <CanvasView editor={editor} />) : null}
+            {editor !== null ? (
+                <EditorProvider editor={editor}>
+                    {children ?? (
+                        <>
+                            <ToolOptionBar />
+                            <Toolbar />
+                            <CanvasView editor={editor} />
+                        </>
+                    )}
+                </EditorProvider>
+            ) : null}
             <div ref={setContainerEl} className="fp-canvas-mount" style={MOUNT_STYLE} />
         </div>
     );
