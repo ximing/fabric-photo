@@ -852,6 +852,14 @@ export class Editor {
     }
 
     /**
+     * 容器尺寸变化通知（React CanvasView 的 ResizeObserver 触发）：有 renderer 时委托做
+     * 无状态重排（zoom/pan 保持，按新容器尺寸重算居中）；无头模式 no-op。
+     */
+    notifyResize(): void {
+        this.renderer?.notifyResize();
+    }
+
+    /**
      * refit 始终 dispatch：即使 viewport 已是 {1,0,0}（setCssMaxDimension 改过 cssMax/尺寸后
      * 视觉仍需重算），也要触发 syncState → syncCanvasSize + applyViewport。viewport 内容
      * 不变时 sameViewport 抑制 change:viewport，不发历史、无可见副作用。

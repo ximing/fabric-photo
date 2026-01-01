@@ -7,5 +7,7 @@ import type { EditorMode, EditorState } from '../state/editor-state';
 export interface Renderer {
     syncState(state: EditorState, prev: EditorState): void;
     setMode(mode: EditorMode, prevMode: EditorMode): void;
+    /** 容器尺寸变化后的无状态重排（不触碰 state.viewport，zoom/pan 保持）。 */
+    notifyResize(): void;
     destroy(): void;
 }

@@ -13,6 +13,7 @@ function makeFakeRenderer() {
     return {
         syncState: vi.fn<Renderer['syncState']>(),
         setMode: vi.fn<Renderer['setMode']>(),
+        notifyResize: vi.fn<Renderer['notifyResize']>(),
         destroy: vi.fn<Renderer['destroy']>()
     };
 }
@@ -804,6 +805,22 @@ describe('Editor', () => {
         editor.setAngle(630); // 630 % 360 = 270 未变
         expect(editor.getAngle()).toBe(270);
         expect(editor.history.undoSize).toBe(undoSizeBefore);
+    });
+
+    it('notifyResize：有 renderer 时委托调用一次', () => {
+        const renderer = makeFakeRenderer();
+        const editor = new Editor({ renderer });
+
+        editor.notifyResize();
+        expect(renderer.notifyResize).toHaveBeenCalledTimes(1);
+
+        editor.notifyResize();
+        expect(renderer.notifyResize).toHaveBeenCalledTimes(2);
+    });
+
+    it('notifyResize：无 renderer（无头模式）为 no-op 不抛错', () => {
+        const editor = new Editor();
+        expect(() => editor.notifyResize()).not.toThrow();
     });
 
     it('rotate 相对累加；连续 4 次 rotate(90) 回到原状（宽高复原）', () => {

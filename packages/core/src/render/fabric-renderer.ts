@@ -162,6 +162,21 @@ export class FabricRenderer implements Renderer {
         this.fabricCanvas.requestRenderAll();
     }
 
+    /**
+     * 容器尺寸变化后的无状态重排：重读容器尺寸 + 按 lastState 重算 vpt（居中随新尺寸，
+     * zoom/pan 保持，不触碰 state.viewport）+ 请求重绘。尚未同步过 state 时仅同步尺寸。
+     */
+    notifyResize(): void {
+        if (this.destroyed) {
+            return;
+        }
+        this.syncCanvasSize();
+        if (this.lastState !== undefined) {
+            this.applyViewport(this.lastState);
+        }
+        this.fabricCanvas.requestRenderAll();
+    }
+
     destroy(): void {
         if (this.destroyed) {
             return;
