@@ -48,6 +48,10 @@ function NumberField(props: {
                 min={props.min}
                 max={props.max}
                 onChange={(event) => {
+                    // 清空输入框（''）与非数字输入都不触发回调，避免误写 0
+                    if (event.target.value === '') {
+                        return;
+                    }
                     const value = Number(event.target.value);
                     if (!Number.isNaN(value)) {
                         props.onChange(value);
