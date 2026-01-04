@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, type CSSProperties, type JSX, type ReactNode } from 'react';
 import { Editor, type EditorState } from '@gmi/fp-core';
 import { CanvasView } from './canvas-view';
+import { useEditor, useToolSettings } from './hooks';
 import { EditorProvider } from './provider';
+import { useShortcuts } from './shortcuts';
 import { PropertiesPanel } from './properties-panel';
 import { Toolbar } from './toolbar';
 import { ToolOptionBar } from './tool-option-bar';
@@ -34,6 +36,17 @@ const MOUNT_STYLE = {
     position: 'relative',
     overflow: 'hidden'
 } satisfies CSSProperties;
+
+/**
+ * 快捷键桥：必须在 EditorProvider 内（取 context 的 editor 与 toolSettings），
+ * 不渲染任何 DOM；getToolSettings 传内联闭包由 useShortcuts 的 latest-ref 取最新值。
+ */
+function ShortcutsBridge(): null {
+    const editor = useEditor();
+    const { toolSettings } = useToolSettings();
+    useShortcuts(editor, () => toolSettings);
+    return null;
+}
 
 /**
  * 组合骨架：ref 回调拿容器 div（useState 持有）→ effect 创建 Editor →
@@ -79,6 +92,7 @@ export function FabricPhotoEditor(props: FabricPhotoEditorProps): JSX.Element {
         <div className={rootClassName} style={GRID_STYLE}>
             {editor !== null ? (
                 <EditorProvider editor={editor}>
+                    <ShortcutsBridge />
                     {children ?? (
                         <>
                             <TopBar />
