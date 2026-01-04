@@ -1,6 +1,8 @@
 import type { CSSProperties, JSX, ReactNode } from 'react';
 import type { EditorMode, ShapeObject } from '@gmi/fp-core';
+import { ColorPalette } from './color-palette';
 import { useEditor, useEditorState, useToolSettings } from './hooks';
+import { applyColor, modeToTool } from './tool-settings';
 
 const AREA_STYLE = { gridArea: 'opts' } satisfies CSSProperties;
 
@@ -21,14 +23,22 @@ function isBrushMode(mode: EditorMode): mode is BrushMode {
 
 /**
  * 工具选项条（顶栏与画布区之间，grid 行 2）：容器始终占位，按当前 mode 渲染内容。
- * crop → Apply/Cancel；freedraw/line/arrow → 线宽（写 toolSettings + setBrush 实时生效）；
- * shape → 形状类型（写 toolSettings + setDrawingShape）；mosaic → 粒度（仅写 toolSettings，
- * 不重启模式，下次 startMosaicDrawing 生效）；text/normal/pan → 空。
+ * crop → Apply/Cancel；freedraw/line/arrow → 线宽（写 toolSettings + setBrush 实时生效）+ 色板；
+ * shape → 形状类型（写 toolSettings + setDrawingShape）+ 色板（描边色）；mosaic → 粒度
+ * （仅写 toolSettings，不重启模式，下次 startMosaicDrawing 生效）；text/normal/pan → 空。
+ * 色板改色统一走 applyColor 路由（选中对象优先改对象，否则写工具预设并实时同步 editor）。
  */
 export function ToolOptionBar(props: { className?: string }): JSX.Element {
     const editor = useEditor();
     const { toolSettings, setToolSettings } = useToolSettings();
     const mode = useEditorState((state) => state.mode);
+    const selection = useEditorState((state) => state.selection);
+    const objects = useEditorState((state) => state.doc.objects);
+    const selectedObjects = objects.filter((object) => selection.includes(object.id));
+
+    const onColor = (color: string): void => {
+        applyColor(editor, toolSettings, setToolSettings, modeToTool(mode), selectedObjects, color);
+    };
 
     let content: ReactNode = null;
     if (mode === 'crop') {
@@ -48,39 +58,49 @@ export function ToolOptionBar(props: { className?: string }): JSX.Element {
             setToolSettings((prev) => ({ ...prev, [brushMode]: { ...prev[brushMode], width } }));
             editor.setBrush({ width });
         };
-        content = WIDTH_OPTIONS.map((width) => {
-            const isActive = toolSettings[brushMode].width === width;
-            return (
-                <button
-                    key={width}
-                    type="button"
-                    className={isActive ? 'fp-option-btn fp-option-btn-active' : 'fp-option-btn'}
-                    aria-pressed={isActive}
-                    onClick={() => setWidth(width)}
-                >
-                    {width}
-                </button>
-            );
-        });
+        content = (
+            <>
+                {WIDTH_OPTIONS.map((width) => {
+                    const isActive = toolSettings[brushMode].width === width;
+                    return (
+                        <button
+                            key={width}
+                            type="button"
+                            className={isActive ? 'fp-option-btn fp-option-btn-active' : 'fp-option-btn'}
+                            aria-pressed={isActive}
+                            onClick={() => setWidth(width)}
+                        >
+                            {width}
+                        </button>
+                    );
+                })}
+                <ColorPalette value={toolSettings[brushMode].color} onChange={onColor} />
+            </>
+        );
     } else if (mode === 'shape') {
         const setShapeType = (shapeType: ShapeObject['shapeType']): void => {
             setToolSettings((prev) => ({ ...prev, shape: { ...prev.shape, shapeType } }));
             editor.setDrawingShape(shapeType);
         };
-        content = SHAPE_TYPES.map(({ type, label }) => {
-            const isActive = toolSettings.shape.shapeType === type;
-            return (
-                <button
-                    key={type}
-                    type="button"
-                    className={isActive ? 'fp-option-btn fp-option-btn-active' : 'fp-option-btn'}
-                    aria-pressed={isActive}
-                    onClick={() => setShapeType(type)}
-                >
-                    {label}
-                </button>
-            );
-        });
+        content = (
+            <>
+                {SHAPE_TYPES.map(({ type, label }) => {
+                    const isActive = toolSettings.shape.shapeType === type;
+                    return (
+                        <button
+                            key={type}
+                            type="button"
+                            className={isActive ? 'fp-option-btn fp-option-btn-active' : 'fp-option-btn'}
+                            aria-pressed={isActive}
+                            onClick={() => setShapeType(type)}
+                        >
+                            {label}
+                        </button>
+                    );
+                })}
+                <ColorPalette value={toolSettings.shape.stroke} onChange={onColor} />
+            </>
+        );
     } else if (mode === 'mosaic') {
         // 不允许重启模式：dimensions 只在下次 startMosaicDrawing 生效
         const setDimensions = (dimensions: number): void => {
