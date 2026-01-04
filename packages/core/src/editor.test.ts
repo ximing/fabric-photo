@@ -492,6 +492,29 @@ describe('Editor', () => {
         expect((editor.state.getObject('p1') as PathObject).stroke).toBe('red');
     });
 
+    it('changeFreeDrawingPathStyle 覆盖选中且 tool=line 的 path，undo 可回滚', () => {
+        const editor = new Editor({ renderer: makeFakeRenderer() });
+        editor.dispatch(
+            editor
+                .newTransaction()
+                .addStep(new AddObject(makePath('p1', 'line')))
+                .addStep(new AddObject(makePath('p2', 'arrow')))
+                .setSelection(['p1', 'p2'])
+        );
+        const before = editor.history.undoSize;
+
+        editor.changeFreeDrawingPathStyle({ color: '#00f', width: 9 });
+        expect(editor.history.undoSize).toBe(before + 1);
+        const p1 = editor.state.getObject('p1') as PathObject;
+        const p2 = editor.state.getObject('p2') as PathObject;
+        expect(p1.stroke).toBe('#00f');
+        expect(p1.strokeWidth).toBe(9);
+        expect(p2.stroke).toBe('red'); // tool=arrow 不动
+
+        editor.undo();
+        expect((editor.state.getObject('p1') as PathObject).stroke).toBe('red');
+    });
+
     it('changeArrowStyle 只改选中且 tool=arrow 的 path；无匹配对象不产生历史', () => {
         const editor = new Editor({ renderer: makeFakeRenderer() });
         editor.dispatch(

@@ -1,6 +1,6 @@
 import { Emitter, type EditorEventMap } from './events';
 import { createId } from './model/id';
-import type { ImageObject, ShapeObject } from './model/doc';
+import type { ImageObject, PathObject, ShapeObject } from './model/doc';
 import { History } from './plugins/history';
 import { Keymap } from './plugins/keymap';
 import type { Plugin } from './plugins/plugin';
@@ -505,14 +505,14 @@ export class Editor {
         }
     }
 
-    /** 修改选中 freedraw 路径的样式（stroke/strokeWidth，可撤销）。 */
+    /** 修改选中 freedraw/line 路径的样式（stroke/strokeWidth，可撤销）。 */
     changeFreeDrawingPathStyle(setting?: { width?: number; color?: string }): void {
-        this.changeSelectedPathStyle('freedraw', setting);
+        this.changeSelectedPathStyle(['freedraw', 'line'], setting);
     }
 
     /** 修改选中 arrow 路径的样式（stroke/strokeWidth，可撤销）。 */
     changeArrowStyle(setting?: { width?: number; color?: string }): void {
-        this.changeSelectedPathStyle('arrow', setting);
+        this.changeSelectedPathStyle(['arrow'], setting);
     }
 
     // —— 形状（rect / circle / triangle）——
@@ -801,15 +801,18 @@ export class Editor {
         return ids;
     }
 
-    /** 对当前选中且 kind==='path' 且 tool 匹配的对象 dispatch UpdateObject。 */
-    private changeSelectedPathStyle(tool: 'freedraw' | 'arrow', setting?: { width?: number; color?: string }): void {
+    /** 对当前选中且 kind==='path' 且 tool 在 tools 内的对象 dispatch UpdateObject。 */
+    private changeSelectedPathStyle(
+        tools: ReadonlyArray<PathObject['tool']>,
+        setting?: { width?: number; color?: string }
+    ): void {
         if (setting === undefined) {
             return;
         }
         const attrs: ObjectAttrs = {};
         if (setting.color !== undefined) {
             attrs.stroke = setting.color;
-            if (tool === 'arrow') {
+            if (tools.includes('arrow')) {
                 // 箭头头部为填充三角（对齐旧实心行为），换色需同步 fill，否则头部滞留旧色
                 attrs.fill = setting.color;
             }
@@ -824,7 +827,7 @@ export class Editor {
         let changed = false;
         for (const id of this.currentState.selection) {
             const obj = this.currentState.getObject(id);
-            if (obj !== undefined && obj.kind === 'path' && obj.tool === tool) {
+            if (obj !== undefined && obj.kind === 'path' && tools.includes(obj.tool)) {
                 tr.addStep(new UpdateObject(id, attrs));
                 changed = true;
             }
