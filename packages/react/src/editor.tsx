@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type JSX, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type JSX, type ReactNode } from 'react';
 import { Editor, type EditorState } from '@gmi/fp-core';
 import { CanvasView } from './canvas-view';
 import { useEditor, useToolSettings } from './hooks';
@@ -20,23 +20,6 @@ export interface FabricPhotoEditorProps {
     children?: ReactNode; // 缺省 TopBar + ToolOptionBar + Toolbar + CanvasView + PropertiesPanel
 }
 
-/** Figma 骨架：上顶栏 / 选项条 / 左工具栏 + 中画布 + 右属性面板。 */
-const GRID_STYLE = {
-    display: 'grid',
-    gridTemplateAreas: '"top top top" "opts opts opts" "tools canvas props"',
-    gridTemplateRows: '48px auto 1fr',
-    gridTemplateColumns: '48px 1fr 240px',
-    width: '100%',
-    height: '100%'
-} satisfies CSSProperties;
-
-/** canvas 挂载容器（Editor 的 DOM 依赖，先于 Editor 存在）；透明叠加在灰底 CanvasView 之上。 */
-const MOUNT_STYLE = {
-    gridArea: 'canvas',
-    position: 'relative',
-    overflow: 'hidden'
-} satisfies CSSProperties;
-
 /**
  * 快捷键桥：必须在 EditorProvider 内（取 context 的 editor 与 toolSettings），
  * 不渲染任何 DOM；getToolSettings 传内联闭包由 useShortcuts 的 latest-ref 取最新值。
@@ -54,7 +37,9 @@ function ShortcutsBridge(): null {
  * cleanup 退订 + destroy。挂载容器始终渲染（自定义 children 时 Editor 仍需要 DOM）；
  * children 整体包在 EditorProvider 内（Toolbar/ToolOptionBar 等子组件经 context 取 editor
  * 与 toolSettings），缺省 children 为 TopBar + ToolOptionBar + Toolbar + CanvasView +
- * PropertiesPanel（各带 gridArea 样式落入 GRID_STYLE 的命名区域）。
+ * PropertiesPanel。布局（grid 骨架、grid-area 落位）全部由 styles.css 的
+ * fp-editor / fp-topbar / fp-option-bar / fp-toolbar / fp-canvas-view / fp-canvas-mount /
+ * fp-props-panel 承载，组件不含内联样式。
  */
 export function FabricPhotoEditor(props: FabricPhotoEditorProps): JSX.Element {
     const { src, imageName = 'image', cssMaxWidth, cssMaxHeight, onReady, onChange, className, children } = props;
@@ -89,7 +74,7 @@ export function FabricPhotoEditor(props: FabricPhotoEditorProps): JSX.Element {
 
     const rootClassName = className === undefined ? 'fp-editor' : `fp-editor ${className}`;
     return (
-        <div className={rootClassName} style={GRID_STYLE}>
+        <div className={rootClassName}>
             {editor !== null ? (
                 <EditorProvider editor={editor}>
                     <ShortcutsBridge />
@@ -104,7 +89,7 @@ export function FabricPhotoEditor(props: FabricPhotoEditorProps): JSX.Element {
                     )}
                 </EditorProvider>
             ) : null}
-            <div ref={setContainerEl} className="fp-canvas-mount" style={MOUNT_STYLE} />
+            <div ref={setContainerEl} className="fp-canvas-mount" />
         </div>
     );
 }

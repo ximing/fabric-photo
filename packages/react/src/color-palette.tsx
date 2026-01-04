@@ -21,7 +21,8 @@ export interface ColorPaletteProps {
 /**
  * 色板：7 个固定色块按钮 + 1 个原生自定义取色 input。纯受控组件，
  * 改色是否实时生效由调用方的 onChange 决定（见 tool-settings.applyColor 路由）。
- * 视觉样式（20x20 圆角带边框格子、白色块可见边框）由 className 占位，T9 统一落地。
+ * 视觉样式（20x20 圆角带边框格子、白色块可见边框）由 styles.css 的
+ * .fp-swatch / .fp-color-custom 承载；色块背景色为动态值，保留内联 style。
  */
 export function ColorPalette(props: ColorPaletteProps): JSX.Element {
     const rootClassName =

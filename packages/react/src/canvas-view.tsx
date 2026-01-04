@@ -1,15 +1,10 @@
-import { useEffect, useRef, type CSSProperties, type JSX } from 'react';
+import { useEffect, useRef, type JSX } from 'react';
 import type { Editor } from '@gmi/fp-core';
 
 export interface CanvasViewProps {
     editor: Editor;
     className?: string;
 }
-
-const CANVAS_AREA_STYLE = {
-    gridArea: 'canvas',
-    backgroundColor: '#e5e5e5'
-} satisfies CSSProperties;
 
 /**
  * 画布区域容器（灰底）：渲染在 FabricPhotoEditor grid 的 'canvas' 区。
@@ -36,5 +31,5 @@ export function CanvasView(props: CanvasViewProps): JSX.Element {
     }, [editor]);
 
     const cls = className === undefined ? 'fp-canvas-view' : `fp-canvas-view ${className}`;
-    return <div ref={ref} className={cls} style={CANVAS_AREA_STYLE} />;
+    return <div ref={ref} className={cls} />;
 }

@@ -1,8 +1,6 @@
-import { useState, type CSSProperties, type JSX } from 'react';
+import { useState, type JSX } from 'react';
 import { Download, Minus, Plus, Redo2, Undo2 } from 'lucide-react';
 import { useEditor, useEditorEvent, useEditorState } from './hooks';
-
-const AREA_STYLE = { gridArea: 'top' } satisfies CSSProperties;
 
 /** 单次点击的缩放步长（乘区以 0.2 为档）。 */
 const ZOOM_STEP = 0.2;
@@ -44,7 +42,7 @@ export function TopBar(props: { className?: string }): JSX.Element {
 
     const rootClassName = props.className === undefined ? 'fp-topbar' : `fp-topbar ${props.className}`;
     return (
-        <div className={rootClassName} style={AREA_STYLE}>
+        <div className={rootClassName}>
             <span className="fp-topbar-name">{imageName}</span>
             <div className="fp-topbar-history">
                 <button
