@@ -1,33 +1,35 @@
 import type { CSSProperties, JSX } from 'react';
-import type { Editor, ImageObject, MosaicObject, PathObject, ShapeObject, TextObject } from '@gmi/fp-core';
-import { useEditor, useEditorState } from './hooks';
+import type { Editor, EditorObject, ImageObject, MosaicObject, PathObject, ShapeObject, TextObject } from '@gmi/fp-core';
+import { ColorPalette } from './color-palette';
+import { useEditor, useEditorState, useToolSettings } from './hooks';
+import { applyColor, modeToTool } from './tool-settings';
 
 const AREA_STYLE = { gridArea: 'props' } satisfies CSSProperties;
 
-/** input[type=color] 只接受 #rrggbb；对象上的颜色可能是命名色等，非法值回退黑色避免控件异常。 */
-const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
-
-function toColorInputValue(value: string): string {
-    return HEX_COLOR.test(value) ? value : '#000000';
-}
-
 /**
- * 颜色字段（私有，T7 完整色板落地后替换调用点）：
- * 原生 input[type=color] + 当前值文本显示。aria-label 供无障碍与测试定位。
+ * 颜色字段（私有）：字段名 + 行内 ColorPalette（7 色板 + 原生自定义取色 input）+ 当前值文本。
+ * 面板空间足够，色板直接行内渲染（不做弹出）；自定义 input 的 aria-label 用字段名，
+ * 保证同面板多个颜色字段可区分。
  */
 function ColorField(props: { label: string; value: string; onChange: (color: string) => void }): JSX.Element {
     return (
-        <label className="fp-color-field">
+        <div className="fp-color-field">
             <span className="fp-color-field-label">{props.label}</span>
-            <input
-                type="color"
-                aria-label={props.label}
-                value={toColorInputValue(props.value)}
-                onChange={(event) => props.onChange(event.target.value)}
-            />
+            <ColorPalette value={props.value} onChange={props.onChange} inputLabel={props.label} />
             <span className="fp-color-field-value">{props.value}</span>
-        </label>
+        </div>
     );
+}
+
+/**
+ * 选中对象主色改色（shape fill / text fill / path color）：统一走 applyColor 路由，
+ * 与工具选项条同一套「实时生效」语义；返回的回调直接绑到 ColorField.onChange。
+ */
+function useApplyObjectColor(object: EditorObject): (color: string) => void {
+    const editor = useEditor();
+    const { toolSettings, setToolSettings } = useToolSettings();
+    const mode = useEditorState((state) => state.mode);
+    return (color) => applyColor(editor, toolSettings, setToolSettings, modeToTool(mode), [object], color);
 }
 
 /** 数值字段（私有）：非数字输入忽略，不触发回调。 */
@@ -73,9 +75,10 @@ function DeleteButton(props: { editor: Editor }): JSX.Element {
 
 function ShapePanel(props: { editor: Editor; object: ShapeObject }): JSX.Element {
     const { editor, object } = props;
+    const applyObjectColor = useApplyObjectColor(object);
     return (
         <>
-            <ColorField label="填充" value={object.fill} onChange={(fill) => editor.changeShape({ fill })} />
+            <ColorField label="填充" value={object.fill} onChange={applyObjectColor} />
             <ColorField label="描边" value={object.stroke} onChange={(stroke) => editor.changeShape({ stroke })} />
             <NumberField
                 label="描边宽度"
@@ -90,6 +93,7 @@ function ShapePanel(props: { editor: Editor; object: ShapeObject }): JSX.Element
 
 function TextPanel(props: { editor: Editor; object: TextObject }): JSX.Element {
     const { editor, object } = props;
+    const applyObjectColor = useApplyObjectColor(object);
     // changeTextStyle 为 toggle 语义：按钮恒传目标值，active 态读对象当前值
     const toggles = [
         { label: '加粗', active: object.fontWeight === 'bold', apply: () => editor.changeTextStyle({ fontWeight: 'bold' }) },
@@ -116,7 +120,7 @@ function TextPanel(props: { editor: Editor; object: TextObject }): JSX.Element {
                 min={1}
                 onChange={(fontSize) => editor.changeTextStyle({ fontSize })}
             />
-            <ColorField label="填充" value={object.fill} onChange={(fill) => editor.changeTextStyle({ fill })} />
+            <ColorField label="填充" value={object.fill} onChange={applyObjectColor} />
             <div className="fp-props-style-toggles">
                 {toggles.map((toggle) => (
                     <button
@@ -136,11 +140,12 @@ function TextPanel(props: { editor: Editor; object: TextObject }): JSX.Element {
 
 function PathPanel(props: { editor: Editor; object: PathObject }): JSX.Element {
     const { editor, object } = props;
+    const applyObjectColor = useApplyObjectColor(object);
     // arrow 走 changeArrowStyle（同步头部 fill）；其余（freedraw/line）走 changeFreeDrawingPathStyle
     const change = object.tool === 'arrow' ? editor.changeArrowStyle : editor.changeFreeDrawingPathStyle;
     return (
         <>
-            <ColorField label="颜色" value={object.stroke} onChange={(color) => change.call(editor, { color })} />
+            <ColorField label="颜色" value={object.stroke} onChange={applyObjectColor} />
             <NumberField
                 label="线宽"
                 value={object.strokeWidth}

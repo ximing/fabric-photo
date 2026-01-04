@@ -1,4 +1,5 @@
-import type { Editor, EditorMode } from '@gmi/fp-core';
+import type { Dispatch, SetStateAction } from 'react';
+import type { Editor, EditorMode, EditorObject } from '@gmi/fp-core';
 
 export type ToolId = 'select' | 'crop' | 'rotate' | 'arrow' | 'freedraw' | 'line' | 'shape' | 'text' | 'mosaic' | 'pan';
 
@@ -45,6 +46,63 @@ export function modeToTool(mode: EditorMode): ToolId {
             return 'shape';
         case 'pan':
             return 'pan';
+    }
+}
+
+/**
+ * 色板改色的实时生效路由（修复旧 demo「改色不实时」缺陷），供工具选项条与属性面板复用：
+ * - 有选中对象 → 对应 change* API（shape→changeShape({fill})、text→changeTextStyle({fill})、
+ *   path→按 tool 走 changeArrowStyle/changeFreeDrawingPathStyle；arrow 换色同步 fill 由 core 处理；
+ *   mosaic/image 无颜色字段，no-op）——均可撤销
+ * - 无选中但激活绘制工具 → setToolSettings 写对应工具预设 + 同步 editor 实时样式
+ *   （freedraw/line/arrow 走 setBrush；shape 走 setDrawingShape 预设；text 仅写预设）
+ * - 两者都无 → 写 freedraw 预设（默认工具）
+ */
+export function applyColor(
+    editor: Editor,
+    toolSettings: ToolSettings,
+    setToolSettings: Dispatch<SetStateAction<ToolSettings>>,
+    activeTool: ToolId,
+    selectedObjects: readonly EditorObject[],
+    color: string
+): void {
+    const target = selectedObjects[0];
+    if (target !== undefined) {
+        switch (target.kind) {
+            case 'shape':
+                editor.changeShape({ fill: color });
+                return;
+            case 'text':
+                editor.changeTextStyle({ fill: color });
+                return;
+            case 'path':
+                if (target.tool === 'arrow') {
+                    editor.changeArrowStyle({ color });
+                } else {
+                    editor.changeFreeDrawingPathStyle({ color });
+                }
+                return;
+            default:
+                // mosaic/image 没有颜色字段
+                return;
+        }
+    }
+    switch (activeTool) {
+        case 'freedraw':
+        case 'line':
+        case 'arrow':
+            setToolSettings((prev) => ({ ...prev, [activeTool]: { ...prev[activeTool], color } }));
+            editor.setBrush({ color });
+            return;
+        case 'shape':
+            setToolSettings((prev) => ({ ...prev, shape: { ...prev.shape, stroke: color } }));
+            editor.setDrawingShape(toolSettings.shape.shapeType, { stroke: color });
+            return;
+        case 'text':
+            setToolSettings((prev) => ({ ...prev, text: { ...prev.text, fill: color } }));
+            return;
+        default:
+            setToolSettings((prev) => ({ ...prev, freedraw: { ...prev.freedraw, color } }));
     }
 }
 
