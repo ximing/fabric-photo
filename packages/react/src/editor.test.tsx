@@ -13,6 +13,7 @@ interface FakeEditorInstance {
     subscribe: ReturnType<typeof vi.fn>;
     destroy: ReturnType<typeof vi.fn>;
     notifyResize: ReturnType<typeof vi.fn>;
+    resizeCanvasDimension: ReturnType<typeof vi.fn>;
 }
 
 const mocks = vi.hoisted(() => ({ createdEditors: [] as unknown[] }));
@@ -27,6 +28,7 @@ vi.mock('@gmi/fp-core', async (importOriginal) => {
         subscribe = vi.fn(() => vi.fn());
         destroy = vi.fn();
         notifyResize = vi.fn();
+        resizeCanvasDimension = vi.fn();
         // 缺省 children 含 TopBar：historyChange 订阅 + undo/redo 初值取栈空态
         on = vi.fn();
         off = vi.fn();
@@ -154,6 +156,38 @@ describe('FabricPhotoEditor', () => {
         expect(container.querySelector('.fp-toolbar')).toBeNull();
         // 挂载容器始终存在（Editor 的 DOM 依赖）
         expect(container.querySelector('.fp-canvas-mount')).not.toBeNull();
+    });
+
+    it('cssMax 变化不重建 Editor：走 resizeCanvasDimension 便宜路径，onReady 只发一次', () => {
+        const onReady = vi.fn();
+        const { rerender } = render(<FabricPhotoEditor cssMaxWidth={500} cssMaxHeight={300} onReady={onReady} />);
+        const ed = fakeEditorAt(0);
+
+        rerender(<FabricPhotoEditor cssMaxWidth={600} cssMaxHeight={300} onReady={onReady} />);
+        expect(mocks.createdEditors).toHaveLength(1);
+        expect(ed.destroy).not.toHaveBeenCalled();
+        expect(onReady).toHaveBeenCalledTimes(1);
+        expect(ed.resizeCanvasDimension).toHaveBeenCalledTimes(1);
+        expect(ed.resizeCanvasDimension).toHaveBeenCalledWith({ width: 600, height: 300 });
+
+        // 值未实际变化时不重复调用
+        rerender(<FabricPhotoEditor cssMaxWidth={600} cssMaxHeight={300} onReady={onReady} />);
+        expect(ed.resizeCanvasDimension).toHaveBeenCalledTimes(1);
+    });
+
+    it('src 变化不重建 Editor：同一实例 loadImageFromURL 新地址（透传最新 imageName）', () => {
+        const { rerender } = render(<FabricPhotoEditor src="https://example.com/a.png" />);
+        const ed = fakeEditorAt(0);
+
+        rerender(<FabricPhotoEditor src="https://example.com/b.png" imageName="photo" />);
+        expect(mocks.createdEditors).toHaveLength(1);
+        expect(ed.destroy).not.toHaveBeenCalled();
+        expect(ed.loadImageFromURL).toHaveBeenCalledTimes(2);
+        expect(ed.loadImageFromURL).toHaveBeenLastCalledWith('https://example.com/b.png', 'photo');
+
+        // src 未实际变化时不重复加载
+        rerender(<FabricPhotoEditor src="https://example.com/b.png" imageName="photo" />);
+        expect(ed.loadImageFromURL).toHaveBeenCalledTimes(2);
     });
 
     it('unmount 时退订并 destroy editor', () => {

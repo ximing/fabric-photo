@@ -30,7 +30,7 @@ function useApplyObjectColor(object: EditorObject): (color: string) => void {
     return (color) => applyColor(editor, toolSettings, setToolSettings, modeToTool(mode), [object], color);
 }
 
-/** 数值字段（私有）：非数字输入忽略，不触发回调。 */
+/** 数值字段（私有）：非数字输入忽略，不触发回调；min/max 对键盘输入做 clamp（min/max attribute 不拦截手输）。 */
 function NumberField(props: {
     label: string;
     value: number;
@@ -54,7 +54,8 @@ function NumberField(props: {
                     }
                     const value = Number(event.target.value);
                     if (!Number.isNaN(value)) {
-                        props.onChange(value);
+                        const clamped = Math.min(props.max ?? Infinity, Math.max(props.min ?? -Infinity, value));
+                        props.onChange(clamped);
                     }
                 }}
             />

@@ -32,12 +32,14 @@ function ShortcutsBridge(): null {
 }
 
 /**
- * 组合骨架：ref 回调拿容器 div（useState 持有）→ effect 创建 Editor →
- * src 存在时 loadImageFromURL → onReady(editor) → subscribe(onChange)；
- * cleanup 退订 + destroy。挂载容器始终渲染（自定义 children 时 Editor 仍需要 DOM）；
- * children 整体包在 EditorProvider 内（Toolbar/ToolOptionBar 等子组件经 context 取 editor
- * 与 toolSettings），缺省 children 为 TopBar + ToolOptionBar + Toolbar + CanvasView +
- * PropertiesPanel。布局（grid 骨架、grid-area 落位）全部由 styles.css 的
+ * 组合骨架：ref 回调拿容器 div（useState 持有）→ 创建效应（只依赖 containerEl）创建 Editor →
+ * src 存在时 loadImageFromURL → onReady(editor) → subscribe(onChange)；cleanup 退订 + destroy。
+ * cssMax/src 变化走独立效应的便宜路径（resizeCanvasDimension / 同实例 loadImageFromURL），
+ * 不重建 Editor（保住撤销栈、onReady 只发一次）；已应用的创建时取值记录在 ref 中，
+ * 后续效应据此判断「真的变了」才调用，避免挂载时重复执行。挂载容器始终渲染（自定义 children
+ * 时 Editor 仍需要 DOM）；children 整体包在 EditorProvider 内（Toolbar/ToolOptionBar 等子组件经
+ * context 取 editor 与 toolSettings），缺省 children 为 TopBar + ToolOptionBar + Toolbar +
+ * CanvasView + PropertiesPanel。布局（grid 骨架、grid-area 落位）全部由 styles.css 的
  * fp-editor / fp-topbar / fp-option-bar / fp-toolbar / fp-canvas-view / fp-canvas-mount /
  * fp-props-panel 承载，组件不含内联样式。
  */
@@ -50,16 +52,23 @@ export function FabricPhotoEditor(props: FabricPhotoEditorProps): JSX.Element {
     onReadyRef.current = onReady;
     const onChangeRef = useRef(onChange);
     onChangeRef.current = onChange;
+    // 创建效应实际应用的 cssMax/src，供后续效应比对（仅在真的变化时走便宜路径）
+    const appliedCssMaxRef = useRef<{ width?: number; height?: number }>({});
+    const appliedSrcRef = useRef<{ src: string; imageName: string } | null>(null);
 
     useEffect(() => {
         if (containerEl === null) {
             return;
         }
         const instance = new Editor({ container: containerEl, cssMaxWidth, cssMaxHeight });
+        appliedCssMaxRef.current = { width: cssMaxWidth, height: cssMaxHeight };
         setEditor(instance);
         if (src !== undefined && src !== '') {
+            appliedSrcRef.current = { src, imageName };
             // 加载失败在此静默：错误通道由 core 图片加载流程统一处理
             void instance.loadImageFromURL(src, imageName).catch(() => undefined);
+        } else {
+            appliedSrcRef.current = null;
         }
         onReadyRef.current?.(instance);
         const unsubscribe = instance.subscribe((state) => {
@@ -70,7 +79,36 @@ export function FabricPhotoEditor(props: FabricPhotoEditorProps): JSX.Element {
             instance.destroy();
             setEditor(null);
         };
-    }, [containerEl, src, imageName, cssMaxWidth, cssMaxHeight]);
+        // 只随容器重建：cssMax/src 变化由下方独立效应处理（创建时的取值为挂载快照）
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [containerEl]);
+
+    // cssMax 变化：core 便宜路径 refit（setCssMaxDimension + refitViewport），不进历史、不重建 Editor
+    useEffect(() => {
+        if (editor === null) {
+            return;
+        }
+        const prev = appliedCssMaxRef.current;
+        if (prev.width === cssMaxWidth && prev.height === cssMaxHeight) {
+            return;
+        }
+        appliedCssMaxRef.current = { width: cssMaxWidth, height: cssMaxHeight };
+        editor.resizeCanvasDimension({ width: cssMaxWidth, height: cssMaxHeight });
+    }, [editor, cssMaxWidth, cssMaxHeight]);
+
+    // src 变化：同一 Editor 实例上 loadImageFromURL（撤销栈随之由 core 的图片加载流程处理）
+    useEffect(() => {
+        if (editor === null || src === undefined || src === '') {
+            return;
+        }
+        const prev = appliedSrcRef.current;
+        if (prev !== null && prev.src === src && prev.imageName === imageName) {
+            return;
+        }
+        appliedSrcRef.current = { src, imageName };
+        // 加载失败在此静默：错误通道由 core 图片加载流程统一处理
+        void editor.loadImageFromURL(src, imageName).catch(() => undefined);
+    }, [editor, src, imageName]);
 
     const rootClassName = className === undefined ? 'fp-editor' : `fp-editor ${className}`;
     return (

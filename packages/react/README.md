@@ -111,7 +111,7 @@ function App() {
 | --- | --- |
 | `Mod+Z`（macOS `⌘Z` / Win `Ctrl+Z`） | 撤销 |
 | `Mod+Shift+Z` / `Ctrl+Y` | 重做 |
-| `Delete` | 删除选中对象 |
+| `Delete` / `Backspace` | 删除选中对象 |
 
 ## 样式说明
 
