@@ -189,6 +189,32 @@ describe('PropertiesPanel', () => {
         editor.destroy();
     });
 
+    it('NumberField 键盘输入 clamp 到 min/max：描边宽度超界收敛 1-20', () => {
+        const editor = new Editor();
+        const shapeSpy = vi.spyOn(editor, 'changeShape');
+        const utils = renderWithEditor(editor);
+        addAndSelect(editor, makeShape());
+
+        // min/max attribute 不拦截键盘输入，onChange 必须 clamp
+        const widthInput = utils.getByLabelText('描边宽度') as HTMLInputElement;
+        fireEvent.change(widthInput, { target: { value: '999' } });
+        expect(shapeSpy).toHaveBeenLastCalledWith({ strokeWidth: 20 });
+        fireEvent.change(widthInput, { target: { value: '0' } });
+        expect(shapeSpy).toHaveBeenLastCalledWith({ strokeWidth: 1 });
+        editor.destroy();
+    });
+
+    it('NumberField 只有 min 时向下 clamp：字号输 0 → changeTextStyle({fontSize: 1})', () => {
+        const editor = new Editor();
+        const styleSpy = vi.spyOn(editor, 'changeTextStyle');
+        const utils = renderWithEditor(editor);
+        addAndSelect(editor, makeText());
+
+        fireEvent.change(utils.getByLabelText('字号'), { target: { value: '0' } });
+        expect(styleSpy).toHaveBeenLastCalledWith({ fontSize: 1 });
+        editor.destroy();
+    });
+
     it('单选 text：textarea + fontSize + fill + 三个 style toggle；点 bold → changeTextStyle({fontWeight: bold})', () => {
         const editor = new Editor();
         const textSpy = vi.spyOn(editor, 'changeText');

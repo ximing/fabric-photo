@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { Editor } from '@gmi/fp-core';
+import { AddObject, Editor, createId, type PathObject, type ShapeObject } from '@gmi/fp-core';
 import { EditorProvider } from './provider';
 import { useToolSettings } from './hooks';
 import type { EditorUIState } from './context';
@@ -195,6 +195,77 @@ describe('ToolOptionBar', () => {
         // 不允许重启模式：粒度只在下次 start 生效
         expect(startSpy.mock.calls.length).toBe(callsAfterStart);
         expect(editor.getCurrentState()).toBe('mosaic');
+        editor.destroy();
+    });
+
+    // —— 色板 value「选中优先」：core setMode 不清 selection，brush/shape 模式下残留选中时
+    // 点色板改的是选中对象（applyColor 路由），高亮必须落在选中对象主色而非工具预设。 ——
+
+    function makePath(stroke: string): PathObject {
+        return {
+            id: createId(),
+            kind: 'path',
+            tool: 'freedraw',
+            path: 'M 0 0 L 10 10',
+            left: 0,
+            top: 0,
+            angle: 0,
+            scaleX: 1,
+            scaleY: 1,
+            stroke,
+            strokeWidth: 2,
+            fill: stroke
+        };
+    }
+
+    function makeShape(fill: string, stroke: string): ShapeObject {
+        return {
+            id: createId(),
+            kind: 'shape',
+            shapeType: 'rect',
+            left: 10,
+            top: 10,
+            angle: 0,
+            scaleX: 1,
+            scaleY: 1,
+            width: 20,
+            height: 20,
+            fill,
+            stroke,
+            strokeWidth: 4
+        };
+    }
+
+    it('freedraw 模式残留选中 path：色板高亮选中对象 stroke 而非工具预设色', () => {
+        const editor = new Editor();
+        const utils = renderWithEditor(editor);
+        // 先造残留选中，再进模式（setMode 不清 selection）
+        const path = makePath('#0000ff');
+        act(() => {
+            editor.dispatch(editor.newTransaction().addStep(new AddObject(path)).setSelection([path.id]));
+        });
+        fireEvent.click(toolButton(utils, '画笔'));
+        expect(editor.getCurrentState()).toBe('freedraw');
+
+        // 预设色 #ff0000 不高亮；选中对象 stroke #0000ff 高亮
+        expect(utils.getByRole('button', { name: '色板 #ff0000' }).getAttribute('aria-pressed')).toBe('false');
+        expect(utils.getByRole('button', { name: '色板 #0000ff' }).getAttribute('aria-pressed')).toBe('true');
+        editor.destroy();
+    });
+
+    it('shape 模式残留选中 shape：色板高亮选中对象 fill（与 applyColor 作用字段一致）而非 stroke/预设', () => {
+        const editor = new Editor();
+        const utils = renderWithEditor(editor);
+        const shape = makeShape('#00ff00', '#0000ff');
+        act(() => {
+            editor.dispatch(editor.newTransaction().addStep(new AddObject(shape)).setSelection([shape.id]));
+        });
+        fireEvent.click(toolButton(utils, '形状'));
+        expect(editor.getCurrentState()).toBe('shape');
+
+        expect(utils.getByRole('button', { name: '色板 #00ff00' }).getAttribute('aria-pressed')).toBe('true');
+        expect(utils.getByRole('button', { name: '色板 #0000ff' }).getAttribute('aria-pressed')).toBe('false');
+        expect(utils.getByRole('button', { name: '色板 #ff0000' }).getAttribute('aria-pressed')).toBe('false');
         editor.destroy();
     });
 });

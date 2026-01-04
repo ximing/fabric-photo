@@ -1,5 +1,5 @@
 import type { JSX, ReactNode } from 'react';
-import type { EditorMode, ShapeObject } from '@gmi/fp-core';
+import type { EditorMode, EditorObject, ShapeObject } from '@gmi/fp-core';
 import { ColorPalette } from './color-palette';
 import { useEditor, useEditorState, useToolSettings } from './hooks';
 import { applyColor, modeToTool } from './tool-settings';
@@ -17,6 +17,29 @@ type BrushMode = Extract<EditorMode, 'freedraw' | 'line' | 'arrow'>;
 
 function isBrushMode(mode: EditorMode): mode is BrushMode {
     return mode === 'freedraw' || mode === 'line' || mode === 'arrow';
+}
+
+/**
+ * 色板高亮值：选中优先——applyColor 是「选中优先」路由（core setMode 不清 selection，
+ * brush/shape 模式下可存在残留选中），点色板改的是选中对象，故 value 必须取首个选中对象
+ * 的主色且与该色板经 applyColor 实际作用的字段一致（shape→fill、text→fill、path→stroke）；
+ * mosaic/image 无颜色字段（applyColor no-op），回退工具预设色。
+ */
+function paletteValue(objects: readonly EditorObject[], preset: string): string {
+    const target = objects[0];
+    if (target === undefined) {
+        return preset;
+    }
+    switch (target.kind) {
+        case 'shape':
+            return target.fill;
+        case 'text':
+            return target.fill;
+        case 'path':
+            return target.stroke;
+        default:
+            return preset;
+    }
 }
 
 /**
@@ -72,7 +95,7 @@ export function ToolOptionBar(props: { className?: string }): JSX.Element {
                         </button>
                     );
                 })}
-                <ColorPalette value={toolSettings[brushMode].color} onChange={onColor} />
+                <ColorPalette value={paletteValue(selectedObjects, toolSettings[brushMode].color)} onChange={onColor} />
             </>
         );
     } else if (mode === 'shape') {
@@ -96,7 +119,7 @@ export function ToolOptionBar(props: { className?: string }): JSX.Element {
                         </button>
                     );
                 })}
-                <ColorPalette value={toolSettings.shape.stroke} onChange={onColor} />
+                <ColorPalette value={paletteValue(selectedObjects, toolSettings.shape.stroke)} onChange={onColor} />
             </>
         );
     } else if (mode === 'mosaic') {
