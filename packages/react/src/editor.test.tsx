@@ -96,14 +96,12 @@ describe('FabricPhotoEditor', () => {
         expect(onReady).toHaveBeenCalledTimes(1);
         expect(onReady).toHaveBeenCalledWith(ed);
 
-        // grid 骨架（PropertiesPanel 由 T6 插入）
+        // grid 骨架：布局由 styles.css 的 .fp-editor 承载（jsdom 不加载 CSS，
+        // 这里只验证语义 class 与无内联样式）
         const root = container.firstElementChild as HTMLElement;
         expect(root.className).toContain('fp-editor');
         expect(root.className).toContain('custom');
-        expect(root.style.display).toBe('grid');
-        expect(root.style.gridTemplateAreas).toBe('"top top top" "opts opts opts" "tools canvas props"');
-        expect(root.style.gridTemplateRows).toBe('48px auto 1fr');
-        expect(root.style.gridTemplateColumns).toBe('48px 1fr 240px');
+        expect(root.getAttribute('style')).toBeNull();
     });
 
     it('缺省 children 渲染 TopBar + ToolOptionBar + Toolbar + CanvasView（灰底容器）', () => {
@@ -176,8 +174,8 @@ describe('CanvasView', () => {
         const el = container.querySelector('.fp-canvas-view') as HTMLElement;
         expect(el).not.toBeNull();
         expect(el.className).toContain('extra');
-        // jsdom 把 #e5e5e5 归一化为 rgb(229, 229, 229)
-        expect(el.getAttribute('style')).toContain('rgb(229, 229, 229)');
+        // 灰底（#e5e5e5）由 styles.css 的 .fp-canvas-view 承载，组件无内联样式
+        expect(el.getAttribute('style')).toBeNull();
         editor.destroy();
     });
 

@@ -310,7 +310,7 @@ describe('PropertiesPanel', () => {
         editor.destroy();
     });
 
-    it('gridArea=props，className 语义占位并可追加自定义 class', () => {
+    it('className 语义占位（fp-props-panel，grid 落位在 styles.css）并可追加自定义 class', () => {
         const editor = new Editor();
         const utils = render(
             <EditorProvider editor={editor}>
@@ -321,7 +321,7 @@ describe('PropertiesPanel', () => {
         const panel = utils.container.querySelector('.fp-props-panel') as HTMLElement;
         expect(panel).not.toBeNull();
         expect(panel.className).toContain('extra');
-        expect(panel.style.gridArea).toBe('props');
+        expect(panel.getAttribute('style')).toBeNull();
         editor.destroy();
     });
 });

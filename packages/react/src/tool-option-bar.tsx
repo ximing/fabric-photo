@@ -1,10 +1,8 @@
-import type { CSSProperties, JSX, ReactNode } from 'react';
+import type { JSX, ReactNode } from 'react';
 import type { EditorMode, ShapeObject } from '@gmi/fp-core';
 import { ColorPalette } from './color-palette';
 import { useEditor, useEditorState, useToolSettings } from './hooks';
 import { applyColor, modeToTool } from './tool-settings';
-
-const AREA_STYLE = { gridArea: 'opts' } satisfies CSSProperties;
 
 const WIDTH_OPTIONS = [2, 4, 8, 12] as const;
 const MOSAIC_DIMENSIONS = [4, 8, 16] as const;
@@ -128,7 +126,7 @@ export function ToolOptionBar(props: { className?: string }): JSX.Element {
 
     const rootClassName = props.className === undefined ? 'fp-option-bar' : `fp-option-bar ${props.className}`;
     return (
-        <div className={rootClassName} style={AREA_STYLE}>
+        <div className={rootClassName}>
             {content}
         </div>
     );

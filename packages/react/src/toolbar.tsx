@@ -1,4 +1,4 @@
-import type { CSSProperties, JSX } from 'react';
+import type { JSX } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
     ArrowUpRight,
@@ -36,8 +36,6 @@ export const TOOLS: ToolDef[] = [
     { id: 'pan', icon: Hand, label: '平移', shortcut: 'H' }
 ];
 
-const AREA_STYLE = { gridArea: 'tools' } satisfies CSSProperties;
-
 /**
  * 左侧工具栏：每个工具一个图标按钮。active = modeToTool(当前 mode) === tool.id；
  * rotate 是动作（rotate 90°）无 active 态。点击 mode 工具 → activateTool；
@@ -58,7 +56,7 @@ export function Toolbar(props: { className?: string }): JSX.Element {
 
     const rootClassName = props.className === undefined ? 'fp-toolbar' : `fp-toolbar ${props.className}`;
     return (
-        <div className={rootClassName} style={AREA_STYLE}>
+        <div className={rootClassName}>
             {TOOLS.map((tool) => {
                 const isActive = tool.id !== 'rotate' && activeTool === tool.id;
                 const btnClassName = isActive ? 'fp-tool-btn fp-tool-btn-active' : 'fp-tool-btn';

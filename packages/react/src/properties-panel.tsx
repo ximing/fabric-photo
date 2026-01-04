@@ -1,10 +1,8 @@
-import type { CSSProperties, JSX } from 'react';
+import type { JSX } from 'react';
 import type { Editor, EditorObject, ImageObject, MosaicObject, PathObject, ShapeObject, TextObject } from '@gmi/fp-core';
 import { ColorPalette } from './color-palette';
 import { useEditor, useEditorState, useToolSettings } from './hooks';
 import { applyColor, modeToTool } from './tool-settings';
-
-const AREA_STYLE = { gridArea: 'props' } satisfies CSSProperties;
 
 /**
  * 颜色字段（私有）：字段名 + 行内 ColorPalette（7 色板 + 原生自定义取色 input）+ 当前值文本。
@@ -250,7 +248,7 @@ export function PropertiesPanel(props: { className?: string }): JSX.Element {
 
     const rootClassName = props.className === undefined ? 'fp-props-panel' : `fp-props-panel ${props.className}`;
     return (
-        <div className={rootClassName} style={AREA_STYLE}>
+        <div className={rootClassName}>
             {content}
         </div>
     );

@@ -175,7 +175,7 @@ describe('TopBar', () => {
         editor.destroy();
     });
 
-    it('gridArea=top，className 语义占位并可追加自定义 class', () => {
+    it('className 语义占位（fp-topbar，grid 落位在 styles.css）并可追加自定义 class', () => {
         const editor = new Editor();
         const utils = render(
             <EditorProvider editor={editor}>
@@ -186,7 +186,7 @@ describe('TopBar', () => {
         const bar = utils.container.querySelector('.fp-topbar') as HTMLElement;
         expect(bar).not.toBeNull();
         expect(bar.className).toContain('extra');
-        expect(bar.style.gridArea).toBe('top');
+        expect(bar.getAttribute('style')).toBeNull();
         editor.destroy();
     });
 });
