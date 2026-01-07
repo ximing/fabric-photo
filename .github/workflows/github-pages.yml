@@ -6,9 +6,10 @@ on:
     tags:
       - v1
     paths:
-      - 'src/**'
+      - 'packages/**'
       - 'demo/**'
       - '.github/**'
+      - 'pnpm-lock.yaml'
   repository_dispatch:
 jobs:
   build:
@@ -28,9 +29,11 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
-      - name: Install & build 🔧
+      - name: Install, verify & build 🔧
         run: |
           pnpm install --frozen-lockfile
+          pnpm -r typecheck
+          pnpm -r test
           pnpm build:demo
         env:
           CI: true
