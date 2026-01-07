@@ -8,63 +8,23 @@
     "packageManager": "pnpm@10.33.0",
     "scripts": {
         "i": "pnpm install",
-        "dev": "vite",
-        "build": "tsup",
-        "build:demo": "vite build",
-        "preview:demo": "vite preview",
-        "typecheck": "tsc --noEmit",
-        "tsc": "tsc",
-        "test": "pnpm -r test",
-        "build:packages": "pnpm -r --filter @gmi/* build",
-        "typecheck:all": "pnpm -r typecheck"
-    },
-    "dependencies": {
-        "classnames": "^2.5.1",
-        "fabric": "1.7.3",
-        "lucide-react": "^0.344.0",
-        "tailwindcss": "^3.4.1"
+        "dev": "pnpm --filter fabric-photo-demo dev",
+        "build": "pnpm -r build",
+        "build:demo": "pnpm --filter fabric-photo-demo build",
+        "preview:demo": "pnpm --filter fabric-photo-demo preview",
+        "typecheck": "pnpm -r typecheck",
+        "test": "pnpm -r test"
     },
     "devDependencies": {
-        "@babel/eslint-parser": "^7.28.0",
         "@commitlint/cli": "^20.4.3",
         "@commitlint/config-conventional": "^20.4.3",
-        "@types/fabric": "^5.3.11",
-        "@types/react": "^16.14.69",
-        "@types/react-dom": "^16.9.25",
-        "@vitejs/plugin-react": "^6.0.5",
-        "autoprefixer": "^10.4.27",
-        "eslint": "^8.57.0",
-        "eslint-config-airbnb": "^19.0.4",
-        "eslint-config-prettier": "^10.1.8",
-        "eslint-config-standard": "^17.1.0",
-        "eslint-config-standard-jsx": "^11.0.0",
-        "eslint-html-reporter": "^0.7.4",
-        "eslint-plugin-flowtype": "^8.0.3",
-        "eslint-plugin-import": "^2.32.0",
-        "eslint-plugin-jest": "^29.15.0",
-        "eslint-plugin-jsx-a11y": "^6.10.2",
-        "eslint-plugin-node": "^11.1.0",
-        "eslint-plugin-prettier": "^5.5.5",
-        "eslint-plugin-promise": "^6.1.1",
-        "eslint-plugin-react": "^7.37.5",
         "husky": "^9.1.7",
-        "lint-staged": "^16.3.3",
-        "mocha": "^11.7.5",
-        "postcss": "^8.5.8",
-        "postcss-import": "^15.1.0",
         "prettier": "^3.8.1",
-        "react": "^16.10.2",
-        "react-dom": "^16.10.2",
-        "stylelint": "^17.4.0",
         "tslib": "^2.8.1",
-        "tsup": "^8.5.1",
-        "typescript": "^5.9.3",
-        "vite": "^8.2.0"
+        "typescript": "^5.9.3"
     },
     "onlyBuiltDependencies": [
         "canvas",
-        "contextify",
-        "node-sass",
-        "nx"
+        "contextify"
     ]
 }
