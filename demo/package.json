@@ -1,0 +1,26 @@
+{
+  "name": "fabric-photo-demo",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "predev": "pnpm -r --filter @gmi/* build",
+    "dev": "vite --port 9876 --strictPort",
+    "prebuild": "pnpm -r --filter @gmi/* build",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@gmi/fp-core": "workspace:*",
+    "@gmi/fp-react": "workspace:*",
+    "react": "^19",
+    "react-dom": "^19"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.0.5",
+    "typescript": "^5.9.3",
+    "vite": "^8.2.0"
+  }
+}
