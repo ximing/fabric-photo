@@ -8,3 +8,24 @@ body,
 body {
     font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
+
+.demo-shell {
+    position: relative;
+    height: 100%;
+}
+
+.demo-upload {
+    position: absolute;
+    top: 8px;
+    right: 248px; /* 顶栏内、避开右侧面板 */
+    z-index: 10;
+    padding: 4px 12px;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    background: #ffffff;
+    cursor: pointer;
+}
+
+.demo-upload:hover {
+    background: #f0f0f0;
+}
