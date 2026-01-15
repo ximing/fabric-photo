@@ -116,6 +116,23 @@ editor.on('loadImage', ({ width, height }) => {
 | --- | --- |
 | `flipActiveObjects(axis: 'horizontal' \| 'vertical'): boolean` | 选中对象 scaleX/scaleY 取负（一笔事务，多选逐个 UpdateObject）；无选中返回 `false` |
 
+### 滤镜与图像调整
+
+| 签名 | 说明 |
+| --- | --- |
+| `setBackgroundFilters(filters: Partial<FilterSettings>, opts?: { mergeKey?: string }): void` | patch 与现有背景滤镜（缺省 `DEFAULT_FILTERS`）合并后落账；无背景或合并后未变为 no-op |
+| `setImageFilters(objectId: string, filters: Partial<FilterSettings>, opts?: { mergeKey?: string }): void` | 同上，作用于指定 image 对象；对象不存在或非 image 为 no-op |
+| `resetBackgroundFilters(): void` / `resetImageFilters(objectId: string): void` | 移除 filters 字段恢复默认（可撤销）；已无滤镜为 no-op |
+
+`FilterSettings = { brightness, contrast, saturation, blur, grayscale, sepia, invert }`
+（brightness/contrast/saturation ∈ [-1,1]，blur ∈ [0,1]），`DEFAULT_FILTERS` 为全中性默认值；
+两者与 `SetFilters` Step（构造 `(target: 'background' | objectId, before, after)`，apply/invert 成对）
+均从包入口导出。当前滤镜读 state：`doc.background?.filters` / `对象.filters`，缺省 = 无滤镜。
+
+`opts.mergeKey` 透传事务 meta：History 收账时若新事务的 mergeKey 与 undo 栈顶条目相同，
+则合并进该条目（before 快照保持最初值），不新增条目——滑杆连续拖动 N 次 dispatch
+只产生一个 undo 条目；无 mergeKey 行为不变。
+
 ### 视口
 
 | 签名 | 说明 |

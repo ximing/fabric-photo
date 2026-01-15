@@ -184,4 +184,90 @@ describe('History', () => {
         expect(history.popUndo()).toBeNull();
         expect(history.popRedo()).toBeNull();
     });
+
+    it('mergeKey：连续同 key 事务合并进栈顶条目（undoSize 恒 1），一次 undo 回到起点', () => {
+        const { history } = makeHistory();
+        let state = new EditorState();
+        for (const fill of ['#111111', '#222222', '#333333']) {
+            state = dispatch(
+                history,
+                state,
+                new Transaction(state)
+                    .addStep(new AddObject({ ...makeShape(fill), id: fill }))
+                    .setMeta('mergeKey', 'drag')
+            );
+        }
+        expect(history.undoSize).toBe(1);
+        expect(state.doc.objects).toHaveLength(3);
+
+        state = revert(history, state, 'undo');
+        expect(state.doc.objects).toHaveLength(0);
+
+        state = revert(history, state, 'redo');
+        expect(state.doc.objects).toHaveLength(3);
+        expect(history.undoSize).toBe(1);
+    });
+
+    it('mergeKey：栈顶 key 不同则不合并；合并打断 redo（清 redoStack）', () => {
+        const { history } = makeHistory();
+        let state = new EditorState();
+        state = dispatch(history, state, new Transaction(state).addStep(new AddObject(makeShape('a'))).setMeta('mergeKey', 'k1'));
+        state = dispatch(history, state, new Transaction(state).addStep(new AddObject(makeShape('b'))).setMeta('mergeKey', 'k2'));
+        expect(history.undoSize).toBe(2);
+        state = dispatch(history, state, new Transaction(state).addStep(new AddObject(makeShape('c'))).setMeta('mergeKey', 'k2'));
+        expect(history.undoSize).toBe(2); // 与栈顶 k2 合并
+
+        state = revert(history, state, 'undo'); // 合并条目一次 undo 撤掉 b+c
+        expect(state.getObject('b')).toBeUndefined();
+        expect(state.getObject('c')).toBeUndefined();
+        expect(state.getObject('a')).toBeDefined();
+        expect(history.redoSize).toBe(1);
+
+        // 合并收账同样清 redoStack
+        state = dispatch(history, state, new Transaction(state).addStep(new AddObject(makeShape('d'))).setMeta('mergeKey', 'k1'));
+        expect(history.redoSize).toBe(0);
+        expect(history.undoSize).toBe(1); // 与栈顶 k1 合并
+    });
+
+    it('mergeKey：合并条目保持最初 before 快照、更新 after 快照', () => {
+        const { history } = makeHistory();
+        let state = new EditorState();
+        state = dispatch(
+            history,
+            state,
+            new Transaction(state).addStep(new AddObject(makeShape('a'))).setSelection(['a']).setMeta('mergeKey', 'sel')
+        );
+        state = dispatch(
+            history,
+            state,
+            new Transaction(state).setSelection([]).setMeta('mergeKey', 'sel')
+        );
+        // 第二笔无 step：docChanged=false 且 viewport 未设 → addToHistory false，不收账
+        expect(history.undoSize).toBe(1);
+
+        state = dispatch(
+            history,
+            state,
+            new Transaction(state).addStep(new AddObject(makeShape('b'))).setSelection(['b']).setMeta('mergeKey', 'sel')
+        );
+        expect(history.undoSize).toBe(1);
+
+        const entry = history.popUndo();
+        expect(entry?.selectionBefore).toEqual([]);
+        expect(entry?.selectionAfter).toEqual(['b']);
+        expect(entry?.mergeKey).toBe('sel');
+        history.pushUndo(entry as HistoryEntry);
+
+        state = revert(history, state, 'undo');
+        expect(state.doc.objects).toHaveLength(0);
+        expect(state.selection).toEqual([]);
+    });
+
+    it('无 mergeKey 的行为不变：相邻事务各自成条目', () => {
+        const { history } = makeHistory();
+        let state = new EditorState();
+        state = dispatch(history, state, new Transaction(state).addStep(new AddObject(makeShape('a'))));
+        state = dispatch(history, state, new Transaction(state).addStep(new AddObject(makeShape('b'))));
+        expect(history.undoSize).toBe(2);
+    });
 });

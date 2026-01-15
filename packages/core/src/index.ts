@@ -15,8 +15,9 @@ export type { ObjectAttrs } from './steps/object-steps';
 export { ReorderObjects, computeReorderedIds } from './steps/reorder-objects-step';
 export type { ReorderAction } from './steps/reorder-objects-step';
 export { SetBackground, RestoreDoc, TransformDoc } from './steps/doc-steps';
+export { SetFilters } from './steps/filter-steps';
 
-export { createDoc, docToJSON, docFromJSON, cloneDoc } from './model/doc';
+export { createDoc, docToJSON, docFromJSON, cloneDoc, DEFAULT_FILTERS } from './model/doc';
 export type {
     Doc,
     EditorObject,
@@ -27,7 +28,8 @@ export type {
     PathObject,
     MosaicObject,
     MosaicRect,
-    ImageObject
+    ImageObject,
+    FilterSettings
 } from './model/doc';
 export { createId } from './model/id';
 

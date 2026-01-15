@@ -326,6 +326,32 @@
         background: #fdecec;
     }
 
+    /* ===== 滤镜调整（属性面板背景/图像调整组） ===== */
+    .fp-filter-field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .fp-filter-field-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+    .fp-filter-field-label {
+        color: #666666;
+    }
+    .fp-filter-field-value {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 11px;
+        color: #888888;
+    }
+    .fp-filter-field input[type='range'] {
+        width: 100%;
+        margin: 0;
+        accent-color: #0d99ff;
+    }
+
     /* ===== 色板 ===== */
     .fp-color-palette {
         display: flex;

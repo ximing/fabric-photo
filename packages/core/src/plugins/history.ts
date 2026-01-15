@@ -16,6 +16,8 @@ export interface HistoryEntry {
     selectionAfter: readonly string[];
     viewportBefore: Viewport;
     viewportAfter: Viewport;
+    /** 事务 meta mergeKey 透传；连续同 key 事务合并进同一条目（滑杆连续拖动 = 一个 undo 条目）。 */
+    mergeKey?: string;
 }
 
 /**
@@ -36,13 +38,29 @@ export class History implements Plugin {
         if (!tr.addToHistory) {
             return;
         }
+        const mergeKey = tr.getMeta('mergeKey');
+        if (typeof mergeKey === 'string') {
+            const top = this.undoStack[this.undoStack.length - 1];
+            if (top !== undefined && top.mergeKey === mergeKey) {
+                // 合并进栈顶条目：新 step 的 inverse 逆序插到最前（undo 先回退最新改动），
+                // redo 追加到末尾；before 快照保持条目最初值，after 更新为最新。
+                top.inverse = [...tr.steps].reverse().map((s) => s.invert()).concat(top.inverse);
+                top.redo = top.redo.concat([...tr.steps]);
+                top.selectionAfter = newState.selection;
+                top.viewportAfter = { ...newState.viewport };
+                this.redoStack = [];
+                this.emitSizes();
+                return;
+            }
+        }
         this.undoStack.push({
             inverse: [...tr.steps].reverse().map((s) => s.invert()),
             redo: [...tr.steps],
             selectionBefore: oldState.selection,
             selectionAfter: newState.selection,
             viewportBefore: { ...oldState.viewport },
-            viewportAfter: { ...newState.viewport }
+            viewportAfter: { ...newState.viewport },
+            ...(typeof mergeKey === 'string' ? { mergeKey } : {})
         });
         this.redoStack = [];
         this.emitSizes();

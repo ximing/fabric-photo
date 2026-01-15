@@ -1,5 +1,6 @@
 import { Ellipse, FabricImage, IText, Path, Rect, Triangle, util, type FabricObject } from 'fabric';
 import type { EditorObject, ImageObject, PathObject, ShapeObject, TextObject } from '../model/doc';
+import { applyFiltersToImage } from './filters';
 import { MosaicShape } from './shapes/mosaic-shape';
 
 /**
@@ -186,6 +187,7 @@ export function createFabricObject(obj: EditorObject): FabricObject {
                 throw new Error(`image src not preloaded: ${obj.src.slice(0, 64)}`);
             }
             fObj = new FabricImage(img, { ...baseAttrs(obj), ...imageAttrs(obj) });
+            applyFiltersToImage(fObj as FabricImage, obj.filters);
             break;
         }
         case 'mosaic':
@@ -233,6 +235,7 @@ export function updateFabricObject(fObj: FabricObject, obj: EditorObject): void 
                 fImg.setElement(img);
             }
             fObj.set({ ...baseAttrs(obj), ...imageAttrs(obj) });
+            applyFiltersToImage(fImg, obj.filters);
             break;
         }
         case 'mosaic':
