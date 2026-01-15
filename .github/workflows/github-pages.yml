@@ -32,9 +32,9 @@ jobs:
       - name: Install, verify & build 🔧
         run: |
           pnpm install --frozen-lockfile
+          pnpm -r build
           pnpm -r typecheck
           pnpm -r test
-          pnpm build:demo
         env:
           CI: true
       - name: Deploy 🚀
