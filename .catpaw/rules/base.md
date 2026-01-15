@@ -1,3 +1,8 @@
+---
+ruleType: Always
+description: 项目全局基线规则（根 CLAUDE.md 的 CatPaw 镜像）
+---
+
 # 项目指令
 
 ## 1. 项目概览
