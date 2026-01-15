@@ -1,6 +1,6 @@
 import { Emitter, type EditorEventMap } from './events';
 import { createId } from './model/id';
-import type { ImageObject, PathObject, ShapeObject } from './model/doc';
+import type { EditorObject, ImageObject, PathObject, ShapeObject } from './model/doc';
 import { History } from './plugins/history';
 import { Keymap } from './plugins/keymap';
 import type { Plugin } from './plugins/plugin';
@@ -22,6 +22,7 @@ import type { Renderer } from './render/renderer';
 import { EditorState, ZOOM_MAX, ZOOM_MIN, type EditorMode, type Viewport } from './state/editor-state';
 import { SetBackground, TransformDoc } from './steps/doc-steps';
 import { AddObject, ClearObjects, RemoveObject, UpdateObject, type ObjectAttrs } from './steps/object-steps';
+import { ReorderObjects, computeReorderedIds, type ReorderAction } from './steps/reorder-objects-step';
 import { Transaction } from './transform/transaction';
 
 export interface EditorOptions {
@@ -60,6 +61,10 @@ export class Editor {
     private readonly plugins: Plugin[];
     private readonly historyPlugin: History;
     private readonly renderer?: Renderer;
+    /** 对象剪贴板（内部，不操作系统剪贴板）：copy/cut 时存选中对象的深拷贝。 */
+    private clipboard: EditorObject[] = [];
+    /** 同一轮连续 paste 的级联偏移倍数（第 n 次偏移 16*n）；copy/cut 后重置为 1。 */
+    private pasteCascade = 1;
     /** renderer 为 FabricRenderer 时的具体引用（导出 API 需要访问 fabric canvas）。 */
     private readonly fabricRenderer?: FabricRenderer;
     /** 绘制三件套 controller（仅 FabricRenderer 存在时创建；无头模式下对应 API 仅切 mode）。 */
@@ -389,6 +394,147 @@ export class Editor {
             return;
         }
         this.dispatch(this.newTransaction().setSelection([]).setMeta('addToHistory', false));
+    }
+
+    // —— 剪贴板（内部对象剪贴板，不操作系统剪贴板）——
+
+    /**
+     * 复制当前选中（单选/多选）到内部剪贴板（深拷贝，按 doc z 序）；
+     * 重置连续 paste 的级联偏移。无选中返回 false。
+     */
+    copyActiveObjects(): boolean {
+        const objects = this.selectedObjects();
+        if (objects.length === 0) {
+            return false;
+        }
+        this.clipboard = structuredClone(objects);
+        this.pasteCascade = 1;
+        return true;
+    }
+
+    /**
+     * 粘贴内部剪贴板：每个对象深拷贝 + 新 id + left/top 偏移 +16×级联倍数
+     * （同一轮连续 paste 第 n 次偏移 16*n，copy/cut 后重置为 1）；
+     * 一笔 Transaction 多个 AddObject step 并选中粘贴结果（可一步撤销）。
+     * 剪贴板为空返回 false。
+     */
+    paste(): boolean {
+        if (this.clipboard.length === 0) {
+            return false;
+        }
+        const offset = 16 * this.pasteCascade;
+        this.pasteCascade += 1;
+        this.pasteClones(this.clipboard, offset);
+        return true;
+    }
+
+    /** 剪切 = copyActiveObjects 成功后一笔 Transaction 移除选中对象（RemoveObject steps）。 */
+    cutActiveObjects(): boolean {
+        if (!this.copyActiveObjects()) {
+            return false;
+        }
+        const tr = this.newTransaction().setSelection([]);
+        const removed: string[] = [];
+        for (const id of this.currentState.selection) {
+            if (this.currentState.getObject(id) !== undefined) {
+                tr.addStep(new RemoveObject(id));
+                removed.push(id);
+            }
+        }
+        this.dispatch(tr);
+        for (const id of removed) {
+            this.emitter.emit('objectRemoved', { id });
+        }
+        return true;
+    }
+
+    /** 与 paste 同语义（新 id + 偏移 +16 + 选中结果）但不读/不写剪贴板，偏移恒 +16。无选中返回 false。 */
+    duplicateActiveObjects(): boolean {
+        const objects = this.selectedObjects();
+        if (objects.length === 0) {
+            return false;
+        }
+        this.pasteClones(objects, 16);
+        return true;
+    }
+
+    /** 当前选中对象（按 doc z 序，过滤无效 id）。 */
+    private selectedObjects(): EditorObject[] {
+        const selected = new Set(this.currentState.selection);
+        return this.currentState.doc.objects.filter((o) => selected.has(o.id));
+    }
+
+    /** 共用落盘路径：sources 逐个深拷贝 + 新 id + left/top += offset，一笔事务 AddObject 并选中。 */
+    private pasteClones(sources: readonly EditorObject[], offset: number): void {
+        const tr = this.newTransaction();
+        const pastedIds: string[] = [];
+        for (const source of sources) {
+            const clone = structuredClone(source);
+            clone.id = createId();
+            clone.left += offset;
+            clone.top += offset;
+            tr.addStep(new AddObject(clone));
+            pastedIds.push(clone.id);
+        }
+        tr.setSelection(pastedIds);
+        this.dispatch(tr);
+    }
+
+    // —— z 序 ——
+
+    /** 选中对象（支持多选，保持相对顺序）置顶；无选中或已在顶 no-op 不 dispatch。 */
+    bringToFront(): void {
+        this.reorderActiveObjects('front');
+    }
+
+    /** 选中对象置底；无选中或已在底 no-op 不 dispatch。 */
+    sendToBack(): void {
+        this.reorderActiveObjects('back');
+    }
+
+    /** 选中对象上移一层；无选中或已紧邻顶层 no-op 不 dispatch。 */
+    bringForward(): void {
+        this.reorderActiveObjects('forward');
+    }
+
+    /** 选中对象下移一层；无选中或已紧邻底层 no-op 不 dispatch。 */
+    sendBackward(): void {
+        this.reorderActiveObjects('backward');
+    }
+
+    private reorderActiveObjects(action: ReorderAction): void {
+        const selection = this.currentState.selection;
+        if (selection.length === 0) {
+            return;
+        }
+        const doc = this.currentState.doc;
+        const after = computeReorderedIds(doc, selection, action);
+        if (after === null) {
+            return;
+        }
+        this.dispatch(
+            this.newTransaction().addStep(new ReorderObjects(doc.objects.map((o) => o.id), after))
+        );
+    }
+
+    // —— 翻转 ——
+
+    /**
+     * 翻转当前选中对象（单选/多选，一笔 Transaction 多个 UpdateObject）：
+     * horizontal 取负 scaleX，vertical 取负 scaleY。无选中返回 false。
+     */
+    flipActiveObjects(axis: 'horizontal' | 'vertical'): boolean {
+        const objects = this.selectedObjects();
+        if (objects.length === 0) {
+            return false;
+        }
+        const key = axis === 'horizontal' ? 'scaleX' : 'scaleY';
+        const tr = this.newTransaction();
+        for (const obj of objects) {
+            tr.addStep(new UpdateObject(obj.id, { [key]: -obj[key] }));
+        }
+        this.dispatch(tr);
+        return true;
     }
 
     // —— 视口（zoom/pan）——

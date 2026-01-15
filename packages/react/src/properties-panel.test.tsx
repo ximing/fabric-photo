@@ -314,6 +314,61 @@ describe('PropertiesPanel', () => {
         editor.destroy();
     });
 
+    it('单选：图层顺序 4 按钮与翻转 2 按钮渲染并委托 core API', () => {
+        const editor = new Editor();
+        const frontSpy = vi.spyOn(editor, 'bringToFront');
+        const forwardSpy = vi.spyOn(editor, 'bringForward');
+        const backwardSpy = vi.spyOn(editor, 'sendBackward');
+        const backSpy = vi.spyOn(editor, 'sendToBack');
+        const flipSpy = vi.spyOn(editor, 'flipActiveObjects');
+        const utils = renderWithEditor(editor);
+        addAndSelect(editor, makeShape());
+
+        fireEvent.click(utils.getByRole('button', { name: '置顶' }));
+        expect(frontSpy).toHaveBeenCalledTimes(1);
+        fireEvent.click(utils.getByRole('button', { name: '上移' }));
+        expect(forwardSpy).toHaveBeenCalledTimes(1);
+        fireEvent.click(utils.getByRole('button', { name: '下移' }));
+        expect(backwardSpy).toHaveBeenCalledTimes(1);
+        fireEvent.click(utils.getByRole('button', { name: '置底' }));
+        expect(backSpy).toHaveBeenCalledTimes(1);
+
+        fireEvent.click(utils.getByRole('button', { name: '水平翻转' }));
+        expect(flipSpy).toHaveBeenCalledWith('horizontal');
+        fireEvent.click(utils.getByRole('button', { name: '垂直翻转' }));
+        expect(flipSpy).toHaveBeenCalledWith('vertical');
+        editor.destroy();
+    });
+
+    it('多选：同样有图层顺序与翻转按钮组并委托 core API', () => {
+        const editor = new Editor();
+        const backSpy = vi.spyOn(editor, 'sendToBack');
+        const flipSpy = vi.spyOn(editor, 'flipActiveObjects');
+        const a = makeShape();
+        const b = makeShape();
+        act(() => {
+            editor.dispatch(editor.newTransaction().addStep(new AddObject(a)).addStep(new AddObject(b)));
+        });
+        const utils = renderWithEditor(editor);
+        selectAll(editor, [a.id, b.id]);
+
+        fireEvent.click(utils.getByRole('button', { name: '置底' }));
+        expect(backSpy).toHaveBeenCalledTimes(1);
+        fireEvent.click(utils.getByRole('button', { name: '水平翻转' }));
+        expect(flipSpy).toHaveBeenCalledWith('horizontal');
+        editor.destroy();
+    });
+
+    it('单选各 kind（含只读 mosaic/image）均有图层顺序与翻转按钮组', () => {
+        const editor = new Editor();
+        const utils = renderWithEditor(editor);
+        addAndSelect(editor, makeImage());
+
+        expect(utils.getByRole('button', { name: '置顶' })).not.toBeNull();
+        expect(utils.getByRole('button', { name: '水平翻转' })).not.toBeNull();
+        editor.destroy();
+    });
+
     it('单选 mosaic：只读块数 + 删除按钮；点删除 → removeActiveObject', () => {
         const editor = new Editor();
         const spy = vi.spyOn(editor, 'removeActiveObject');

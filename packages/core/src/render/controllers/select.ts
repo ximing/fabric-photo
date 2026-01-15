@@ -1,18 +1,22 @@
-import { ActiveSelection, type FabricObject, type ModifiedEvent } from 'fabric';
+import { ActiveSelection, type BasicTransformEvent, type FabricObject, type ModifiedEvent } from 'fabric';
 import type { EditorObject } from '../../model/doc';
 import { UpdateObject } from '../../steps/object-steps';
 import { Transaction } from '../../transform/transaction';
-import { getFpId } from '../object-factory';
+import { fabricToScale, getFpId } from '../object-factory';
 import type { Controller, ControllerContext } from './controller';
 
-/** 拖拽/缩放/旋转结束后需要读回的几何字段。 */
+/**
+ * 拖拽/缩放/旋转结束后需要读回的几何字段。
+ * fabric 把 scale 归一化为恒正、翻转存 flipX/flipY，回读必须合并符号，
+ * 否则任何 object:modified 提交都会把 state 里的翻转（负 scale）写丢。
+ */
 function readGeometry(fObj: FabricObject): Record<string, number> {
     return {
         left: fObj.left,
         top: fObj.top,
         angle: fObj.angle,
-        scaleX: fObj.scaleX,
-        scaleY: fObj.scaleY
+        scaleX: fabricToScale(fObj.scaleX, fObj.flipX),
+        scaleY: fabricToScale(fObj.scaleY, fObj.flipY)
     };
 }
 
@@ -28,20 +32,21 @@ function readGeometry(fObj: FabricObject): Record<string, number> {
 function readCommittedAttrs(obj: EditorObject, fObj: FabricObject): Record<string, number> {
     const geometry = readGeometry(fObj);
     if (obj.kind === 'shape') {
+        // 宽高折算后 scale 幅度归一，但翻转符号必须保留为 ±1（否则提交即丢翻转）
         return {
             ...geometry,
             width: obj.width * fObj.scaleX,
             height: obj.height * fObj.scaleY,
-            scaleX: 1,
-            scaleY: 1
+            scaleX: fObj.flipX ? -1 : 1,
+            scaleY: fObj.flipY ? -1 : 1
         };
     }
     if (obj.kind === 'text') {
         return {
             ...geometry,
             fontSize: obj.fontSize * fObj.scaleY,
-            scaleX: 1,
-            scaleY: 1
+            scaleX: fObj.flipX ? -1 : 1,
+            scaleY: fObj.flipY ? -1 : 1
         };
     }
     return geometry;
@@ -95,8 +100,36 @@ export class SelectController implements Controller {
         ctx.dispatch(new Transaction(ctx.getState()).setSelection(ids).setMeta('addToHistory', false));
     };
 
-    private readonly onObjectModified = (event: ModifiedEvent): void => {
+    /**
+     * 拖拽期间按 state 校正 flip 标志：
+     * fabric 会在若干路径改写 flip 表示（如 ActiveSelection 成组/解散时
+     * applyTransformToObject 清 flipX/flipY 并按矩阵重分解），move 手势本身
+     * 不会合法改变 flip，故一旦发现 fabric 标志与 state 脱节即以 state 为准重新施加，
+     * 保证拖拽已翻转对象全程画布显示与 state 一致。
+     * （scaling 不挂此守卫：拖过原点翻转是 fabric 原生合法行为，由回读合并符号正确处理。）
+     */
+    private readonly onObjectMoving = (event: BasicTransformEvent & { target?: FabricObject }): void => {
         const ctx = this.ctx;
+        const target = event.target;
+        if (ctx === undefined || target === undefined || this.committing) {
+            return;
+        }
+        const fpId = getFpId(target);
+        if (fpId === undefined) {
+            return; // ActiveSelection 等渲染层内部对象
+        }
+        const obj = ctx.getState().getObject(fpId);
+        if (obj === undefined) {
+            return;
+        }
+        const flipX = obj.scaleX < 0;
+        const flipY = obj.scaleY < 0;
+        if (target.flipX !== flipX || target.flipY !== flipY) {
+            target.set({ flipX, flipY });
+        }
+    };
+
+    private readonly onObjectModified = (event: ModifiedEvent): void => {        const ctx = this.ctx;
         const target = event.target;
         if (ctx === undefined || target === undefined || this.committing) {
             return;
@@ -129,6 +162,7 @@ export class SelectController implements Controller {
         ctx.canvas.on('selection:created', this.onSelectionChange);
         ctx.canvas.on('selection:updated', this.onSelectionChange);
         ctx.canvas.on('selection:cleared', this.onSelectionChange);
+        ctx.canvas.on('object:moving', this.onObjectMoving);
         ctx.canvas.on('object:modified', this.onObjectModified);
     }
 
@@ -141,6 +175,7 @@ export class SelectController implements Controller {
         canvas.off('selection:created', this.onSelectionChange);
         canvas.off('selection:updated', this.onSelectionChange);
         canvas.off('selection:cleared', this.onSelectionChange);
+        canvas.off('object:moving', this.onObjectMoving);
         canvas.off('object:modified', this.onObjectModified);
         this.ctx = undefined;
     }

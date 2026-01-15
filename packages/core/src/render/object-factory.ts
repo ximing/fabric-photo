@@ -54,12 +54,42 @@ export function getCachedImage(src: string): HTMLImageElement | undefined {
 
 // —— 属性映射 ——
 
+export interface FabricScaleAttrs {
+    scaleX: number;
+    scaleY: number;
+    flipX: boolean;
+    flipY: boolean;
+}
+
+/**
+ * state 带符号 scale（负值表示翻转）→ fabric 幂等投影。
+ * fabric 6.9.1 的 FabricObject._set 对负 scale 的语义是「toggle flipX/flipY 并取绝对值」
+ * （dist index.js ~7101），不是幂等赋值：直接 set({ scaleX: -1 }) 会让 flipX
+ * 随同步次数震荡（false→true→false），而 state 恒为 -1。
+ * 故 state → fabric 一律显式换算为 { abs(scale), flip 标志 }，绕开负 scale 赋值路径。
+ */
+export function scaleToFabric(scaleX: number, scaleY: number): FabricScaleAttrs {
+    return {
+        scaleX: Math.abs(scaleX),
+        scaleY: Math.abs(scaleY),
+        flipX: scaleX < 0,
+        flipY: scaleY < 0
+    };
+}
+
+/** fabric 归一化后的 { scale（恒正）, flip } → state 带符号 scale（object:modified 回读用）。 */
+export function fabricToScale(scale: number, flip: boolean): number {
+    return flip ? -scale : scale;
+}
+
 interface BaseAttrs {
     left: number;
     top: number;
     angle: number;
     scaleX: number;
     scaleY: number;
+    flipX: boolean;
+    flipY: boolean;
 }
 
 function baseAttrs(obj: EditorObject): BaseAttrs {
@@ -67,8 +97,7 @@ function baseAttrs(obj: EditorObject): BaseAttrs {
         left: obj.left,
         top: obj.top,
         angle: obj.angle,
-        scaleX: obj.scaleX,
-        scaleY: obj.scaleY
+        ...scaleToFabric(obj.scaleX, obj.scaleY)
     };
 }
 

@@ -25,10 +25,13 @@ function isEditableTarget(target: EventTarget | null): boolean {
 
 /**
  * 全局快捷键：监听 document.documentElement 的 keydown（与 core keymap 同层级；
- * core keymap 只管 Mod+Z/Mod+Shift+Z/Ctrl+Y/Delete，单字母工具与 Esc 由本 hook 负责）。
+ * core keymap 只管 Mod+Z/Mod+Shift+Z/Ctrl+Y/Delete/剪贴板/z 序，单字母工具、Esc 与翻转由本 hook 负责）。
  * - 单字母 → activateTool(editor, tool, getToolSettings())（settings 按键时取最新值）
  * - Escape → editor.endAll()
- * 守卫：metaKey/ctrlKey/altKey 跳过（留给系统与 core keymap）；target 为
+ * - Shift+H → 水平翻转选中（editor.flipActiveObjects('horizontal')）
+ * - Shift+V → 垂直翻转选中（editor.flipActiveObjects('vertical')）
+ * 守卫：metaKey/ctrlKey/altKey 跳过（留给系统与 core keymap）；shiftKey 仅放行
+ * Shift+H/Shift+V 两个翻转组合，其余 shift 组合不触发单字母工具切换；target 为
  * input/textarea/contenteditable 跳过；editor.isTextEditing() 跳过。
  * cleanup 移除监听；node 环境（无 document）不挂监听。
  */
@@ -53,6 +56,15 @@ export function useShortcuts(editor: Editor, getToolSettings: () => ToolSettings
             }
             if (event.key === 'Escape') {
                 editor.endAll();
+                return;
+            }
+            if (event.shiftKey) {
+                // shift 组合仅开口子给翻转；event.key 已是大写（'H'/'V'）
+                if (event.key === 'H') {
+                    editor.flipActiveObjects('horizontal');
+                } else if (event.key === 'V') {
+                    editor.flipActiveObjects('vertical');
+                }
                 return;
             }
             const tool = TOOL_SHORTCUTS[event.key.toLowerCase()];

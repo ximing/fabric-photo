@@ -129,6 +129,45 @@ describe('useShortcuts', () => {
         editor.destroy();
     });
 
+    it("Shift+H / Shift+V 触发水平/垂直翻转，且不触发 'h'/'v' 的工具切换", () => {
+        const editor = new Editor();
+        const flipSpy = vi.spyOn(editor, 'flipActiveObjects');
+        const panSpy = vi.spyOn(editor, 'startPan');
+        const endAllSpy = vi.spyOn(editor, 'endAll');
+        renderHook(() => useShortcuts(editor, () => DEFAULT_TOOL_SETTINGS));
+
+        pressKey('H', { shiftKey: true });
+        expect(flipSpy).toHaveBeenCalledWith('horizontal');
+        expect(panSpy).not.toHaveBeenCalled(); // 'h' = pan 工具不被触发
+
+        pressKey('V', { shiftKey: true });
+        expect(flipSpy).toHaveBeenCalledWith('vertical');
+        expect(endAllSpy).not.toHaveBeenCalled(); // 'v' = select 工具不被触发
+        editor.destroy();
+    });
+
+    it("shift + 无映射字母（如 Shift+P）不触发工具切换", () => {
+        const editor = new Editor();
+        const spy = vi.spyOn(editor, 'startFreeDrawing');
+        renderHook(() => useShortcuts(editor, () => DEFAULT_TOOL_SETTINGS));
+
+        pressKey('P', { shiftKey: true });
+        expect(spy).not.toHaveBeenCalled();
+        expect(editor.getCurrentState()).toBe('normal');
+        editor.destroy();
+    });
+
+    it("Shift+H 在修饰键（Mod）同按时不触发", () => {
+        const editor = new Editor();
+        const flipSpy = vi.spyOn(editor, 'flipActiveObjects');
+        renderHook(() => useShortcuts(editor, () => DEFAULT_TOOL_SETTINGS));
+
+        pressKey('H', { shiftKey: true, metaKey: true });
+        pressKey('H', { shiftKey: true, ctrlKey: true });
+        expect(flipSpy).not.toHaveBeenCalled();
+        editor.destroy();
+    });
+
     it('unmount 后按键不触发', () => {
         const editor = new Editor();
         const spy = vi.spyOn(editor, 'startFreeDrawing');

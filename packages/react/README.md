@@ -44,7 +44,7 @@ function App() {
 | `Toolbar` | 左侧 10 工具图标按钮（选择/裁剪/旋转/箭头/画笔/直线/形状/文字/马赛克/平移） |
 | `ToolOptionBar` | 按当前 mode 渲染：crop→Apply/Cancel；画笔类→线宽+色板；shape→形状类型+色板；mosaic→粒度 |
 | `CanvasView` | 灰底画布区（`#e5e5e5`），ResizeObserver → `editor.notifyResize()` |
-| `PropertiesPanel` | 选中驱动表单：shape/text/path 颜色与尺寸（可撤销）、mosaic/image 只读信息、多选删除；无选中显示画布属性 |
+| `PropertiesPanel` | 选中驱动表单：shape/text/path 颜色与尺寸（可撤销）、mosaic/image 只读信息、多选删除；单选/多选均有图层顺序（置顶/上移/下移/置底）与翻转（水平/垂直）按钮组；无选中显示画布属性 |
 | `ColorPalette` | 7 色固定色板（`PALETTE_COLORS`）+ 原生自定义取色 input，纯受控 |
 
 所有组件接受可选 `className`，追加在语义类（`fp-topbar`、`fp-toolbar` 等）之后，便于覆写。
@@ -104,6 +104,8 @@ function App() {
 | `M` | 马赛克 |
 | `H` | 平移 |
 | `Esc` | 退出当前模式（`editor.endAll()`） |
+| `Shift+H` | 水平翻转选中对象 |
+| `Shift+V` | 垂直翻转选中对象 |
 
 以下由 `@gmi/fp-core` 内建 keymap 处理：
 
@@ -112,6 +114,11 @@ function App() {
 | `Mod+Z`（macOS `⌘Z` / Win `Ctrl+Z`） | 撤销 |
 | `Mod+Shift+Z` / `Ctrl+Y` | 重做 |
 | `Delete` / `Backspace` | 删除选中对象 |
+| `Mod+C` / `Mod+X` | 复制 / 剪切选中对象（内部剪贴板） |
+| `Mod+V` | 粘贴（偏移 +16，连续粘贴级联） |
+| `Mod+D` | 创建选中对象副本（偏移 +16） |
+| `]` / `[` | 上移一层 / 下移一层 |
+| `Mod+]` / `Mod+[` | 置顶 / 置底 |
 
 ## 样式说明
 
