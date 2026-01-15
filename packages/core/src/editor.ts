@@ -1,6 +1,6 @@
 import { Emitter, type EditorEventMap } from './events';
 import { createId } from './model/id';
-import type { EditorObject, ImageObject, PathObject, ShapeObject } from './model/doc';
+import { DEFAULT_FILTERS, type EditorObject, type FilterSettings, type ImageObject, type PathObject, type ShapeObject } from './model/doc';
 import { History } from './plugins/history';
 import { Keymap } from './plugins/keymap';
 import type { Plugin } from './plugins/plugin';
@@ -21,6 +21,7 @@ import { preloadImage } from './render/object-factory';
 import type { Renderer } from './render/renderer';
 import { EditorState, ZOOM_MAX, ZOOM_MIN, type EditorMode, type Viewport } from './state/editor-state';
 import { SetBackground, TransformDoc } from './steps/doc-steps';
+import { SetFilters, sameFilters } from './steps/filter-steps';
 import { AddObject, ClearObjects, RemoveObject, UpdateObject, type ObjectAttrs } from './steps/object-steps';
 import { ReorderObjects, computeReorderedIds, type ReorderAction } from './steps/reorder-objects-step';
 import { Transaction } from './transform/transaction';
@@ -515,6 +516,68 @@ export class Editor {
         this.dispatch(
             this.newTransaction().addStep(new ReorderObjects(doc.objects.map((o) => o.id), after))
         );
+    }
+
+    // —— 滤镜与图像调整（SetFilters，可撤销；mergeKey 连续调用合并为一个 undo 条目）——
+
+    /**
+     * 合并设置背景图滤镜：patch 叠加在现有 filters（缺省 DEFAULT_FILTERS）之上，
+     * dispatch SetFilters（可撤销）。无背景或合并后未变为 no-op。
+     * opts.mergeKey 透传事务 meta：连续同 key 调用在 History 里合并为一个 undo 条目
+     * （滑杆连续拖动场景）。
+     */
+    setBackgroundFilters(filters: Partial<FilterSettings>, opts?: { mergeKey?: string }): void {
+        const bg = this.currentState.doc.background;
+        if (bg === null) {
+            return;
+        }
+        this.setFiltersOn('background', bg.filters, filters, opts);
+    }
+
+    /** 合并设置某个 image 对象的滤镜；对象不存在或非 image 为 no-op。语义同 setBackgroundFilters。 */
+    setImageFilters(objectId: string, filters: Partial<FilterSettings>, opts?: { mergeKey?: string }): void {
+        const obj = this.currentState.getObject(objectId);
+        if (obj === undefined || obj.kind !== 'image') {
+            return;
+        }
+        this.setFiltersOn(objectId, obj.filters, filters, opts);
+    }
+
+    /** 移除背景图滤镜（filters 置 undefined，恢复默认，可撤销）；已无滤镜为 no-op。 */
+    resetBackgroundFilters(): void {
+        const bg = this.currentState.doc.background;
+        if (bg === null || bg.filters === undefined) {
+            return;
+        }
+        this.dispatch(this.newTransaction().addStep(new SetFilters('background', bg.filters, undefined)));
+    }
+
+    /** 移除某个 image 对象的滤镜（可撤销）；对象不存在、非 image 或已无滤镜为 no-op。 */
+    resetImageFilters(objectId: string): void {
+        const obj = this.currentState.getObject(objectId);
+        if (obj === undefined || obj.kind !== 'image' || obj.filters === undefined) {
+            return;
+        }
+        this.dispatch(this.newTransaction().addStep(new SetFilters(objectId, obj.filters, undefined)));
+    }
+
+    /** setBackgroundFilters / setImageFilters 共用落账路径：合并 patch → no-op 判定 → dispatch。 */
+    private setFiltersOn(
+        target: 'background' | string,
+        current: FilterSettings | undefined,
+        patch: Partial<FilterSettings>,
+        opts?: { mergeKey?: string }
+    ): void {
+        const after: FilterSettings = { ...DEFAULT_FILTERS, ...current, ...patch };
+        // current 缺省按 DEFAULT_FILTERS 参与比较：「无滤镜 + 全默认 patch」不产生历史条目
+        if (sameFilters(current ?? DEFAULT_FILTERS, after)) {
+            return;
+        }
+        const tr = this.newTransaction().addStep(new SetFilters(target, current, after));
+        if (opts?.mergeKey !== undefined) {
+            tr.setMeta('mergeKey', opts.mergeKey);
+        }
+        this.dispatch(tr);
     }
 
     // —— 翻转 ——

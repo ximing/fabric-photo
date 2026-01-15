@@ -391,6 +391,102 @@ describe('PropertiesPanel', () => {
         editor.destroy();
     });
 
+    it('无选中且有背景：渲染「背景调整」组；滑杆 onChange 调 setBackgroundFilters 且带稳定 mergeKey', () => {
+        const editor = new Editor();
+        const spy = vi.spyOn(editor, 'setBackgroundFilters');
+        act(() => {
+            editor.dispatch(
+                editor.newTransaction().addStep(
+                    new SetBackground({ src: 'data:image/png;base64,x', width: 100, height: 80, name: 'p.png', angle: 0 })
+                )
+            );
+        });
+        const utils = renderWithEditor(editor);
+
+        expect(utils.getByText('背景调整')).not.toBeNull();
+        const brightness = utils.getByLabelText('亮度') as HTMLInputElement;
+        expect(brightness.value).toBe('0');
+
+        fireEvent.change(brightness, { target: { value: '40' } });
+        expect(spy).toHaveBeenCalledWith({ brightness: 0.4 }, { mergeKey: 'bg-filters' });
+        fireEvent.change(utils.getByLabelText('模糊'), { target: { value: '25' } });
+        expect(spy).toHaveBeenCalledWith({ blur: 0.25 }, { mergeKey: 'bg-filters' });
+        editor.destroy();
+    });
+
+    it('无选中且有背景：toggle 与重置按钮委托 core API（resetBackgroundFilters）', () => {
+        const editor = new Editor();
+        const patchSpy = vi.spyOn(editor, 'setBackgroundFilters');
+        const resetSpy = vi.spyOn(editor, 'resetBackgroundFilters');
+        act(() => {
+            editor.dispatch(
+                editor.newTransaction().addStep(
+                    new SetBackground({ src: 'data:image/png;base64,x', width: 100, height: 80, name: 'p.png', angle: 0 })
+                )
+            );
+        });
+        const utils = renderWithEditor(editor);
+
+        const grayscale = utils.getByRole('button', { name: '灰度' });
+        expect(grayscale.getAttribute('aria-pressed')).toBe('false');
+        fireEvent.click(grayscale);
+        expect(patchSpy).toHaveBeenCalledWith({ grayscale: true }, { mergeKey: 'bg-filters' });
+
+        fireEvent.click(utils.getByRole('button', { name: '重置' }));
+        expect(resetSpy).toHaveBeenCalledTimes(1);
+        editor.destroy();
+    });
+
+    it('无选中且无背景：不渲染「背景调整」组', () => {
+        const editor = new Editor();
+        const utils = renderWithEditor(editor);
+        expect(utils.queryByText('背景调整')).toBeNull();
+        editor.destroy();
+    });
+
+    it('单选 image：渲染「图像调整」组；滑杆 onChange 调 setImageFilters 且带 img-filters-${id} mergeKey', () => {
+        const editor = new Editor();
+        const spy = vi.spyOn(editor, 'setImageFilters');
+        const utils = renderWithEditor(editor);
+        const image = makeImage();
+        addAndSelect(editor, image);
+
+        expect(utils.getByText('图像调整')).not.toBeNull();
+        fireEvent.change(utils.getByLabelText('对比度'), { target: { value: '-30' } });
+        expect(spy).toHaveBeenCalledWith(image.id, { contrast: -0.3 }, { mergeKey: `img-filters-${image.id}` });
+
+        fireEvent.click(utils.getByRole('button', { name: '反色' }));
+        expect(spy).toHaveBeenCalledWith(image.id, { invert: true }, { mergeKey: `img-filters-${image.id}` });
+        editor.destroy();
+    });
+
+    it('单选 image：重置按钮调 resetImageFilters(objectId)；对象已有滤镜时滑杆/toggle 回显当前值', () => {
+        const editor = new Editor();
+        const resetSpy = vi.spyOn(editor, 'resetImageFilters');
+        const image = { ...makeImage(), filters: { brightness: 0.5, contrast: 0, saturation: 0, blur: 0.2, grayscale: true, sepia: false, invert: false } };
+        act(() => {
+            editor.dispatch(editor.newTransaction().addStep(new AddObject(image)).setSelection([image.id]));
+        });
+        const utils = renderWithEditor(editor);
+
+        expect((utils.getByLabelText('亮度') as HTMLInputElement).value).toBe('50');
+        expect((utils.getByLabelText('模糊') as HTMLInputElement).value).toBe('20');
+        expect(utils.getByRole('button', { name: '灰度' }).getAttribute('aria-pressed')).toBe('true');
+        expect(utils.getByRole('button', { name: '褐色' }).getAttribute('aria-pressed')).toBe('false');
+
+        fireEvent.click(utils.getByRole('button', { name: '重置' }));
+        expect(resetSpy).toHaveBeenCalledWith(image.id);
+        editor.destroy();
+    });
+
+    it('单选非 image（shape）：不渲染滤镜调整组', () => {
+        const editor = new Editor();
+        const utils = renderWithEditor(editor);
+        addAndSelect(editor, makeShape());
+        expect(utils.queryByText('图像调整')).toBeNull();
+        editor.destroy();
+    });
+
     it('className 语义占位（fp-props-panel，grid 落位在 styles.css）并可追加自定义 class', () => {
         const editor = new Editor();
         const utils = render(

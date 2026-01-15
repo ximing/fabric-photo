@@ -115,6 +115,48 @@ describe('docToJSON / docFromJSON', () => {
     it('非 JSON 字符串抛错', () => {
         expect(() => docFromJSON('not json')).toThrow();
     });
+
+    it('旧数据兼容：background 与对象均无 filters 字段可正常加载', () => {
+        const json = JSON.stringify({ background: makeBackground(), objects: [makeImage('i1')] });
+        const doc = docFromJSON(json);
+        expect(doc.background?.filters).toBeUndefined();
+        expect((doc.objects[0] as ImageObject).filters).toBeUndefined();
+    });
+
+    it('带合法 filters 的 background / image 往返相等', () => {
+        const filters = { brightness: 0.5, contrast: -1, saturation: 1, blur: 0.25, grayscale: true, sepia: false, invert: true };
+        const doc: Doc = {
+            background: { ...makeBackground(), filters },
+            objects: [{ ...makeImage('i1'), filters: { ...filters, invert: false } }, makeShape('s1')]
+        };
+        expect(docFromJSON(docToJSON(doc))).toEqual(doc);
+    });
+
+    it('background.filters 数值越界 / 字段非法时抛错', () => {
+        const base = { ...makeBackground() };
+        const cases: unknown[] = [
+            { brightness: 2, contrast: 0, saturation: 0, blur: 0, grayscale: false, sepia: false, invert: false },
+            { brightness: 0, contrast: 0, saturation: 0, blur: -0.1, grayscale: false, sepia: false, invert: false },
+            { brightness: 0, contrast: 0, saturation: 0, blur: 0, grayscale: 'yes', sepia: false, invert: false },
+            { brightness: 0 }, // 字段不全
+            'not-an-object'
+        ];
+        for (const filters of cases) {
+            expect(() => docFromJSON(JSON.stringify({ background: { ...base, filters }, objects: [] }))).toThrow(
+                'invalid doc JSON'
+            );
+        }
+    });
+
+    it('对象 filters 数值越界 / 字段非法时抛错', () => {
+        const bad = { brightness: 0, contrast: 0, saturation: -1.5, blur: 0, grayscale: false, sepia: false, invert: false };
+        expect(() =>
+            docFromJSON(JSON.stringify({ background: null, objects: [{ ...makeImage('i1'), filters: bad }] }))
+        ).toThrow('invalid doc JSON');
+        expect(() =>
+            docFromJSON(JSON.stringify({ background: null, objects: [{ ...makeShape('s1'), filters: 42 }] }))
+        ).toThrow('invalid doc JSON');
+    });
 });
 
 describe('cloneDoc', () => {

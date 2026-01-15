@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import type { Editor, EditorObject, ImageObject, MosaicObject, PathObject, ShapeObject, TextObject } from '@gmi/fp-core';
+import { DEFAULT_FILTERS, type Editor, type EditorObject, type FilterSettings, type ImageObject, type MosaicObject, type PathObject, type ShapeObject, type TextObject } from '@gmi/fp-core';
 import { ColorPalette } from './color-palette';
 import { useEditor, useEditorState, useToolSettings } from './hooks';
 import { applyColor, modeToTool } from './tool-settings';
@@ -60,6 +60,80 @@ function NumberField(props: {
                 }}
             />
         </label>
+    );
+}
+
+/**
+ * 滤镜滑杆（私有）：domain [-1,1] 映射为 -100..100，[0,1] 映射为 0..100 显示。
+ * onChange 直接透传归一化值（连续拖动由调用方配 mergeKey 合并历史）。
+ */
+function FilterSlider(props: {
+    label: string;
+    value: number; // 归一化（[-1,1] 或 [0,1]）
+    min: number;   // 归一化域
+    max: number;
+    onChange: (value: number) => void;
+}): JSX.Element {
+    const display = Math.round(props.value * 100);
+    return (
+        <div className="fp-filter-field">
+            <div className="fp-filter-field-row">
+                <span className="fp-filter-field-label">{props.label}</span>
+                <span className="fp-filter-field-value">{display}</span>
+            </div>
+            <input
+                type="range"
+                aria-label={props.label}
+                min={props.min * 100}
+                max={props.max * 100}
+                step={1}
+                value={display}
+                onChange={(event) => props.onChange(Number(event.target.value) / 100)}
+            />
+        </div>
+    );
+}
+
+/**
+ * 滤镜调整组（私有）：亮度/对比度/饱和度/模糊滑杆 + 灰度/褐色/反色 toggle + 重置。
+ * 零编辑逻辑：onPatch/onReset 由调用方绑定 core 的 set*Filters/reset*Filters（含 mergeKey）。
+ */
+function FilterAdjustGroup(props: {
+    title: string;
+    filters: FilterSettings | undefined;
+    onPatch: (patch: Partial<FilterSettings>) => void;
+    onReset: () => void;
+}): JSX.Element {
+    const effective = props.filters ?? DEFAULT_FILTERS;
+    const toggles = [
+        { key: 'grayscale', label: '灰度', active: effective.grayscale },
+        { key: 'sepia', label: '褐色', active: effective.sepia },
+        { key: 'invert', label: '反色', active: effective.invert }
+    ] as const;
+    return (
+        <div className="fp-props-group">
+            <span className="fp-props-group-label">{props.title}</span>
+            <FilterSlider label="亮度" value={effective.brightness} min={-1} max={1} onChange={(brightness) => props.onPatch({ brightness })} />
+            <FilterSlider label="对比度" value={effective.contrast} min={-1} max={1} onChange={(contrast) => props.onPatch({ contrast })} />
+            <FilterSlider label="饱和度" value={effective.saturation} min={-1} max={1} onChange={(saturation) => props.onPatch({ saturation })} />
+            <FilterSlider label="模糊" value={effective.blur} min={0} max={1} onChange={(blur) => props.onPatch({ blur })} />
+            <div className="fp-props-style-toggles">
+                {toggles.map((toggle) => (
+                    <button
+                        key={toggle.key}
+                        type="button"
+                        className={toggle.active ? 'fp-props-toggle fp-props-toggle-active' : 'fp-props-toggle'}
+                        aria-pressed={toggle.active}
+                        onClick={() => props.onPatch({ [toggle.key]: !toggle.active })}
+                    >
+                        {toggle.label}
+                    </button>
+                ))}
+            </div>
+            <button type="button" className="fp-props-toggle" onClick={() => props.onReset()}>
+                重置
+            </button>
+        </div>
     );
 }
 
@@ -213,7 +287,7 @@ function MosaicPanel(props: { editor: Editor; object: MosaicObject }): JSX.Eleme
 }
 
 function ImagePanel(props: { editor: Editor; object: ImageObject }): JSX.Element {
-    const { object } = props;
+    const { editor, object } = props;
     return (
         <>
             <div className="fp-props-readonly">
@@ -222,15 +296,23 @@ function ImagePanel(props: { editor: Editor; object: ImageObject }): JSX.Element
                     {object.width} × {object.height}
                 </span>
             </div>
-            <DeleteButton editor={props.editor} />
+            <FilterAdjustGroup
+                title="图像调整"
+                filters={object.filters}
+                onPatch={(patch) => editor.setImageFilters(object.id, patch, { mergeKey: `img-filters-${object.id}` })}
+                onReset={() => editor.resetImageFilters(object.id)}
+            />
+            <DeleteButton editor={editor} />
         </>
     );
 }
 
 /**
  * 属性面板（grid 右列，gridArea 'props'）：由选中驱动表单。
- * 无选中 → 画布属性（缩放只读、背景尺寸/「未加载图片」、对象数）；
- * 单选按 kind 分派 shape/text/path/mosaic/image 表单（change* API 均可撤销）；
+ * 无选中 → 画布属性（缩放只读、背景尺寸/「未加载图片」、对象数）+「背景调整」滤镜组
+ * （已加载背景时，mergeKey 'bg-filters'，连续拖动一个 undo 条目）；
+ * 单选按 kind 分派 shape/text/path/mosaic/image 表单（change* API 均可撤销），
+ * image 表单带「图像调整」滤镜组（mergeKey `img-filters-${id}`）；
  * 多选 → 数量 + 删除。单选与多选均有「图层顺序」（置顶/上移/下移/置底）与
  * 「翻转」（水平/垂直）按钮组，委托 core 公开 API。
  */
@@ -260,6 +342,14 @@ export function PropertiesPanel(props: { className?: string }): JSX.Element {
                     <span className="fp-props-readonly-label">对象数</span>
                     <span className="fp-props-canvas-count">{objects.length}</span>
                 </div>
+                {background !== null && (
+                    <FilterAdjustGroup
+                        title="背景调整"
+                        filters={background.filters}
+                        onPatch={(patch) => editor.setBackgroundFilters(patch, { mergeKey: 'bg-filters' })}
+                        onReset={() => editor.resetBackgroundFilters()}
+                    />
+                )}
             </div>
         );
     } else if (selected.length > 1) {

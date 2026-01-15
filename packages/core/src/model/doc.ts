@@ -1,3 +1,28 @@
+/**
+ * 滤镜与图像调整参数。数值域：brightness/contrast/saturation ∈ [-1,1]，blur ∈ [0,1]。
+ * 挂在 BackgroundImage / ImageObject 的可选 filters 字段上；缺省 = 无滤镜。
+ */
+export interface FilterSettings {
+    brightness: number;
+    contrast: number;
+    saturation: number;
+    blur: number;
+    grayscale: boolean;
+    sepia: boolean;
+    invert: boolean;
+}
+
+/** 滤镜默认值（全部中性：不产生任何 fabric filter 实例）。 */
+export const DEFAULT_FILTERS: FilterSettings = {
+    brightness: 0,
+    contrast: 0,
+    saturation: 0,
+    blur: 0,
+    grayscale: false,
+    sepia: false,
+    invert: false
+};
+
 export interface BaseObject {
     id: string;
     left: number;            // 背景图片像素坐标系
@@ -52,6 +77,7 @@ export interface ImageObject extends BaseObject {
     src: string;               // dataURL 或跨域 URL
     width: number;
     height: number;
+    filters?: FilterSettings;  // 缺省 = 无滤镜（保持旧数据兼容）
 }
 
 export type EditorObject = ShapeObject | TextObject | PathObject | MosaicObject | ImageObject;
@@ -62,6 +88,7 @@ export interface BackgroundImage {
     height: number;
     name: string;
     angle: number;             // 度，0 为原始方向
+    filters?: FilterSettings;  // 缺省 = 无滤镜（保持旧数据兼容）
 }
 
 export interface Doc {
@@ -106,6 +133,29 @@ function isValidObject(value: unknown): value is EditorObject {
     return typeof value.id === 'string' && typeof value.kind === 'string' && OBJECT_KINDS.has(value.kind);
 }
 
+function inRange(value: unknown, min: number, max: number): boolean {
+    return typeof value === 'number' && value >= min && value <= max;
+}
+
+/** filters 缺省合法（旧数据兼容）；有则必须是完整 FilterSettings 且数值在域内。 */
+function isValidFilters(value: unknown): value is FilterSettings | undefined {
+    if (value === undefined) {
+        return true;
+    }
+    if (!isRecord(value)) {
+        return false;
+    }
+    return (
+        inRange(value.brightness, -1, 1) &&
+        inRange(value.contrast, -1, 1) &&
+        inRange(value.saturation, -1, 1) &&
+        inRange(value.blur, 0, 1) &&
+        typeof value.grayscale === 'boolean' &&
+        typeof value.sepia === 'boolean' &&
+        typeof value.invert === 'boolean'
+    );
+}
+
 export function docFromJSON(json: string): Doc {
     let data: unknown;
     try {
@@ -117,6 +167,13 @@ export function docFromJSON(json: string): Doc {
         throw new Error('invalid doc JSON');
     }
     if (!Array.isArray(data.objects) || !data.objects.every(isValidObject)) {
+        throw new Error('invalid doc JSON');
+    }
+    const background = data.background as BackgroundImage | null;
+    if (background !== null && !isValidFilters(background.filters)) {
+        throw new Error('invalid doc JSON');
+    }
+    if (!(data.objects as EditorObject[]).every((obj) => isValidFilters((obj as { filters?: unknown }).filters))) {
         throw new Error('invalid doc JSON');
     }
     return data as unknown as Doc;

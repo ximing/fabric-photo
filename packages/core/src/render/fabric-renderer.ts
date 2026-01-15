@@ -3,6 +3,7 @@ import type { BackgroundImage, EditorObject } from '../model/doc';
 import { ZOOM_MAX, ZOOM_MIN, type EditorMode, type EditorState, type Viewport } from '../state/editor-state';
 import { Transaction } from '../transform/transaction';
 import type { Controller, ControllerContext } from './controllers/controller';
+import { applyFiltersToImage } from './filters';
 import { createFabricObject, getCachedImage, preloadImage, updateFabricObject } from './object-factory';
 import type { Renderer } from './renderer';
 
@@ -235,6 +236,7 @@ export class FabricRenderer implements Renderer {
                     top: bg.height / 2,
                     angle: bg.angle
                 });
+                applyFiltersToImage(img, bg.filters);
                 this.fabricCanvas.backgroundImage = img;
                 this.fabricCanvas.requestRenderAll();
             })

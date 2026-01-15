@@ -44,7 +44,7 @@ function App() {
 | `Toolbar` | 左侧 10 工具图标按钮（选择/裁剪/旋转/箭头/画笔/直线/形状/文字/马赛克/平移） |
 | `ToolOptionBar` | 按当前 mode 渲染：crop→Apply/Cancel；画笔类→线宽+色板；shape→形状类型+色板；mosaic→粒度 |
 | `CanvasView` | 灰底画布区（`#e5e5e5`），ResizeObserver → `editor.notifyResize()` |
-| `PropertiesPanel` | 选中驱动表单：shape/text/path 颜色与尺寸（可撤销）、mosaic/image 只读信息、多选删除；单选/多选均有图层顺序（置顶/上移/下移/置底）与翻转（水平/垂直）按钮组；无选中显示画布属性 |
+| `PropertiesPanel` | 选中驱动表单：shape/text/path 颜色与尺寸（可撤销）、mosaic 只读信息、多选删除；单选/多选均有图层顺序（置顶/上移/下移/置底）与翻转（水平/垂直）按钮组；无选中显示画布属性 +「背景调整」滤镜组（已加载背景时，亮度/对比度/饱和度/模糊滑杆 + 灰度/褐色/反色 + 重置，mergeKey 连续拖动一个 undo 条目）；单选 image 带同样的「图像调整」组（作用于该对象） |
 | `ColorPalette` | 7 色固定色板（`PALETTE_COLORS`）+ 原生自定义取色 input，纯受控 |
 
 所有组件接受可选 `className`，追加在语义类（`fp-topbar`、`fp-toolbar` 等）之后，便于覆写。
