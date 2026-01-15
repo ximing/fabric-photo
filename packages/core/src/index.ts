@@ -12,6 +12,8 @@ export { Step } from './steps/step';
 export type { StepResult } from './steps/step';
 export { AddObject, RemoveObject, RestoreObject, UpdateObject, ClearObjects } from './steps/object-steps';
 export type { ObjectAttrs } from './steps/object-steps';
+export { ReorderObjects, computeReorderedIds } from './steps/reorder-objects-step';
+export type { ReorderAction } from './steps/reorder-objects-step';
 export { SetBackground, RestoreDoc, TransformDoc } from './steps/doc-steps';
 
 export { createDoc, docToJSON, docFromJSON, cloneDoc } from './model/doc';

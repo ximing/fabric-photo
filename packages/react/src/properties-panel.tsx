@@ -72,6 +72,50 @@ function DeleteButton(props: { editor: Editor }): JSX.Element {
     );
 }
 
+/**
+ * 图层顺序 + 翻转按钮组：单选与多选共用，全部委托 core 公开 API
+ * （z 序多选保持相对顺序、已在顶/底 no-op；翻转对每个选中对象取负 scale）。
+ */
+function ArrangeGroups(props: { editor: Editor }): JSX.Element {
+    const { editor } = props;
+    return (
+        <>
+            <div className="fp-props-group">
+                <span className="fp-props-group-label">图层顺序</span>
+                <div className="fp-props-style-toggles">
+                    <button type="button" className="fp-props-toggle" onClick={() => editor.bringToFront()}>
+                        置顶
+                    </button>
+                    <button type="button" className="fp-props-toggle" onClick={() => editor.bringForward()}>
+                        上移
+                    </button>
+                    <button type="button" className="fp-props-toggle" onClick={() => editor.sendBackward()}>
+                        下移
+                    </button>
+                    <button type="button" className="fp-props-toggle" onClick={() => editor.sendToBack()}>
+                        置底
+                    </button>
+                </div>
+            </div>
+            <div className="fp-props-group">
+                <span className="fp-props-group-label">翻转</span>
+                <div className="fp-props-style-toggles">
+                    <button
+                        type="button"
+                        className="fp-props-toggle"
+                        onClick={() => editor.flipActiveObjects('horizontal')}
+                    >
+                        水平翻转
+                    </button>
+                    <button type="button" className="fp-props-toggle" onClick={() => editor.flipActiveObjects('vertical')}>
+                        垂直翻转
+                    </button>
+                </div>
+            </div>
+        </>
+    );
+}
+
 function ShapePanel(props: { editor: Editor; object: ShapeObject }): JSX.Element {
     const { editor, object } = props;
     const applyObjectColor = useApplyObjectColor(object);
@@ -187,7 +231,8 @@ function ImagePanel(props: { editor: Editor; object: ImageObject }): JSX.Element
  * 属性面板（grid 右列，gridArea 'props'）：由选中驱动表单。
  * 无选中 → 画布属性（缩放只读、背景尺寸/「未加载图片」、对象数）；
  * 单选按 kind 分派 shape/text/path/mosaic/image 表单（change* API 均可撤销）；
- * 多选 → 数量 + 删除。
+ * 多选 → 数量 + 删除。单选与多选均有「图层顺序」（置顶/上移/下移/置底）与
+ * 「翻转」（水平/垂直）按钮组，委托 core 公开 API。
  */
 export function PropertiesPanel(props: { className?: string }): JSX.Element {
     const editor = useEditor();
@@ -221,6 +266,7 @@ export function PropertiesPanel(props: { className?: string }): JSX.Element {
         content = (
             <div className="fp-props-multi">
                 <span className="fp-props-multi-count">已选 {selected.length} 个对象</span>
+                <ArrangeGroups editor={editor} />
                 <DeleteButton editor={editor} />
             </div>
         );
@@ -244,7 +290,12 @@ export function PropertiesPanel(props: { className?: string }): JSX.Element {
                 form = <ImagePanel editor={editor} object={object} />;
                 break;
         }
-        content = <div className={`fp-props-object fp-props-object-${object.kind}`}>{form}</div>;
+        content = (
+            <div className={`fp-props-object fp-props-object-${object.kind}`}>
+                {form}
+                <ArrangeGroups editor={editor} />
+            </div>
+        );
     }
 
     const rootClassName = props.className === undefined ? 'fp-props-panel' : `fp-props-panel ${props.className}`;

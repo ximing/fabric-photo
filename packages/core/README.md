@@ -90,6 +90,32 @@ editor.on('loadImage', ({ width, height }) => {
 | `clearObjects(): void` | 清空全部对象并清空选中 |
 | `deactivateAll(): void` | 取消全部选中（不进历史） |
 
+### 剪贴板（内部对象剪贴板，不操作系统剪贴板）
+
+| 签名 | 说明 |
+| --- | --- |
+| `copyActiveObjects(): boolean` | 复制当前选中（单选/多选）到内部剪贴板；无选中返回 `false` |
+| `paste(): boolean` | 粘贴：新 id + left/top 偏移 +16（连续 paste 级联 16*n，copy/cut 后重置），一笔事务并选中粘贴结果；剪贴板空返回 `false` |
+| `cutActiveObjects(): boolean` | = `copyActiveObjects` 成功后一笔事务移除选中对象；无选中返回 `false` |
+| `duplicateActiveObjects(): boolean` | 与 `paste` 同语义但不读/不写剪贴板，偏移恒 +16；无选中返回 `false` |
+
+### z 序
+
+| 签名 | 说明 |
+| --- | --- |
+| `bringToFront(): void` / `sendToBack(): void` | 选中对象（多选保持相对顺序）置顶 / 置底；无选中或已在顶/底 no-op 不 dispatch |
+| `bringForward(): void` / `sendBackward(): void` | 选中对象上移 / 下移一层；同上 no-op 语义 |
+
+对应 Step：`ReorderObjects`（存 before/after 完整 id 序，apply/invert 成对）与工厂函数
+`computeReorderedIds(doc, ids, action)`（`action: 'front' \| 'back' \| 'forward' \| 'backward'`，
+序不变返回 `null`），均从包入口导出。
+
+### 翻转
+
+| 签名 | 说明 |
+| --- | --- |
+| `flipActiveObjects(axis: 'horizontal' \| 'vertical'): boolean` | 选中对象 scaleX/scaleY 取负（一笔事务，多选逐个 UpdateObject）；无选中返回 `false` |
+
 ### 视口
 
 | 签名 | 说明 |

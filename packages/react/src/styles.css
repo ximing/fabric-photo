@@ -282,8 +282,17 @@
         border-color: #0d99ff;
         box-shadow: 0 0 0 1px #0d99ff;
     }
+    .fp-props-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .fp-props-group-label {
+        color: #666666;
+    }
     .fp-props-style-toggles {
         display: flex;
+        flex-wrap: wrap;
         gap: 6px;
     }
     .fp-props-toggle {
