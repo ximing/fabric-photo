@@ -17,7 +17,7 @@ body {
 .demo-upload {
     position: absolute;
     top: 8px;
-    right: 248px; /* 顶栏内、避开右侧面板 */
+    right: 248px; /* 顶栏内、避开右端 zoom/导出按钮组 */
     z-index: 10;
     padding: 4px 12px;
     border: 1px solid #d0d0d0;
