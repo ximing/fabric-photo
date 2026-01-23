@@ -846,6 +846,20 @@ describe('Editor', () => {
         expect(() => editor.notifyResize()).not.toThrow();
     });
 
+    it('notifyResize 无状态重排：不 dispatch、不触碰 state.viewport（zoom/pan 语义保持）、不进历史', () => {
+        const renderer = makeFakeRenderer();
+        const editor = new Editor({ renderer });
+        editor.setZoom(2); // 先入一笔 viewport 历史，制造非缺省 zoom
+        const stateBefore = editor.state;
+        const undoSizeBefore = editor.history.undoSize;
+
+        editor.notifyResize();
+
+        expect(renderer.notifyResize).toHaveBeenCalledTimes(1);
+        expect(editor.state).toBe(stateBefore); // 无事务发生（refit 在 renderer 内按新容器尺寸重算）
+        expect(editor.history.undoSize).toBe(undoSizeBefore);
+    });
+
     it('rotate 相对累加；连续 4 次 rotate(90) 回到原状（宽高复原）', () => {
         const editor = new Editor();
         editor.dispatch(

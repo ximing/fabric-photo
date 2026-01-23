@@ -9,6 +9,26 @@ import type { Renderer } from './renderer';
 
 const DEFAULT_CSS_MAX_WIDTH = 700;
 const DEFAULT_CSS_MAX_HEIGHT = 400;
+
+/**
+ * fit 缩放：图片等比收缩到完整落入 fit 盒（上限 1 = 不放大超过原尺寸）。
+ * fit 盒 = min(cssMax, 画布实际尺寸)：cssMax 是「最大显示尺寸」上限，但容器比 cssMax
+ * 还窄时（窗口缩窄/侧栏撑开）必须按画布实际尺寸收缩，否则 zoom=1 时图像溢出可见区域。
+ * 画布尚未测量（尺寸 ≤ 0，如挂载前）时回退 cssMax。
+ * 纯函数以便单测；renderer 内所有 fit 计算（applyViewport / 滚轮不动点换算）共用此口径。
+ */
+export function computeFitScale(
+    cssMaxWidth: number,
+    cssMaxHeight: number,
+    canvasWidth: number,
+    canvasHeight: number,
+    imageWidth: number,
+    imageHeight: number
+): number {
+    const fitWidth = canvasWidth > 0 ? Math.min(cssMaxWidth, canvasWidth) : cssMaxWidth;
+    const fitHeight = canvasHeight > 0 ? Math.min(cssMaxHeight, canvasHeight) : cssMaxHeight;
+    return Math.min(fitWidth / imageWidth, fitHeight / imageHeight, 1);
+}
 /** 滚轮缩放停止多久后把整段合并补记一笔历史。 */
 const WHEEL_HISTORY_DEBOUNCE_MS = 200;
 
@@ -25,7 +45,8 @@ export interface FabricRendererOptions {
  * - canvas 元素铺满 container（backstore = CSS = container 的 CSS 像素，1:1）；
  *   灰底由 container 的 CSS 负责
  * - doc 坐标系 = 背景图片像素坐标系；vpt = [s,0,0,s,tx,ty]，
- *   s = fitScale × zoom，tx/ty = 容器中心 − 图片中心 × s + pan
+ *   s = fitScale × zoom，tx/ty = 容器中心 − 图片中心 × s + pan；
+ *   fitScale 的 fit 盒 = min(cssMax, 画布实际尺寸)，故容器 resize 后 zoom=1 仍完整适配可见区域
  * - 背景图以 center origin 放在 (bg.width/2, bg.height/2) 并带 angle，
  *   其外接框恰为 doc 坐标系的 [0,0,bg.width,bg.height]
  */
@@ -107,13 +128,13 @@ export class FabricRenderer implements Renderer {
         this.syncCanvasSize();
     }
 
-    /** min(cssMaxW/imgW, cssMaxH/imgH, 1)；无图返回 1。 */
+    /** fit 盒 = min(cssMax, 画布实际尺寸) 的等比 fit（见 computeFitScale）；无图返回 1。 */
     fitScale(state: EditorState): number {
         const bg = state.doc.background;
         if (bg === null) {
             return 1;
         }
-        return Math.min(this.cssMaxWidth / bg.width, this.cssMaxHeight / bg.height, 1);
+        return computeFitScale(this.cssMaxWidth, this.cssMaxHeight, this.canvasWidth, this.canvasHeight, bg.width, bg.height);
     }
 
     syncState(state: EditorState, prev: EditorState): void {
@@ -176,8 +197,10 @@ export class FabricRenderer implements Renderer {
     }
 
     /**
-     * 容器尺寸变化后的无状态重排：重读容器尺寸 + 按 lastState 重算 vpt（居中随新尺寸，
-     * zoom/pan 保持，不触碰 state.viewport）+ 请求重绘。尚未同步过 state 时仅同步尺寸。
+     * 容器尺寸变化后的无状态重排：重读容器尺寸 + 按 lastState 重算 vpt（画布 backstore
+     * 随容器 1:1 重设保证清晰不拉伸；fit 盒随画布实际尺寸收缩 → zoom=1 仍完整适配；
+     * 居中随新尺寸，zoom/pan 保持，不触碰 state.viewport）+ 请求重绘。
+     * 尚未同步过 state 时仅同步尺寸。
      */
     notifyResize(): void {
         if (this.destroyed) {
