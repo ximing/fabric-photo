@@ -120,6 +120,67 @@
         background: #e0e0e0;
     }
 
+    /* 导出弹层：锚在导出按钮 wrapper 上，右对齐下挂 */
+    .fp-topbar-export {
+        position: relative;
+        display: inline-flex;
+    }
+    .fp-export-panel {
+        position: absolute;
+        top: calc(100% + 6px);
+        right: 0;
+        z-index: 20;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-width: 220px;
+        padding: 10px 12px;
+        background: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        font-size: 12px;
+        color: #333333;
+    }
+    .fp-export-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .fp-export-label {
+        flex: 0 0 28px;
+        color: #777777;
+    }
+    .fp-export-choice {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+    }
+    .fp-export-choice:has(input:disabled) {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    .fp-export-row input[type='range'] {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+    .fp-export-value {
+        flex: 0 0 32px;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+    }
+    .fp-export-confirm {
+        height: 28px;
+        border-radius: 4px;
+        background: #0d99ff;
+        color: #ffffff;
+        font-size: 12px;
+    }
+    .fp-export-confirm:hover {
+        background: #0b89e8;
+    }
+
     /* ===== 工具选项条（auto 高，grid 行 2） ===== */
     .fp-option-bar {
         grid-area: opts;

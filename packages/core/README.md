@@ -255,10 +255,20 @@ UpdateObject 入历史）。吸附计算为纯函数 `computeSnap`（`src/render
 
 ### 导出
 
+`toDataURL` / `toBlobData` 入参为 `string | ExportImageOptions`：裸 MIME 字符串（旧签名）等价于
+`{ type }`。`ExportImageOptions`（包入口导出）字段：
+
+- `type`：MIME 类型，`image/png`（默认）/ `image/jpeg` / `image/webp`
+- `quality`：jpeg/webp 质量 0..1（png 忽略）
+- `multiplier`：输出倍率（输出像素 = 导出尺寸 × multiplier），默认 1；非正数按 1 处理
+- `selectionOnly`：`true` 时仅导出当前选中对象——裁剪到选中集 bbox 并集、不含背景、透明底；
+  空选中时 `toDataURL` / `toBlobData` 抛错（UI 层应先禁用），`getExportSize` 返回 `null`
+
 | 签名 | 说明 |
 | --- | --- |
-| `toDataURL(type?: string): string` | 整图 dataURL（背景原始像素，不受 zoom/pan 影响），`type` 如 `image/png`（默认）/`image/jpeg`/`image/webp` |
-| `toBlobData(type?: string): Promise<Blob \| null>` | 整图 Blob，进制同 `toDataURL` |
+| `toDataURL(options?: string \| ExportImageOptions): string` | 导出 dataURL（整图 = 背景原始像素 × multiplier，不受 zoom/pan 影响；无背景导出画布现状） |
+| `toBlobData(options?: string \| ExportImageOptions): Promise<Blob \| null>` | 导出 Blob，进制与选项同 `toDataURL` |
+| `getExportSize(options?: { multiplier?; selectionOnly? }): { width; height } \| null` | 预估导出像素尺寸（已乘 multiplier，导出文件名等用途）；无背景整图 / 空选中返回 `null` |
 | `getViewPortImage(): string` | 当前视口可见区域（容器 CSS 像素）的 dataURL |
 | `getViewPortInfo(): ViewportInfo` | 容器可见区域在 doc 坐标系下的矩形；无头模式返回全 0 |
 

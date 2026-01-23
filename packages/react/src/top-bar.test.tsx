@@ -150,7 +150,75 @@ describe('TopBar', () => {
         editor.destroy();
     });
 
-    it('点击导出 → toDataURL(image/png) 并触发 a[download=<图名>.png] 点击', () => {
+    it('点击导出打开弹层；再点导出 / Esc / 点外部关闭', () => {
+        const editor = new Editor();
+        const utils = renderWithEditor(editor);
+
+        expect(utils.queryByRole('dialog', { name: '导出设置' })).toBeNull();
+
+        fireEvent.click(button(utils, '导出'));
+        expect(utils.getByRole('dialog', { name: '导出设置' })).not.toBeNull();
+
+        // 再点触发按钮关闭
+        fireEvent.click(button(utils, '导出'));
+        expect(utils.queryByRole('dialog', { name: '导出设置' })).toBeNull();
+
+        // Esc 关闭
+        fireEvent.click(button(utils, '导出'));
+        fireEvent.keyDown(document, { key: 'Escape' });
+        expect(utils.queryByRole('dialog', { name: '导出设置' })).toBeNull();
+
+        // 点外部关闭；点面板内部不关闭
+        fireEvent.click(button(utils, '导出'));
+        fireEvent.mouseDown(utils.getByRole('dialog', { name: '导出设置' }));
+        expect(utils.queryByRole('dialog', { name: '导出设置' })).not.toBeNull();
+        fireEvent.mouseDown(document.body);
+        expect(utils.queryByRole('dialog', { name: '导出设置' })).toBeNull();
+        editor.destroy();
+    });
+
+    it('格式切 JPEG/WebP 显示质量滑杆（默认 0.9），切回 PNG 隐藏', () => {
+        const editor = new Editor();
+        const utils = renderWithEditor(editor);
+
+        fireEvent.click(button(utils, '导出'));
+        expect(utils.queryByRole('slider', { name: '质量' })).toBeNull();
+
+        fireEvent.click(utils.getByRole('radio', { name: 'JPEG' }));
+        const slider = utils.getByRole('slider', { name: '质量' }) as HTMLInputElement;
+        expect(slider.value).toBe('0.9');
+        expect(slider.min).toBe('0.1');
+        expect(slider.max).toBe('1');
+        expect(slider.step).toBe('0.05');
+
+        fireEvent.click(utils.getByRole('radio', { name: 'WEBP' }));
+        expect(utils.queryByRole('slider', { name: '质量' })).not.toBeNull();
+
+        fireEvent.click(utils.getByRole('radio', { name: 'PNG' }));
+        expect(utils.queryByRole('slider', { name: '质量' })).toBeNull();
+        editor.destroy();
+    });
+
+    it('无选中时「仅选中」禁用；有选中后可用', () => {
+        const editor = new Editor();
+        const utils = renderWithEditor(editor);
+
+        fireEvent.click(button(utils, '导出'));
+        const scopeRadio = (): HTMLInputElement => utils.getByRole('radio', { name: '仅选中' }) as HTMLInputElement;
+        expect(scopeRadio().disabled).toBe(true);
+
+        const shape = makeShape();
+        act(() => {
+            editor.dispatch(editor.newTransaction().addStep(new AddObject(shape)));
+        });
+        act(() => {
+            editor.selectObjects([shape.id]);
+        });
+        expect(scopeRadio().disabled).toBe(false);
+        editor.destroy();
+    });
+
+    it('默认参数确认导出 → toDataURL 收 PNG/1x/整图，a[download=<图名>-100x80@1x.png]', () => {
         const editor = new Editor();
         const dataSpy = vi.spyOn(editor, 'toDataURL').mockReturnValue('data:image/png;base64,xxx');
         const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
@@ -164,13 +232,52 @@ describe('TopBar', () => {
             );
         });
         fireEvent.click(button(utils, '导出'));
+        fireEvent.click(button(utils, '确认导出'));
 
         expect(dataSpy).toHaveBeenCalledTimes(1);
-        expect(dataSpy).toHaveBeenCalledWith('image/png');
+        expect(dataSpy).toHaveBeenCalledWith({ type: 'image/png', multiplier: 1, selectionOnly: false });
         expect(clickSpy).toHaveBeenCalledTimes(1);
         const anchor = clickSpy.mock.instances[0] as HTMLAnchorElement;
-        expect(anchor.download).toBe('photo.png');
+        expect(anchor.download).toBe('photo-100x80@1x.png');
         expect(anchor.href).toBe('data:image/png;base64,xxx');
+        // 导出后弹层关闭
+        expect(utils.queryByRole('dialog', { name: '导出设置' })).toBeNull();
+        clickSpy.mockRestore();
+        editor.destroy();
+    });
+
+    it('JPEG + 改质量 + 2x + 仅选中 → toDataURL 收 quality/multiplier/selectionOnly，文件名带 -selection', () => {
+        const editor = new Editor();
+        const dataSpy = vi.spyOn(editor, 'toDataURL').mockReturnValue('data:image/jpeg;base64,yyy');
+        const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
+        const utils = renderWithEditor(editor);
+
+        let shapeId = '';
+        act(() => {
+            const shape = makeShape();
+            shapeId = shape.id;
+            editor.dispatch(
+                editor
+                    .newTransaction()
+                    .addStep(new SetBackground({ src: 'data:image/png;base64,x', width: 100, height: 80, name: 'photo.png', angle: 0 }))
+                    .addStep(new AddObject(shape))
+            );
+        });
+        act(() => {
+            editor.selectObjects([shapeId]);
+        });
+
+        fireEvent.click(button(utils, '导出'));
+        fireEvent.click(utils.getByRole('radio', { name: 'JPEG' }));
+        fireEvent.change(utils.getByRole('slider', { name: '质量' }), { target: { value: '0.5' } });
+        fireEvent.click(utils.getByRole('radio', { name: '2x' }));
+        fireEvent.click(utils.getByRole('radio', { name: '仅选中' }));
+        fireEvent.click(button(utils, '确认导出'));
+
+        expect(dataSpy).toHaveBeenCalledWith({ type: 'image/jpeg', quality: 0.5, multiplier: 2, selectionOnly: true });
+        const anchor = clickSpy.mock.instances[0] as HTMLAnchorElement;
+        // makeShape：left/top 10、width/height 20 → bbox 20x20，×2 = 40x40
+        expect(anchor.download).toBe('photo-40x40@2x-selection.jpeg');
         clickSpy.mockRestore();
         editor.destroy();
     });
