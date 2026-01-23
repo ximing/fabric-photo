@@ -4,7 +4,7 @@ import { ZOOM_MAX, ZOOM_MIN, type EditorMode, type EditorState, type Viewport } 
 import { Transaction } from '../transform/transaction';
 import type { Controller, ControllerContext } from './controllers/controller';
 import { applyFiltersToImage } from './filters';
-import { createFabricObject, getCachedImage, preloadImage, updateFabricObject } from './object-factory';
+import { createFabricObject, applyRotateSnap, getCachedImage, preloadImage, updateFabricObject } from './object-factory';
 import type { Renderer } from './renderer';
 
 const DEFAULT_CSS_MAX_WIDTH = 700;
@@ -341,7 +341,10 @@ export class FabricRenderer implements Renderer {
         } else if (targets.length === 1) {
             canvas.setActiveObject(targets[0]);
         } else {
-            canvas.setActiveObject(new ActiveSelection(targets, { canvas }));
+            // 多选旋转同样享受 Shift 15° 吸附（ActiveSelection 是独立实例，controls 不共享）
+            const activeSelection = new ActiveSelection(targets, { canvas });
+            applyRotateSnap(activeSelection);
+            canvas.setActiveObject(activeSelection);
         }
     }
 

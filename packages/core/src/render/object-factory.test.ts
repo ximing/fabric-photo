@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { fabricToScale, scaleToFabric } from './object-factory';
+import type { ShapeObject } from '../model/doc';
+import { applyRotateSnap, createFabricObject, fabricToScale, ROTATE_SNAP_ANGLE, scaleToFabric } from './object-factory';
 
 /**
  * 负 scale（翻转）↔ fabric { abs(scale), flip } 幂等换算的纯函数测试。
@@ -57,5 +58,83 @@ describe('往返守恒', () => {
             expect(fabricToScale(projected.scaleX, projected.flipX)).toBe(sx);
             expect(fabricToScale(projected.scaleY, projected.flipY)).toBe(sy);
         }
+    });
+});
+
+/**
+ * Shift 旋转 15° 吸附接线：createFabricObject 产出的对象 snapAngle=15，
+ * 且 mtr actionHandler 被包装（未按 Shift 时临时清零 snapAngle，按住 Shift 才吸附）。
+ */
+describe('applyRotateSnap（Shift 旋转 15° 吸附）', () => {
+    const rectObject: ShapeObject = {
+        id: 's1',
+        kind: 'shape',
+        shapeType: 'rect',
+        left: 10,
+        top: 20,
+        angle: 0,
+        scaleX: 1,
+        scaleY: 1,
+        width: 100,
+        height: 50,
+        fill: 'transparent',
+        stroke: '#ff0000',
+        strokeWidth: 4
+    };
+
+    it('吸附倍角为 15°', () => {
+        expect(ROTATE_SNAP_ANGLE).toBe(15);
+    });
+
+    it('createFabricObject 产出的对象 snapAngle=15', () => {
+        const fObj = createFabricObject(rectObject);
+        expect(fObj.snapAngle).toBe(15);
+    });
+
+    it('未按 Shift：actionHandler 执行期间 snapAngle 临时清零（自由旋转），结束后恢复 15', () => {
+        const fObj = createFabricObject(rectObject);
+        const wrapped = fObj.controls.mtr.actionHandler;
+        // 探针 target：baseHandler（wrapWithFixedAnchor 链）第一步就调用
+        // getRelativeCenterPoint，借此记录「baseHandler 看到的 snapAngle」并抛错中止
+        //（同时验证包装层的 finally 恢复路径）
+        const observed: Array<number | undefined> = [];
+        const fakeTarget = {
+            snapAngle: 15,
+            getRelativeCenterPoint: () => {
+                observed.push(fakeTarget.snapAngle);
+                throw new Error('probe-stop');
+            }
+        };
+        expect(() =>
+            // @ts-expect-error 探针 target 不是完整 FabricObject
+            wrapped({ shiftKey: false }, { target: fakeTarget }, 0, 0)
+        ).toThrow('probe-stop');
+        expect(observed).toEqual([0]); // 未按 Shift：baseHandler 看到 snapAngle=0
+        expect(fakeTarget.snapAngle).toBe(15); // 结束后恢复
+    });
+
+    it('按住 Shift：baseHandler 看到原值 snapAngle=15（吸附生效）', () => {
+        const fObj = createFabricObject(rectObject);
+        const mtr = fObj.controls.mtr;
+        const wrapped = mtr.actionHandler;
+        const observed: Array<number | undefined> = [];
+        const fakeTarget = {
+            snapAngle: 15,
+            getRelativeCenterPoint: () => {
+                observed.push(fakeTarget.snapAngle);
+                throw new Error('probe-stop');
+            }
+        };
+        expect(() =>
+            // @ts-expect-error 探针 target 不是完整 FabricObject
+            wrapped({ shiftKey: true }, { target: fakeTarget }, 0, 0)
+        ).toThrow('probe-stop');
+        expect(observed).toEqual([15]);
+    });
+
+    it('重复接线安全：二次 applyRotateSnap 后 snapAngle 仍为 15', () => {
+        const fObj = createFabricObject(rectObject);
+        applyRotateSnap(fObj);
+        expect(fObj.snapAngle).toBe(15);
     });
 });

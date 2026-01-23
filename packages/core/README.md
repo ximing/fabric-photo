@@ -140,6 +140,15 @@ mouse up 清除；参考线与吸附修正都不进 state，最终位置仍由 `
 UpdateObject 入历史）。吸附计算为纯函数 `computeSnap`（`src/render/snapping.ts`，内部实现），
 目标列表在拖拽开始时快照一次。
 
+### 旋转吸附（Shift + 旋转控制点）
+
+渲染投影创建对象时设 `snapAngle = 15`（`ROTATE_SNAP_ANGLE`，`src/render/object-factory.ts` 内部实现）：
+拖拽旋转控制点（含多选组）时按住 Shift 吸附到 15° 整数倍（`snapThreshold` 缺省 = `snapAngle`，
+即量化为整倍数）。fabric 6.9.1 的旋转控制点本身不检查 Shift（`snapAngle > 0` 即恒吸附），
+故 `applyRotateSnap` 把每个对象的 mtr actionHandler 包了一层：未按 Shift 时临时清零
+`snapAngle` 走自由旋转。该行为只作用于渲染投影的手势过程，不改 state 语义——旋转提交
+仍走既有 `object:modified` 链路。
+
 ### 图层属性（不透明度 / 锁定 / 隐藏）
 
 `BaseObject` 有三个可选字段：`opacity?: number`（0..1，缺省 1）、`locked?: boolean`（缺省 false）、
@@ -186,6 +195,10 @@ UpdateObject 入历史）。吸附计算为纯函数 `computeSnap`（`src/render
 | `setZoom(rate: number): void` | 缩放（clamp [0.05, 8]），支点恒为容器中心 |
 | `getZoom(): number` | 当前缩放倍率 |
 | `startPan(): void` / `endPan(): void` | 进入 / 退出平移模式（拖动画布平移，瞬时不入历史） |
+
+内建 keymap 快捷键：`Mod+=` / `Mod++` 放大一档（+0.2）、`Mod+-` 缩小一档（−0.2）、
+`Mod+0` 重置为 1（均 preventDefault 防浏览器缩放；步进 clamp 纯函数 `stepZoom`，
+`src/plugins/keymap.ts` 导出）。
 
 ### 绘制（freedraw / line / arrow）
 
