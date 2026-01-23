@@ -3,6 +3,7 @@ import type { EditorObject } from '../../model/doc';
 import { UpdateObject } from '../../steps/object-steps';
 import { Transaction } from '../../transform/transaction';
 import { fabricToScale, getFpId } from '../object-factory';
+import { SNAP_THRESHOLD_PX, computeSnap, type SnapBox, type SnapGuide } from '../snapping';
 import type { Controller, ControllerContext } from './controller';
 
 /**
@@ -62,12 +63,33 @@ function sameIdSet(a: readonly string[], b: readonly string[]): boolean {
 }
 
 /**
+ * 被拖盒（doc 坐标）：必须按当前 raw transform（left/top + 尺寸×scale）现算，
+ * 不能用 getBoundingRect()——fabric 只在 render/修正后 setCoords，object:moving 里
+ * 的 aCoords 是上一帧位置，修正量基于旧位置算、加到当前 raw 位置上会形成一帧延迟
+ * 反馈（提交偏差最大达吸附阈值、快速接近时不修正、轨迹振荡）。
+ * 口径与 model/bbox.ts 一致：忽略 angle，center origin（mosaic）折算左上角，
+ * ActiveSelection 组取组 bbox（left/top origin、宽高×组 scale）。
+ */
+function draggedBox(target: FabricObject): SnapBox {
+    const width = target.width * Math.abs(target.scaleX);
+    const height = target.height * Math.abs(target.scaleY);
+    return {
+        left: target.originX === 'center' ? target.left - width / 2 : target.left,
+        top: target.originY === 'center' ? target.top - height / 2 : target.top,
+        width,
+        height
+    };
+}
+
+/**
  * select controller（mode 'normal'，默认激活）：
  * - fabric selection:created/updated/cleared → tr.setSelection(fpIds)（不进历史）
  * - 拖拽/缩放预览由 fabric 原生直改（无事务）；object:modified → 读回最终几何 →
  *   UpdateObject 入历史（「对象变换可撤销」落地处）
  * - ActiveSelection 多选变换：先 discardActiveObject 让 fabric 把组变换兑现到各成员，
  *   逐个 UpdateObject 后再重建 ActiveSelection 还原选中态
+ * - 拖拽吸附（智能参考线）：object:moving 中 computeSnap 命中即修正位置并在
+ *   after:render 直画 #0d99ff 参考线（不进 state），mouse up 清除
  */
 export class SelectController implements Controller {
     readonly mode = 'normal' as const;
@@ -123,18 +145,122 @@ export class SelectController implements Controller {
             return;
         }
         const fpId = getFpId(target);
-        if (fpId === undefined) {
-            return; // ActiveSelection 等渲染层内部对象
+        if (fpId !== undefined) {
+            const obj = ctx.getState().getObject(fpId);
+            if (obj !== undefined) {
+                const flipX = obj.scaleX < 0;
+                const flipY = obj.scaleY < 0;
+                if (target.flipX !== flipX || target.flipY !== flipY) {
+                    target.set({ flipX, flipY });
+                }
+            }
         }
-        const obj = ctx.getState().getObject(fpId);
-        if (obj === undefined) {
+        this.applySnapping(ctx, target);
+    };
+
+    // —— 智能参考线（拖拽吸附）：纯计算见 render/snapping.ts，这里只做 fabric 接线 ——
+
+    /** 拖拽开始时快照的对齐目标盒列表；null = 不在拖拽中。 */
+    private snapTargets: SnapBox[] | null = null;
+    /** 背景（画布）中心线坐标；无背景为 null（不出中心线）。 */
+    private snapCenter: { x: number; y: number } | null = null;
+    /** 当前命中的参考线（after:render 直画到画布顶层，不进 state）。 */
+    private snapGuides: SnapGuide[] = [];
+
+    /**
+     * object:moving 中的吸附：目标列表在拖拽开始快照一次（moving 高频触发），
+     * 命中即把被拖对象（单选或 ActiveSelection 组 bbox）位置修正到对齐位。
+     */
+    private applySnapping(ctx: ControllerContext, target: FabricObject): void {
+        if (this.snapTargets === null) {
+            this.snapshotSnapTargets(ctx, target);
+        }
+        const targets = this.snapTargets;
+        if (targets === null) {
+            return; // 不可达（snapshot 必定赋值），仅收窄类型
+        }
+        const scale = ctx.canvas.viewportTransform[0] || 1;
+        const result = computeSnap(draggedBox(target), targets, this.snapCenter, SNAP_THRESHOLD_PX / scale);
+        if (result.dx !== 0 || result.dy !== 0) {
+            target.set({ left: target.left + result.dx, top: target.top + result.dy });
+            target.setCoords();
+        }
+        this.snapGuides = result.guides;
+    }
+
+    /** 拖拽开始时的目标快照：其他所有非 locked/hidden 对象的 bbox + 背景中心线。 */
+    private snapshotSnapTargets(ctx: ControllerContext, dragged: FabricObject): void {
+        const draggedIds = new Set<string>();
+        if (dragged instanceof ActiveSelection) {
+            for (const member of dragged.getObjects()) {
+                const fpId = getFpId(member);
+                if (fpId !== undefined) {
+                    draggedIds.add(fpId);
+                }
+            }
+        } else {
+            const fpId = getFpId(dragged);
+            if (fpId !== undefined) {
+                draggedIds.add(fpId);
+            }
+        }
+        const state = ctx.getState();
+        const boxes: SnapBox[] = [];
+        for (const fObj of ctx.canvas.getObjects()) {
+            const fpId = getFpId(fObj);
+            if (fpId === undefined || draggedIds.has(fpId)) {
+                continue;
+            }
+            const obj = state.getObject(fpId);
+            if (obj === undefined || obj.locked === true || obj.hidden === true) {
+                continue; // locked/hidden 不作为对齐目标
+            }
+            const rect = fObj.getBoundingRect();
+            boxes.push({ left: rect.left, top: rect.top, width: rect.width, height: rect.height });
+        }
+        const bg = state.doc.background;
+        this.snapCenter = bg === null ? null : { x: bg.width / 2, y: bg.height / 2 };
+        this.snapTargets = boxes;
+    }
+
+    /** 手势结束（mouse up）：清目标快照与参考线，重绘一次擦掉已画的线。 */
+    private readonly onMouseUp = (): void => {
+        this.snapTargets = null;
+        this.snapCenter = null;
+        if (this.snapGuides.length > 0) {
+            this.snapGuides = [];
+            this.ctx?.canvas.requestRenderAll();
+        }
+    };
+
+    /**
+     * 参考线绘制：after:render 的 ctx 为容器主 context（此时 vpt 已 restore、
+     * 控制点已画完），手动应用 vpt 把 doc 坐标换算到屏幕像素画 1px 细线。
+     */
+    private readonly onAfterRender = (event: { ctx: CanvasRenderingContext2D }): void => {
+        const canvas = this.ctx?.canvas;
+        if (canvas === undefined || this.snapGuides.length === 0) {
             return;
         }
-        const flipX = obj.scaleX < 0;
-        const flipY = obj.scaleY < 0;
-        if (target.flipX !== flipX || target.flipY !== flipY) {
-            target.set({ flipX, flipY });
+        const vpt = canvas.viewportTransform;
+        const ctx2d = event.ctx;
+        ctx2d.save();
+        ctx2d.strokeStyle = '#0d99ff';
+        ctx2d.lineWidth = 1;
+        for (const guide of this.snapGuides) {
+            ctx2d.beginPath();
+            if (guide.orientation === 'vertical') {
+                const x = guide.position * vpt[0] + vpt[4];
+                ctx2d.moveTo(x, guide.from * vpt[3] + vpt[5]);
+                ctx2d.lineTo(x, guide.to * vpt[3] + vpt[5]);
+            } else {
+                const y = guide.position * vpt[3] + vpt[5];
+                ctx2d.moveTo(guide.from * vpt[0] + vpt[4], y);
+                ctx2d.lineTo(guide.to * vpt[0] + vpt[4], y);
+            }
+            ctx2d.stroke();
         }
+        ctx2d.restore();
     };
 
     private readonly onObjectModified = (event: ModifiedEvent): void => {        const ctx = this.ctx;
@@ -177,6 +303,8 @@ export class SelectController implements Controller {
         ctx.canvas.on('selection:cleared', this.onSelectionChange);
         ctx.canvas.on('object:moving', this.onObjectMoving);
         ctx.canvas.on('object:modified', this.onObjectModified);
+        ctx.canvas.on('mouse:up', this.onMouseUp);
+        ctx.canvas.on('after:render', this.onAfterRender);
     }
 
     deactivate(): void {
@@ -190,6 +318,15 @@ export class SelectController implements Controller {
         canvas.off('selection:cleared', this.onSelectionChange);
         canvas.off('object:moving', this.onObjectMoving);
         canvas.off('object:modified', this.onObjectModified);
+        canvas.off('mouse:up', this.onMouseUp);
+        canvas.off('after:render', this.onAfterRender);
+        // 模式切换可能发生在拖拽中：清吸附状态并重绘擦掉残留参考线
+        this.snapTargets = null;
+        this.snapCenter = null;
+        if (this.snapGuides.length > 0) {
+            this.snapGuides = [];
+            canvas.requestRenderAll();
+        }
         this.ctx = undefined;
     }
 

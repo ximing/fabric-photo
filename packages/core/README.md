@@ -118,6 +118,28 @@ editor.on('loadImage', ({ width, height }) => {
 | --- | --- |
 | `flipActiveObjects(axis: 'horizontal' \| 'vertical'): boolean` | 选中对象 scaleX/scaleY 取负（一笔事务，多选逐个 UpdateObject）；无选中返回 `false` |
 
+### 对齐与分布
+
+| 签名 | 说明 |
+| --- | --- |
+| `alignActiveObjects(edge: 'left' \| 'centerX' \| 'right' \| 'top' \| 'centerY' \| 'bottom'): boolean` | 选中对象（≥2）按选中集整体 bbox 的对应边/中心对齐（逐对象 UpdateObject 一笔事务，undo 一步全回）；locked 不参与（过滤后不足返回 `false`）；少于 2 个或已全部对齐返回 `false` 不产历史 |
+| `distributeActiveObjects(axis: 'horizontal' \| 'vertical'): boolean` | 选中对象（≥3）按轴等间距分布：按轴心排序后两端固定、中间均分间隙（对象重叠时间隙可为负）；locked 不参与（过滤后不足返回 `false`）；少于 3 个或已等距返回 `false` 不产历史 |
+
+bbox 约定（`objectBBox`，内部实现）：**未旋转外接框**（angle 忽略，v1 简化；scale 取绝对值）。
+shape/image 为 left/top 原点、mosaic 为 center 原点（与渲染投影一致）；无 width/height
+字段的 kind 取近似尺寸——text 宽 = 最长行字符数 × fontSize、高 = 行数 × fontSize × 1.16，
+path 由 path 数据数值对的外接范围（曲线含控制点，为近似值）。
+
+### 智能参考线（拖拽吸附）
+
+normal 模式拖拽移动对象时（多选组拖动以组 bbox 参与），被拖盒对其他所有非
+locked/hidden 对象的 left/centerX/right 与 top/centerY/bottom 六条线 + 背景水平/垂直
+中心线做吸附：阈值 5 屏幕像素（按当前 vpt 缩放折算 doc 距离），每轴取最近命中，
+命中即把被拖对象修正到对齐位，并在画布顶层直画 `#0d99ff` 细参考线（moving 中实时更新，
+mouse up 清除；参考线与吸附修正都不进 state，最终位置仍由 `object:modified` 一笔
+UpdateObject 入历史）。吸附计算为纯函数 `computeSnap`（`src/render/snapping.ts`，内部实现），
+目标列表在拖拽开始时快照一次。
+
 ### 图层属性（不透明度 / 锁定 / 隐藏）
 
 `BaseObject` 有三个可选字段：`opacity?: number`（0..1，缺省 1）、`locked?: boolean`（缺省 false）、

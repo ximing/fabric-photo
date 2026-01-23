@@ -314,6 +314,18 @@
         flex-wrap: wrap;
         gap: 6px;
     }
+    /* 对齐分布按钮组：3 列网格（6 对齐 + 2 分布） */
+    .fp-props-align-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+    }
+    .fp-props-align-grid .fp-props-toggle {
+        padding: 0 4px;
+    }
+    .fp-props-align-grid .fp-props-toggle:disabled {
+        opacity: 0.5;
+    }
     .fp-props-toggle {
         height: 26px;
         padding: 0 10px;
