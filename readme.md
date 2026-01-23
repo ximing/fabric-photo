@@ -94,6 +94,20 @@ function App() {
 
 欢迎提交 Issue 和 Pull Request！
 
+## 🔒 安全说明
+
+`pnpm audit` 中 fabric 6.x 存在 2 条已知漏洞，经评估为**接受风险**，不计划通过升级 fabric 修复：
+
+- [GHSA-hfvx-25r5-qc3w](https://github.com/advisories/GHSA-hfvx-25r5-qc3w)（high，修复于 7.2.0）— SVG 导出存储型 XSS
+- [GHSA-w22m-hvvm-xmwx](https://github.com/advisories/GHSA-w22m-hvvm-xmwx)（moderate，修复于 7.4.0）— Gradient colorStops 在 SVG 序列化中转义不当导致 XSS
+
+接受理由：
+
+1. **不触及 SVG 攻击面**：两条漏洞均只存在于 fabric 的 SVG 导出/序列化路径。本项目导出仅走位图（PNG/Blob，见「导出功能」），代码中不调用 `toSVG` / `toObject` SVG 序列化相关 API，攻击面不可达。
+2. **锁 6.x 是架构决定**：fabric 仅作为内核 state 的渲染投影被封装在 `@gmi/fp-core` 内部（公开 API 不暴露任何 fabric 类型），升级到 fabric 7 属于主版本迁移，收益仅为消除两条不可达告警，风险/收益不匹配。
+
+其余依赖漏洞通过 root `package.json` 的 `pnpm.overrides` 钉版修复（`tar >=7.5.21`、`esbuild >=0.28.1`），新增依赖时请复查 `pnpm audit`。
+
 ## 📄 License
 
 [MIT](./LICENSE)

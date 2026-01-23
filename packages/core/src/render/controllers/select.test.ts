@@ -1,5 +1,6 @@
 import type { Canvas } from 'fabric';
 import { describe, expect, it, vi } from 'vitest';
+import { Editor } from '../../editor';
 import type { MosaicObject, PathObject, ShapeObject, TextObject } from '../../model/doc';
 import { EditorState } from '../../state/editor-state';
 import { UpdateObject } from '../../steps/object-steps';
@@ -432,5 +433,99 @@ describe('SelectController 拖拽吸附（B4-BUG-1：修正基于当前 raw 位�
         const target = fakeDraggedTarget(mosaicObj.id, { left: 245, top: 300, width: 100, height: 40 }, true);
         harness.fireMoving(target);
         expect(target.left).toBe(250);
+    });
+});
+
+/**
+ * 任务 #12 回归：B4 验收曾观察「同 tick addShape ×3 后立即 selectObjects(3 ids)，
+ * 选中集随后变回旧的单选」。代码层面唯一能把选中集写回 state 的渲染侧路径是
+ * onSelectionChange，其回声判定对比的是「当前 state」而非事件来源快照，且 fabric
+ * 的 selection 事件与 Editor.dispatch 均为同步——不存在跨拍回声窗口。
+ * 本测试以真实无头 Editor + SelectController + fake canvas 复刻该场景，
+ * 模拟 renderer.syncSelection 程序化同步触发的回声事件，断言选中集不被覆盖。
+ */
+describe('SelectController selection 回声（任务 #12 回归）', () => {
+    type SelectionHandler = () => void;
+
+    /**
+     * fake canvas：维护可变的「画布激活集」，syncActiveFromState 模拟
+     * renderer.syncSelection 的程序化 setActiveObject/discard（fabric 契约：
+     * 同步 fire selection:updated/cleared）。
+     */
+    function makeSelectionHarness(editor: Editor) {
+        const handlers = new Map<string, SelectionHandler>();
+        let active: Array<{ data: { fpId: string } }> = [];
+        const canvas = {
+            on: vi.fn((name: string, fn: SelectionHandler) => {
+                handlers.set(name, fn);
+            }),
+            off: vi.fn(),
+            getActiveObjects: () => active
+        };
+        const ctx: ControllerContext = {
+            canvas: canvas as unknown as Canvas,
+            getState: () => editor.state,
+            dispatch: (tr) => {
+                editor.dispatch(tr);
+            },
+            fire: vi.fn()
+        };
+        return {
+            ctx,
+            /** renderer 程序化同步选中态到画布 + fabric 同步回声事件。 */
+            syncActiveFromState(): void {
+                const state = editor.state;
+                active = state.selection
+                    .filter((id) => {
+                        const obj = state.getObject(id);
+                        return obj !== undefined && obj.locked !== true && obj.hidden !== true;
+                    })
+                    .map((id) => ({ data: { fpId: id } }));
+                const handler = active.length === 0 ? handlers.get('selection:cleared') : handlers.get('selection:updated');
+                handler?.();
+            },
+            /** 用户在画布上把激活集改成指定 id（真实交互回声，应写回 state）。 */
+            userSelect(ids: string[]): void {
+                active = ids.map((id) => ({ data: { fpId: id } }));
+                handlers.get('selection:updated')?.();
+            }
+        };
+    }
+
+    it('同 tick addShape ×3 + selectObjects(3 ids)：程序化回声不覆盖选中集', async () => {
+        const editor = new Editor(); // 无头：state 层全语义
+        const harness = makeSelectionHarness(editor);
+        const controller = new SelectController();
+        controller.activate(harness.ctx);
+
+        // 旧单选：已有对象 A 处于选中态（画布激活集同步为 [A]）
+        editor.addShape('rect');
+        const oldId = editor.state.doc.objects[0].id;
+        editor.selectObjects([oldId]);
+        harness.syncActiveFromState();
+        expect(editor.state.selection).toEqual([oldId]);
+
+        // 同 tick：addShape ×3 后立即 selectObjects(3 个新 id)
+        editor.addShape('rect');
+        editor.addShape('circle');
+        editor.addShape('triangle');
+        const newIds = editor.state.doc.objects.slice(1).map((o) => o.id);
+        expect(newIds).toHaveLength(3);
+        editor.selectObjects(newIds);
+        expect(editor.state.selection).toEqual(newIds);
+
+        // renderer 程序化同步（setActiveObject(ActiveSelection) → selection:updated 回声）：
+        // 回声判定对比当前 state（已是 3 新 id）→ 不产事务、选中集不被旧单选覆盖
+        harness.syncActiveFromState();
+        expect(editor.state.selection).toEqual(newIds);
+
+        // 跨拍后仍稳定：微任务 flush 后再回声一次，选中集不变
+        await Promise.resolve();
+        harness.syncActiveFromState();
+        expect(editor.state.selection).toEqual(newIds);
+
+        // 对照：真实的画布交互回声（用户改选旧对象）应正常写回 state——监听器是活的
+        harness.userSelect([oldId]);
+        expect(editor.state.selection).toEqual([oldId]);
     });
 });
