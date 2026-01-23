@@ -36,6 +36,7 @@ function NumberField(props: {
     value: number;
     min?: number;
     max?: number;
+    disabled?: boolean; // locked 时几何类控件禁用
     onChange: (value: number) => void;
 }): JSX.Element {
     return (
@@ -47,6 +48,7 @@ function NumberField(props: {
                 value={props.value}
                 min={props.min}
                 max={props.max}
+                disabled={props.disabled}
                 onChange={(event) => {
                     // 清空输入框（''）与非数字输入都不触发回调，避免误写 0
                     if (event.target.value === '') {
@@ -137,6 +139,30 @@ function FilterAdjustGroup(props: {
     );
 }
 
+/**
+ * 不透明度滑杆（私有）：单选/多选共用，0..1 ↔ 0..100 显示；
+ * 委托 editor.setObjectOpacity（作用于全部选中对象），mergeKey 按选中集区分，
+ * 同一选中集连续拖动合并为一个 undo 条目。多选显示第一个选中对象的值。
+ */
+function OpacitySlider(props: { editor: Editor; objects: EditorObject[] }): JSX.Element {
+    const { editor, objects } = props;
+    const ids = objects.map((o) => o.id);
+    return (
+        <FilterSlider
+            label="不透明度"
+            value={objects[0].opacity ?? 1}
+            min={0}
+            max={1}
+            onChange={(opacity) => editor.setObjectOpacity(ids, opacity, { mergeKey: `opacity:${ids.join('+')}` })}
+        />
+    );
+}
+
+/** 锁定提示（私有）：locked 单选时显示；几何类控件（NumberField）由调用方按 locked 禁用。 */
+function LockedHint(): JSX.Element {
+    return <div className="fp-props-locked-hint">已锁定：几何类控件不可用，解锁后可编辑</div>;
+}
+
 /** 删除按钮：单选只读对象与多选共用，委托 editor.removeActiveObject()。 */
 function DeleteButton(props: { editor: Editor }): JSX.Element {
     return (
@@ -190,8 +216,8 @@ function ArrangeGroups(props: { editor: Editor }): JSX.Element {
     );
 }
 
-function ShapePanel(props: { editor: Editor; object: ShapeObject }): JSX.Element {
-    const { editor, object } = props;
+function ShapePanel(props: { editor: Editor; object: ShapeObject; locked: boolean }): JSX.Element {
+    const { editor, object, locked } = props;
     const applyObjectColor = useApplyObjectColor(object);
     return (
         <>
@@ -202,14 +228,15 @@ function ShapePanel(props: { editor: Editor; object: ShapeObject }): JSX.Element
                 value={object.strokeWidth}
                 min={1}
                 max={20}
+                disabled={locked}
                 onChange={(strokeWidth) => editor.changeShape({ strokeWidth })}
             />
         </>
     );
 }
 
-function TextPanel(props: { editor: Editor; object: TextObject }): JSX.Element {
-    const { editor, object } = props;
+function TextPanel(props: { editor: Editor; object: TextObject; locked: boolean }): JSX.Element {
+    const { editor, object, locked } = props;
     const applyObjectColor = useApplyObjectColor(object);
     // changeTextStyle 为 toggle 语义：按钮恒传目标值，active 态读对象当前值
     const toggles = [
@@ -235,6 +262,7 @@ function TextPanel(props: { editor: Editor; object: TextObject }): JSX.Element {
                 label="字号"
                 value={object.fontSize}
                 min={1}
+                disabled={locked}
                 onChange={(fontSize) => editor.changeTextStyle({ fontSize })}
             />
             <ColorField label="填充" value={object.fill} onChange={applyObjectColor} />
@@ -255,8 +283,8 @@ function TextPanel(props: { editor: Editor; object: TextObject }): JSX.Element {
     );
 }
 
-function PathPanel(props: { editor: Editor; object: PathObject }): JSX.Element {
-    const { editor, object } = props;
+function PathPanel(props: { editor: Editor; object: PathObject; locked: boolean }): JSX.Element {
+    const { editor, object, locked } = props;
     const applyObjectColor = useApplyObjectColor(object);
     // arrow 走 changeArrowStyle（同步头部 fill）；其余（freedraw/line）走 changeFreeDrawingPathStyle
     const change = object.tool === 'arrow' ? editor.changeArrowStyle : editor.changeFreeDrawingPathStyle;
@@ -268,6 +296,7 @@ function PathPanel(props: { editor: Editor; object: PathObject }): JSX.Element {
                 value={object.strokeWidth}
                 min={1}
                 max={20}
+                disabled={locked}
                 onChange={(width) => change.call(editor, { width })}
             />
         </>
@@ -313,8 +342,10 @@ function ImagePanel(props: { editor: Editor; object: ImageObject }): JSX.Element
  * （已加载背景时，mergeKey 'bg-filters'，连续拖动一个 undo 条目）；
  * 单选按 kind 分派 shape/text/path/mosaic/image 表单（change* API 均可撤销），
  * image 表单带「图像调整」滤镜组（mergeKey `img-filters-${id}`）；
- * 多选 → 数量 + 删除。单选与多选均有「图层顺序」（置顶/上移/下移/置底）与
- * 「翻转」（水平/垂直）按钮组，委托 core 公开 API。
+ * 多选 → 数量 + 删除。单选与多选均有「不透明度」滑杆（0..100 ↔ 0..1，
+ * setObjectOpacity + mergeKey 连续拖动一个 undo 条目）、「图层顺序」
+ * （置顶/上移/下移/置底）与「翻转」（水平/垂直）按钮组，委托 core 公开 API。
+ * 单选 locked 对象时显示「已锁定」提示并禁用几何类控件（描边宽度/字号/线宽）。
  */
 export function PropertiesPanel(props: { className?: string }): JSX.Element {
     const editor = useEditor();
@@ -356,22 +387,24 @@ export function PropertiesPanel(props: { className?: string }): JSX.Element {
         content = (
             <div className="fp-props-multi">
                 <span className="fp-props-multi-count">已选 {selected.length} 个对象</span>
+                <OpacitySlider editor={editor} objects={selected} />
                 <ArrangeGroups editor={editor} />
                 <DeleteButton editor={editor} />
             </div>
         );
     } else {
         const object = selected[0];
+        const locked = object.locked === true;
         let form: JSX.Element;
         switch (object.kind) {
             case 'shape':
-                form = <ShapePanel editor={editor} object={object} />;
+                form = <ShapePanel editor={editor} object={object} locked={locked} />;
                 break;
             case 'text':
-                form = <TextPanel editor={editor} object={object} />;
+                form = <TextPanel editor={editor} object={object} locked={locked} />;
                 break;
             case 'path':
-                form = <PathPanel editor={editor} object={object} />;
+                form = <PathPanel editor={editor} object={object} locked={locked} />;
                 break;
             case 'mosaic':
                 form = <MosaicPanel editor={editor} object={object} />;
@@ -382,7 +415,9 @@ export function PropertiesPanel(props: { className?: string }): JSX.Element {
         }
         content = (
             <div className={`fp-props-object fp-props-object-${object.kind}`}>
+                {locked && <LockedHint />}
                 {form}
+                <OpacitySlider editor={editor} objects={selected} />
                 <ArrangeGroups editor={editor} />
             </div>
         );

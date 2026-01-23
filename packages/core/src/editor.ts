@@ -397,6 +397,24 @@ export class Editor {
         this.dispatch(this.newTransaction().setSelection([]).setMeta('addToHistory', false));
     }
 
+    /**
+     * 设置选中集（图层面板点选/Shift 加选用）：过滤无效 id 并去重；与现选中集相同 no-op；
+     * 无 doc 变更不进历史，变化时触发 change:selection。
+     */
+    selectObjects(ids: string[]): void {
+        const objects = this.currentState.doc.objects;
+        const valid: string[] = [];
+        for (const id of ids) {
+            if (!valid.includes(id) && objects.some((o) => o.id === id)) {
+                valid.push(id);
+            }
+        }
+        if (sameSelection(valid, this.currentState.selection)) {
+            return;
+        }
+        this.dispatch(this.newTransaction().setSelection(valid).setMeta('addToHistory', false));
+    }
+
     // —— 剪贴板（内部对象剪贴板，不操作系统剪贴板）——
 
     /**
@@ -518,6 +536,25 @@ export class Editor {
         );
     }
 
+    /**
+     * 单对象移动到 objects 数组任意位置（ReorderObjects 落账，可撤销）。
+     * toIndex 为对象在最终数组中的下标（取整并 clamp [0, length-1]）；
+     * id 不存在或原位移动 no-op 不产历史。
+     */
+    moveObjectToIndex(objectId: string, toIndex: number): void {
+        const before = this.currentState.doc.objects.map((o) => o.id);
+        if (!before.includes(objectId)) {
+            return;
+        }
+        const rest = before.filter((id) => id !== objectId);
+        const target = Math.max(0, Math.min(Math.round(toIndex), rest.length));
+        const after = [...rest.slice(0, target), objectId, ...rest.slice(target)];
+        if (after.every((id, i) => id === before[i])) {
+            return;
+        }
+        this.dispatch(this.newTransaction().addStep(new ReorderObjects(before, after)));
+    }
+
     // —— 滤镜与图像调整（SetFilters，可撤销；mergeKey 连续调用合并为一个 undo 条目）——
 
     /**
@@ -598,6 +635,50 @@ export class Editor {
         }
         this.dispatch(tr);
         return true;
+    }
+
+    // —— 图层属性（不透明度 / 锁定 / 隐藏，UpdateObject 落账，可撤销）——
+
+    /**
+     * 设置一组对象的不透明度（clamp 0..1，可撤销）；已是目标值的对象跳过，
+     * 全部无变化为 no-op。opts.mergeKey 透传事务 meta：滑杆连续拖动合并为一个 undo 条目。
+     */
+    setObjectOpacity(ids: string[], opacity: number, opts?: { mergeKey?: string }): void {
+        const clamped = Math.max(0, Math.min(1, opacity));
+        const tr = this.newTransaction();
+        let changed = false;
+        for (const id of ids) {
+            const obj = this.currentState.getObject(id);
+            if (obj !== undefined && (obj.opacity ?? 1) !== clamped) {
+                tr.addStep(new UpdateObject(id, { opacity: clamped }));
+                changed = true;
+            }
+        }
+        if (!changed) {
+            return;
+        }
+        if (opts?.mergeKey !== undefined) {
+            tr.setMeta('mergeKey', opts.mergeKey);
+        }
+        this.dispatch(tr);
+    }
+
+    /** 切换对象锁定态（可撤销）；对象不存在 no-op。锁定语义见 README「图层属性」。 */
+    toggleObjectLocked(id: string): void {
+        const obj = this.currentState.getObject(id);
+        if (obj === undefined) {
+            return;
+        }
+        this.dispatch(this.newTransaction().addStep(new UpdateObject(id, { locked: !(obj.locked ?? false) })));
+    }
+
+    /** 切换对象隐藏态（可撤销）；对象不存在 no-op。隐藏语义见 README「图层属性」。 */
+    toggleObjectHidden(id: string): void {
+        const obj = this.currentState.getObject(id);
+        if (obj === undefined) {
+            return;
+        }
+        this.dispatch(this.newTransaction().addStep(new UpdateObject(id, { hidden: !(obj.hidden ?? false) })));
     }
 
     // —— 视口（zoom/pan）——

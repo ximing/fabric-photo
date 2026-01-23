@@ -157,6 +157,37 @@ describe('docToJSON / docFromJSON', () => {
             docFromJSON(JSON.stringify({ background: null, objects: [{ ...makeShape('s1'), filters: 42 }] }))
         ).toThrow('invalid doc JSON');
     });
+
+    it('B3 新字段（opacity/locked/hidden）合法值往返相等', () => {
+        const doc: Doc = {
+            background: null,
+            objects: [{ ...makeShape('s1'), opacity: 0.5, locked: true, hidden: true }, makeText('t1')]
+        };
+        expect(docFromJSON(docToJSON(doc))).toEqual(doc);
+    });
+
+    it('B3 新字段缺省合法（旧数据兼容）', () => {
+        const doc = docFromJSON(JSON.stringify({ background: null, objects: [makeShape('s1')] }));
+        expect(doc.objects[0].opacity).toBeUndefined();
+        expect(doc.objects[0].locked).toBeUndefined();
+        expect(doc.objects[0].hidden).toBeUndefined();
+    });
+
+    it('B3 新字段非法值抛错：opacity 越界/非数值，locked/hidden 非布尔', () => {
+        const base = makeShape('s1') as unknown as Record<string, unknown>;
+        const cases: Record<string, unknown>[] = [
+            { opacity: -0.1 },
+            { opacity: 1.1 },
+            { opacity: 'half' },
+            { locked: 'yes' },
+            { hidden: 1 }
+        ];
+        for (const patch of cases) {
+            expect(() =>
+                docFromJSON(JSON.stringify({ background: null, objects: [{ ...base, ...patch }] }))
+            ).toThrow('invalid doc JSON');
+        }
+    });
 });
 
 describe('cloneDoc', () => {
