@@ -1,4 +1,5 @@
 import { Emitter, type EditorEventMap } from './events';
+import { objectBBox } from './model/bbox';
 import { createId } from './model/id';
 import { DEFAULT_FILTERS, type EditorObject, type FilterSettings, type ImageObject, type PathObject, type ShapeObject } from './model/doc';
 import { History } from './plugins/history';
@@ -632,6 +633,99 @@ export class Editor {
         const tr = this.newTransaction();
         for (const obj of objects) {
             tr.addStep(new UpdateObject(obj.id, { [key]: -obj[key] }));
+        }
+        this.dispatch(tr);
+        return true;
+    }
+
+    // —— 对齐与分布（逐对象 UpdateObject 一笔事务，可撤销）——
+
+    /**
+     * 对齐当前选中对象（≥2，locked 不参与、过滤后不足返回 false）：
+     * 以选中集整体 bbox 的对应边/中心为基准，逐对象平移到对齐位（一笔事务，undo 一步全回）。
+     * bbox 为未旋转外接框（angle 忽略；text/path 尺寸为近似值，见 README「对齐与分布」）；
+     * 已全部对齐为 no-op 返回 false（不产历史）。
+     */
+    alignActiveObjects(edge: 'left' | 'centerX' | 'right' | 'top' | 'centerY' | 'bottom'): boolean {
+        const objects = this.selectedObjects().filter((obj) => obj.locked !== true);
+        if (objects.length < 2) {
+            return false;
+        }
+        const boxes = objects.map((obj) => objectBBox(obj));
+        const horizontal = edge === 'left' || edge === 'centerX' || edge === 'right';
+        const startOf = (box: { left: number; top: number }): number => (horizontal ? box.left : box.top);
+        const endOf = (box: { left: number; top: number; width: number; height: number }): number =>
+            horizontal ? box.left + box.width : box.top + box.height;
+        const spanStart = Math.min(...boxes.map(startOf));
+        const spanEnd = Math.max(...boxes.map(endOf));
+        const edgeOf = (box: (typeof boxes)[number]): number => {
+            switch (edge) {
+                case 'left':
+                case 'top':
+                    return startOf(box);
+                case 'centerX':
+                case 'centerY':
+                    return (startOf(box) + endOf(box)) / 2;
+                default:
+                    return endOf(box);
+            }
+        };
+        const target = edge === 'left' || edge === 'top'
+            ? spanStart
+            : edge === 'right' || edge === 'bottom'
+                ? spanEnd
+                : (spanStart + spanEnd) / 2;
+        const tr = this.newTransaction();
+        let changed = false;
+        objects.forEach((obj, index) => {
+            const delta = target - edgeOf(boxes[index]);
+            if (Math.abs(delta) > 1e-9) {
+                tr.addStep(new UpdateObject(obj.id, horizontal ? { left: obj.left + delta } : { top: obj.top + delta }));
+                changed = true;
+            }
+        });
+        if (!changed) {
+            return false;
+        }
+        this.dispatch(tr);
+        return true;
+    }
+
+    /**
+     * 等间距分布当前选中对象（≥3，locked 不参与、过滤后不足返回 false）：
+     * 按轴心排序后两端对象固定，中间对象均分间隙（总间隙 = 两端跨度 − 各对象尺寸和，
+     * 对象重叠时间隙可为负）；一笔事务，undo 一步全回。已全部等距为 no-op 返回 false。
+     */
+    distributeActiveObjects(axis: 'horizontal' | 'vertical'): boolean {
+        const objects = this.selectedObjects().filter((obj) => obj.locked !== true);
+        if (objects.length < 3) {
+            return false;
+        }
+        const horizontal = axis === 'horizontal';
+        const items = objects.map((obj) => ({ obj, box: objectBBox(obj) }));
+        const startOf = (box: (typeof items)[number]['box']): number => (horizontal ? box.left : box.top);
+        const sizeOf = (box: (typeof items)[number]['box']): number => (horizontal ? box.width : box.height);
+        items.sort((a, b) => startOf(a.box) + sizeOf(a.box) / 2 - (startOf(b.box) + sizeOf(b.box) / 2));
+        const spanStart = startOf(items[0].box);
+        const last = items[items.length - 1];
+        const spanEnd = startOf(last.box) + sizeOf(last.box);
+        const totalSize = items.reduce((sum, item) => sum + sizeOf(item.box), 0);
+        const gap = (spanEnd - spanStart - totalSize) / (items.length - 1);
+        const tr = this.newTransaction();
+        let changed = false;
+        let cursor = spanStart;
+        for (const item of items) {
+            const delta = cursor - startOf(item.box);
+            if (Math.abs(delta) > 1e-9) {
+                tr.addStep(
+                    new UpdateObject(item.obj.id, horizontal ? { left: item.obj.left + delta } : { top: item.obj.top + delta })
+                );
+                changed = true;
+            }
+            cursor += sizeOf(item.box) + gap;
+        }
+        if (!changed) {
+            return false;
         }
         this.dispatch(tr);
         return true;

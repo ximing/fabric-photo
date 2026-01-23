@@ -45,7 +45,7 @@ function App() {
 | `ToolOptionBar` | 按当前 mode 渲染：crop→Apply/Cancel；画笔类→线宽+色板；shape→形状类型+色板；mosaic→粒度 |
 | `CanvasView` | 灰底画布区（`#e5e5e5`），ResizeObserver → `editor.notifyResize()` |
 | `LayersPanel` | 图层面板：列出 doc.objects（顶层在前 = 数组倒序），每项类型图标 + 名称（kind 中文名 + 同类序号，如「矩形 3」）+ 隐藏/锁定切换按钮；点击选中、Shift 加选/减选（`selectObjects`），HTML5 拖拽排序（`moveObjectToIndex`），选中项高亮，空列表占位文案 |
-| `PropertiesPanel` | 选中驱动表单：shape/text/path 颜色与尺寸（可撤销）、mosaic 只读信息、多选删除；单选/多选均有「不透明度」滑杆（0..100 ↔ 0..1，`setObjectOpacity` + mergeKey 连续拖动一个 undo 条目）、图层顺序（置顶/上移/下移/置底）与翻转（水平/垂直）按钮组；单选 locked 对象显示「已锁定」提示并禁用几何类控件（描边宽度/字号/线宽）；无选中显示画布属性 +「背景调整」滤镜组（已加载背景时，亮度/对比度/饱和度/模糊滑杆 + 灰度/褐色/反色 + 重置，mergeKey 连续拖动一个 undo 条目）；单选 image 带同样的「图像调整」组（作用于该对象） |
+| `PropertiesPanel` | 选中驱动表单：shape/text/path 颜色与尺寸（可撤销）、mosaic 只读信息、多选删除；多选有「对齐分布」按钮组（6 对齐 + 2 分布，`alignActiveObjects`/`distributeActiveObjects`，≥3 选中才启用分布）；单选/多选均有「不透明度」滑杆（0..100 ↔ 0..1，`setObjectOpacity` + mergeKey 连续拖动一个 undo 条目）、图层顺序（置顶/上移/下移/置底）与翻转（水平/垂直）按钮组；单选 locked 对象显示「已锁定」提示并禁用几何类控件（描边宽度/字号/线宽）；无选中显示画布属性 +「背景调整」滤镜组（已加载背景时，亮度/对比度/饱和度/模糊滑杆 + 灰度/褐色/反色 + 重置，mergeKey 连续拖动一个 undo 条目）；单选 image 带同样的「图像调整」组（作用于该对象） |
 | `ColorPalette` | 7 色固定色板（`PALETTE_COLORS`）+ 原生自定义取色 input，纯受控 |
 
 所有组件接受可选 `className`，追加在语义类（`fp-topbar`、`fp-toolbar` 等）之后，便于覆写。

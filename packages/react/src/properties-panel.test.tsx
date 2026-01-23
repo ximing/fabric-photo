@@ -359,6 +359,67 @@ describe('PropertiesPanel', () => {
         editor.destroy();
     });
 
+    it('多选：对齐分布按钮组渲染（6 对齐 + 2 分布），点击委托 core API', () => {
+        const editor = new Editor();
+        const alignSpy = vi.spyOn(editor, 'alignActiveObjects');
+        const distributeSpy = vi.spyOn(editor, 'distributeActiveObjects');
+        const a = makeShape();
+        const b = makeShape();
+        const c = makeShape();
+        act(() => {
+            editor.dispatch(
+                editor.newTransaction().addStep(new AddObject(a)).addStep(new AddObject(b)).addStep(new AddObject(c))
+            );
+        });
+        const utils = renderWithEditor(editor);
+        selectAll(editor, [a.id, b.id, c.id]);
+
+        for (const [name, edge] of [
+            ['左对齐', 'left'],
+            ['水平居中', 'centerX'],
+            ['右对齐', 'right'],
+            ['顶对齐', 'top'],
+            ['垂直居中', 'centerY'],
+            ['底对齐', 'bottom']
+        ] as const) {
+            fireEvent.click(utils.getByRole('button', { name }));
+            expect(alignSpy).toHaveBeenLastCalledWith(edge);
+        }
+        expect(alignSpy).toHaveBeenCalledTimes(6);
+
+        fireEvent.click(utils.getByRole('button', { name: '水平分布' }));
+        expect(distributeSpy).toHaveBeenCalledWith('horizontal');
+        fireEvent.click(utils.getByRole('button', { name: '垂直分布' }));
+        expect(distributeSpy).toHaveBeenCalledWith('vertical');
+        editor.destroy();
+    });
+
+    it('多选 2 个：分布按钮禁用（≥3 才启用），对齐按钮可用', () => {
+        const editor = new Editor();
+        const a = makeShape();
+        const b = makeShape();
+        act(() => {
+            editor.dispatch(editor.newTransaction().addStep(new AddObject(a)).addStep(new AddObject(b)));
+        });
+        const utils = renderWithEditor(editor);
+        selectAll(editor, [a.id, b.id]);
+
+        expect((utils.getByRole('button', { name: '水平分布' }) as HTMLButtonElement).disabled).toBe(true);
+        expect((utils.getByRole('button', { name: '垂直分布' }) as HTMLButtonElement).disabled).toBe(true);
+        expect((utils.getByRole('button', { name: '左对齐' }) as HTMLButtonElement).disabled).toBe(false);
+        editor.destroy();
+    });
+
+    it('单选：不渲染对齐分布按钮组', () => {
+        const editor = new Editor();
+        const utils = renderWithEditor(editor);
+        addAndSelect(editor, makeShape());
+
+        expect(utils.queryByRole('button', { name: '左对齐' })).toBeNull();
+        expect(utils.queryByRole('button', { name: '水平分布' })).toBeNull();
+        editor.destroy();
+    });
+
     it('单选各 kind（含只读 mosaic/image）均有图层顺序与翻转按钮组', () => {
         const editor = new Editor();
         const utils = renderWithEditor(editor);

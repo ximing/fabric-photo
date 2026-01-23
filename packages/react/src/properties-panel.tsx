@@ -216,6 +216,55 @@ function ArrangeGroups(props: { editor: Editor }): JSX.Element {
     );
 }
 
+/**
+ * 对齐分布按钮组（多选专属，私有）：6 对齐 + 2 分布，全部委托 core 公开 API
+ * （alignActiveObjects/distributeActiveObjects，一笔事务可撤销）；
+ * 分布需 ≥3 选中才启用（core 侧 locked 过滤后不足亦 no-op 返回 false）。
+ */
+function AlignDistributeGroup(props: { editor: Editor; selectedCount: number }): JSX.Element {
+    const { editor, selectedCount } = props;
+    const aligns = [
+        { edge: 'left', label: '左对齐' },
+        { edge: 'centerX', label: '水平居中' },
+        { edge: 'right', label: '右对齐' },
+        { edge: 'top', label: '顶对齐' },
+        { edge: 'centerY', label: '垂直居中' },
+        { edge: 'bottom', label: '底对齐' }
+    ] as const;
+    const distributes = [
+        { axis: 'horizontal', label: '水平分布' },
+        { axis: 'vertical', label: '垂直分布' }
+    ] as const;
+    return (
+        <div className="fp-props-group">
+            <span className="fp-props-group-label">对齐分布</span>
+            <div className="fp-props-align-grid">
+                {aligns.map((item) => (
+                    <button
+                        key={item.edge}
+                        type="button"
+                        className="fp-props-toggle"
+                        onClick={() => editor.alignActiveObjects(item.edge)}
+                    >
+                        {item.label}
+                    </button>
+                ))}
+                {distributes.map((item) => (
+                    <button
+                        key={item.axis}
+                        type="button"
+                        className="fp-props-toggle"
+                        disabled={selectedCount < 3}
+                        onClick={() => editor.distributeActiveObjects(item.axis)}
+                    >
+                        {item.label}
+                    </button>
+                ))}
+            </div>
+        </div>
+    );
+}
+
 function ShapePanel(props: { editor: Editor; object: ShapeObject; locked: boolean }): JSX.Element {
     const { editor, object, locked } = props;
     const applyObjectColor = useApplyObjectColor(object);
@@ -342,7 +391,8 @@ function ImagePanel(props: { editor: Editor; object: ImageObject }): JSX.Element
  * （已加载背景时，mergeKey 'bg-filters'，连续拖动一个 undo 条目）；
  * 单选按 kind 分派 shape/text/path/mosaic/image 表单（change* API 均可撤销），
  * image 表单带「图像调整」滤镜组（mergeKey `img-filters-${id}`）；
- * 多选 → 数量 + 删除。单选与多选均有「不透明度」滑杆（0..100 ↔ 0..1，
+ * 多选 → 数量 + 删除 +「对齐分布」按钮组（6 对齐 + 2 分布，≥3 选中才启用分布，
+ * 委托 alignActiveObjects/distributeActiveObjects）。单选与多选均有「不透明度」滑杆（0..100 ↔ 0..1，
  * setObjectOpacity + mergeKey 连续拖动一个 undo 条目）、「图层顺序」
  * （置顶/上移/下移/置底）与「翻转」（水平/垂直）按钮组，委托 core 公开 API。
  * 单选 locked 对象时显示「已锁定」提示并禁用几何类控件（描边宽度/字号/线宽）。
@@ -388,6 +438,7 @@ export function PropertiesPanel(props: { className?: string }): JSX.Element {
             <div className="fp-props-multi">
                 <span className="fp-props-multi-count">已选 {selected.length} 个对象</span>
                 <OpacitySlider editor={editor} objects={selected} />
+                <AlignDistributeGroup editor={editor} selectedCount={selected.length} />
                 <ArrangeGroups editor={editor} />
                 <DeleteButton editor={editor} />
             </div>
