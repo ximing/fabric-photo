@@ -148,8 +148,8 @@ export class FabricRenderer implements Renderer {
         if (!interactive) {
             this.fabricCanvas.discardActiveObject();
         }
-        for (const fObj of this.objectMap.values()) {
-            this.applyInteractivity(fObj);
+        for (const [id, fObj] of this.objectMap) {
+            this.applyInteractivity(fObj, this.lastState?.getObject(id));
         }
         const next = this.controllers.get(mode);
         if (next !== undefined && this.controllerContext !== undefined) {
@@ -257,7 +257,7 @@ export class FabricRenderer implements Renderer {
                     continue; // 加载完成后统一补齐
                 }
                 const created = createFabricObject(obj);
-                this.applyInteractivity(created);
+                this.applyInteractivity(created, obj);
                 canvas.add(created);
                 this.objectMap.set(obj.id, created);
                 this.refMap.set(obj.id, obj);
@@ -267,6 +267,8 @@ export class FabricRenderer implements Renderer {
                     continue;
                 }
                 updateFabricObject(fObj, obj);
+                // locked/hidden 变化经 UpdateObject 走更新路径，需重算可交互性
+                this.applyInteractivity(fObj, obj);
                 this.refMap.set(obj.id, obj);
             }
         }
@@ -314,6 +316,11 @@ export class FabricRenderer implements Renderer {
         const targets: FabricObject[] = [];
         if (this.mode === 'normal') {
             for (const id of state.selection) {
+                // locked/hidden 对象不呈现画布选中态（面板选中仅存在于 state.selection）
+                const obj = state.getObject(id);
+                if (obj === undefined || obj.locked === true || obj.hidden === true) {
+                    continue;
+                }
                 const fObj = this.objectMap.get(id);
                 if (fObj !== undefined) {
                     targets.push(fObj);
@@ -445,8 +452,13 @@ export class FabricRenderer implements Renderer {
         ctx.dispatch(new Transaction(ctx.getState()).setViewport(finalViewport));
     }
 
-    private applyInteractivity(fObj: FabricObject): void {
-        const interactive = this.mode === 'normal';
+    /**
+     * 可交互性投影：normal 模式且对象未锁定、未隐藏时才 selectable/evented。
+     * locked/hidden 对象因此不可点选、不可拖拽/缩放/旋转，也不计入框选
+     * （fabric 框选只命中 selectable 对象）。
+     */
+    private applyInteractivity(fObj: FabricObject, obj?: EditorObject): void {
+        const interactive = this.mode === 'normal' && obj?.locked !== true && obj?.hidden !== true;
         fObj.set({ selectable: interactive, evented: interactive });
     }
 }

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type JSX, type ReactNode } from 'react';
 import { Editor, type EditorState } from '@gmi/fp-core';
 import { CanvasView } from './canvas-view';
 import { useEditor, useToolSettings } from './hooks';
+import { LayersPanel } from './layers-panel';
 import { EditorProvider } from './provider';
 import { useShortcuts } from './shortcuts';
 import { PropertiesPanel } from './properties-panel';
@@ -17,7 +18,7 @@ export interface FabricPhotoEditorProps {
     onReady?: (editor: Editor) => void;
     onChange?: (state: EditorState) => void;
     className?: string;
-    children?: ReactNode; // 缺省 TopBar + ToolOptionBar + Toolbar + CanvasView + PropertiesPanel
+    children?: ReactNode; // 缺省 TopBar + ToolOptionBar + Toolbar + CanvasView + 右列（LayersPanel + PropertiesPanel）
 }
 
 /**
@@ -39,9 +40,10 @@ function ShortcutsBridge(): null {
  * 后续效应据此判断「真的变了」才调用，避免挂载时重复执行。挂载容器始终渲染（自定义 children
  * 时 Editor 仍需要 DOM）；children 整体包在 EditorProvider 内（Toolbar/ToolOptionBar 等子组件经
  * context 取 editor 与 toolSettings），缺省 children 为 TopBar + ToolOptionBar + Toolbar +
- * CanvasView + PropertiesPanel。布局（grid 骨架、grid-area 落位）全部由 styles.css 的
+ * CanvasView + 右列侧栏（fp-side-panel：LayersPanel 在上、PropertiesPanel 在下）。
+ * 布局（grid 骨架、grid-area 落位）全部由 styles.css 的
  * fp-editor / fp-topbar / fp-option-bar / fp-toolbar / fp-canvas-view / fp-canvas-mount /
- * fp-props-panel 承载，组件不含内联样式。
+ * fp-side-panel / fp-layers-panel / fp-props-panel 承载，组件不含内联样式。
  */
 export function FabricPhotoEditor(props: FabricPhotoEditorProps): JSX.Element {
     const { src, imageName = 'image', cssMaxWidth, cssMaxHeight, onReady, onChange, className, children } = props;
@@ -122,7 +124,10 @@ export function FabricPhotoEditor(props: FabricPhotoEditorProps): JSX.Element {
                             <ToolOptionBar />
                             <Toolbar />
                             <CanvasView editor={editor} />
-                            <PropertiesPanel />
+                            <div className="fp-side-panel">
+                                <LayersPanel />
+                                <PropertiesPanel />
+                            </div>
                         </>
                     )}
                 </EditorProvider>

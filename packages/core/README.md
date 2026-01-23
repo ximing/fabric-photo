@@ -89,6 +89,7 @@ editor.on('loadImage', ({ width, height }) => {
 | `removeActiveObject(): void` | 删除当前选中对象（单选/多选），每个被删对象 fire `objectRemoved` |
 | `clearObjects(): void` | 清空全部对象并清空选中 |
 | `deactivateAll(): void` | 取消全部选中（不进历史） |
+| `selectObjects(ids: string[]): void` | 设置选中集（过滤无效 id、去重；图层面板点选/Shift 加选用）；与现选中相同 no-op，变化时触发 `change:selection`，不进历史 |
 
 ### 剪贴板（内部对象剪贴板，不操作系统剪贴板）
 
@@ -105,6 +106,7 @@ editor.on('loadImage', ({ width, height }) => {
 | --- | --- |
 | `bringToFront(): void` / `sendToBack(): void` | 选中对象（多选保持相对顺序）置顶 / 置底；无选中或已在顶/底 no-op 不 dispatch |
 | `bringForward(): void` / `sendBackward(): void` | 选中对象上移 / 下移一层；同上 no-op 语义 |
+| `moveObjectToIndex(objectId: string, toIndex: number): void` | 单对象移动到 objects 数组任意位置（`toIndex` 为最终数组下标，取整并 clamp）；id 不存在或原位移动 no-op 不产历史（图层面板拖拽排序用） |
 
 对应 Step：`ReorderObjects`（存 before/after 完整 id 序，apply/invert 成对）与工厂函数
 `computeReorderedIds(doc, ids, action)`（`action: 'front' \| 'back' \| 'forward' \| 'backward'`，
@@ -115,6 +117,28 @@ editor.on('loadImage', ({ width, height }) => {
 | 签名 | 说明 |
 | --- | --- |
 | `flipActiveObjects(axis: 'horizontal' \| 'vertical'): boolean` | 选中对象 scaleX/scaleY 取负（一笔事务，多选逐个 UpdateObject）；无选中返回 `false` |
+
+### 图层属性（不透明度 / 锁定 / 隐藏）
+
+`BaseObject` 有三个可选字段：`opacity?: number`（0..1，缺省 1）、`locked?: boolean`（缺省 false）、
+`hidden?: boolean`（缺省 false）；`docFromJSON` 对其做域校验（缺省合法，旧数据兼容）。
+
+| 签名 | 说明 |
+| --- | --- |
+| `setObjectOpacity(ids: string[], opacity: number, opts?: { mergeKey?: string }): void` | 设置一组对象不透明度（clamp 0..1，可撤销）；已是目标值跳过、全不变 no-op；`mergeKey` 语义同滤镜（滑杆连续拖动一个 undo 条目） |
+| `toggleObjectLocked(id: string): void` | 切换锁定态（可撤销）；对象不存在 no-op |
+| `toggleObjectHidden(id: string): void` | 切换隐藏态（可撤销）；对象不存在 no-op |
+
+语义约定（渲染投影 + select controller 落地）：
+
+- **opacity**：投影为 fabric `opacity`（缺省 1）。
+- **locked**：画布上不可点选、不可拖拽/缩放/旋转（fabric `selectable/evented` false，不计入框选），
+  select controller 兜底跳过其 `object:modified` 提交；图层面板仍可选中（便于解锁），
+  但画布不呈现其选中态。锁定对象的 z 序调整、翻转、不透明度修改与**删除均允许**，几何变换不允许。
+- **hidden**：不渲染（fabric `visible` false，含导出）、画布不可选、不计入框选；图层面板可点选
+  （便于取消隐藏），画布同样不呈现其选中态。
+- 面板选中 locked/hidden 对象后，画布上的点选/框选/清空操作不会把该面板选中误清掉
+  （select controller 的回声判定只对画布可选中子集做）。
 
 ### 滤镜与图像调整
 

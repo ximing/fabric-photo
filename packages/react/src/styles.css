@@ -200,6 +200,25 @@
     }
 
     /* ===== 右属性面板（240px，grid 列 3） ===== */
+    /* 缺省骨架下右列 = 侧栏容器（图层在上、属性在下）；自组布局直接用面板组件时
+       fp-layers-panel / fp-props-panel 的 grid-area 仍各自生效 */
+    .fp-side-panel {
+        grid-area: props;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        background: #ffffff;
+        border-left: 1px solid #e5e5e5;
+    }
+    .fp-side-panel .fp-layers-panel,
+    .fp-side-panel .fp-props-panel {
+        grid-area: unset;
+        border-left: none;
+    }
+    .fp-side-panel .fp-props-panel {
+        flex: 1 1 auto;
+        min-height: 0;
+    }
     .fp-props-panel {
         grid-area: props;
         display: flex;
@@ -325,6 +344,12 @@
     .fp-props-delete:hover {
         background: #fdecec;
     }
+    .fp-props-locked-hint {
+        padding: 6px 8px;
+        border-radius: 4px;
+        background: #fff7e0;
+        color: #8a6d1a;
+    }
 
     /* ===== 滤镜调整（属性面板背景/图像调整组） ===== */
     .fp-filter-field {
@@ -397,5 +422,100 @@
     .fp-color-custom::-moz-color-swatch {
         border: none;
         border-radius: 3px;
+    }
+
+    /* ===== 图层面板（右列上半，与属性面板同列） ===== */
+    .fp-layers-panel {
+        grid-area: props;
+        display: flex;
+        flex-direction: column;
+        flex: 0 1 auto;
+        max-height: 45%;
+        min-height: 0;
+        background: #ffffff;
+        border-left: 1px solid #e5e5e5;
+        border-bottom: 1px solid #e5e5e5;
+        font-size: 12px;
+    }
+    .fp-layers-header {
+        flex: 0 0 auto;
+        padding: 8px 12px;
+        color: #666666;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .fp-layers-empty {
+        padding: 16px 12px;
+        color: #999999;
+        text-align: center;
+    }
+    .fp-layers-list {
+        flex: 1 1 auto;
+        min-height: 0;
+        margin: 0;
+        padding: 4px;
+        overflow-y: auto;
+        list-style: none;
+    }
+    .fp-layer-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        height: 28px;
+        padding: 0 6px;
+        border-radius: 4px;
+        color: #333333;
+        cursor: default;
+        user-select: none;
+        border-top: 2px solid transparent;
+        border-bottom: 2px solid transparent;
+    }
+    .fp-layer-item:hover {
+        background: #f5f5f5;
+    }
+    .fp-layer-item-selected,
+    .fp-layer-item-selected:hover {
+        background: rgba(13, 153, 255, 0.12);
+        color: #0d99ff;
+    }
+    .fp-layer-item-hidden .fp-layer-item-name,
+    .fp-layer-item-hidden .fp-layer-item-icon {
+        opacity: 0.4;
+    }
+    .fp-layer-item-drop-above {
+        border-top-color: #0d99ff;
+    }
+    .fp-layer-item-drop-below {
+        border-bottom-color: #0d99ff;
+    }
+    .fp-layer-item-icon {
+        flex: 0 0 auto;
+        color: #666666;
+    }
+    .fp-layer-item-selected .fp-layer-item-icon {
+        color: inherit;
+    }
+    .fp-layer-item-name {
+        flex: 1 1 0;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .fp-layer-btn {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 4px;
+        color: #666666;
+    }
+    .fp-layer-btn:hover {
+        background: #ececec;
+    }
+    .fp-layer-btn-active,
+    .fp-layer-btn-active:hover {
+        color: #0d99ff;
     }
 }

@@ -30,6 +30,9 @@ export interface BaseObject {
     angle: number;           // 度
     scaleX: number;
     scaleY: number;
+    opacity?: number;        // 0..1，缺省 1
+    locked?: boolean;        // 缺省 false；锁定后画布不可交互选中/变换（面板仍可选中）
+    hidden?: boolean;        // 缺省 false；隐藏后不渲染、画布不可选、不计入框选
 }
 
 export interface ShapeObject extends BaseObject {
@@ -156,6 +159,24 @@ function isValidFilters(value: unknown): value is FilterSettings | undefined {
     );
 }
 
+/**
+ * B3 新增可选字段（opacity/locked/hidden）校验：缺省合法（旧数据兼容）；
+ * 有则 opacity 必须 ∈ [0,1]，locked/hidden 必须 boolean。
+ */
+function isValidObjectFlags(obj: EditorObject): boolean {
+    const record = obj as unknown as Record<string, unknown>;
+    if (record.opacity !== undefined && !inRange(record.opacity, 0, 1)) {
+        return false;
+    }
+    if (record.locked !== undefined && typeof record.locked !== 'boolean') {
+        return false;
+    }
+    if (record.hidden !== undefined && typeof record.hidden !== 'boolean') {
+        return false;
+    }
+    return true;
+}
+
 export function docFromJSON(json: string): Doc {
     let data: unknown;
     try {
@@ -174,6 +195,9 @@ export function docFromJSON(json: string): Doc {
         throw new Error('invalid doc JSON');
     }
     if (!(data.objects as EditorObject[]).every((obj) => isValidFilters((obj as { filters?: unknown }).filters))) {
+        throw new Error('invalid doc JSON');
+    }
+    if (!(data.objects as EditorObject[]).every(isValidObjectFlags)) {
         throw new Error('invalid doc JSON');
     }
     return data as unknown as Doc;

@@ -487,6 +487,58 @@ describe('PropertiesPanel', () => {
         editor.destroy();
     });
 
+    it('单选：「不透明度」滑杆回显缺省 100，onChange 委托 setObjectOpacity 且带 mergeKey', () => {
+        const editor = new Editor();
+        const spy = vi.spyOn(editor, 'setObjectOpacity');
+        const utils = renderWithEditor(editor);
+        const shape = makeShape();
+        addAndSelect(editor, shape);
+
+        const slider = utils.getByLabelText('不透明度') as HTMLInputElement;
+        expect(slider.value).toBe('100'); // 缺省 opacity 1 ↔ 100
+
+        fireEvent.change(slider, { target: { value: '40' } });
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith([shape.id], 0.4, { mergeKey: `opacity:${shape.id}` });
+        editor.destroy();
+    });
+
+    it('多选：「不透明度」滑杆作用于全部选中对象（显示第一个选中对象的值）', () => {
+        const editor = new Editor();
+        const spy = vi.spyOn(editor, 'setObjectOpacity');
+        const utils = renderWithEditor(editor);
+        const a = { ...makeShape(), opacity: 0.5 };
+        const b = makeText();
+        act(() => {
+            const tr = editor.newTransaction();
+            tr.addStep(new AddObject(a)).addStep(new AddObject(b));
+            editor.dispatch(tr);
+        });
+        selectAll(editor, [a.id, b.id]);
+
+        const slider = utils.getByLabelText('不透明度') as HTMLInputElement;
+        expect(slider.value).toBe('50'); // 第一个选中对象 a 的 0.5 ↔ 50
+
+        fireEvent.change(slider, { target: { value: '80' } });
+        expect(spy).toHaveBeenCalledWith([a.id, b.id], 0.8, { mergeKey: `opacity:${a.id}+${b.id}` });
+        editor.destroy();
+    });
+
+    it('单选 locked 对象：显示「已锁定」提示且几何类控件禁用（颜色控件不受影响）', () => {
+        const editor = new Editor();
+        const utils = renderWithEditor(editor);
+        const shape = { ...makeShape(), locked: true };
+        addAndSelect(editor, shape);
+
+        expect(utils.getByText('已锁定：几何类控件不可用，解锁后可编辑')).not.toBeNull();
+        expect((utils.getByLabelText('描边宽度') as HTMLInputElement).disabled).toBe(true);
+        // 非几何控件（颜色）保持可用
+        expect((utils.getByLabelText('填充') as HTMLInputElement).disabled).toBe(false);
+        // 图层顺序/翻转按钮仍可用（locked 语义：几何变换禁止，z 序/翻转/删除允许）
+        expect((utils.getByRole('button', { name: '置顶' }) as HTMLButtonElement).disabled).toBe(false);
+        editor.destroy();
+    });
+
     it('className 语义占位（fp-props-panel，grid 落位在 styles.css）并可追加自定义 class', () => {
         const editor = new Editor();
         const utils = render(

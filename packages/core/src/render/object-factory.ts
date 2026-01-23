@@ -91,6 +91,8 @@ interface BaseAttrs {
     scaleY: number;
     flipX: boolean;
     flipY: boolean;
+    opacity: number;
+    visible: boolean;
 }
 
 function baseAttrs(obj: EditorObject): BaseAttrs {
@@ -98,7 +100,10 @@ function baseAttrs(obj: EditorObject): BaseAttrs {
         left: obj.left,
         top: obj.top,
         angle: obj.angle,
-        ...scaleToFabric(obj.scaleX, obj.scaleY)
+        ...scaleToFabric(obj.scaleX, obj.scaleY),
+        // B3 图层属性投影：opacity 缺省 1；hidden → fabric visible:false（不渲染/不参与导出）
+        opacity: obj.opacity ?? 1,
+        visible: obj.hidden !== true
     };
 }
 

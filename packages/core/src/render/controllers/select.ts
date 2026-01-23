@@ -93,11 +93,19 @@ export class SelectController implements Controller {
                 ids.push(fpId);
             }
         }
+        // 回声判定对「画布可选中子集」做：locked/hidden 对象只在面板（state.selection）里
+        // 选中、不呈现在画布上，syncSelection 程序化 discard 触发的 selection:cleared
+        // 若直接对比 state.selection 会把面板选中误清空
+        const state = ctx.getState();
+        const canvasSelectable = state.selection.filter((id) => {
+            const obj = state.getObject(id);
+            return obj !== undefined && obj.locked !== true && obj.hidden !== true;
+        });
         // state 已是目标选中集（如 renderer 程序化同步触发的事件）→ 跳过，避免回声事务
-        if (sameIdSet(ids, ctx.getState().selection)) {
+        if (sameIdSet(ids, canvasSelectable)) {
             return;
         }
-        ctx.dispatch(new Transaction(ctx.getState()).setSelection(ids).setMeta('addToHistory', false));
+        ctx.dispatch(new Transaction(state).setSelection(ids).setMeta('addToHistory', false));
     };
 
     /**
@@ -144,6 +152,11 @@ export class SelectController implements Controller {
         }
         const obj = ctx.getState().getObject(fpId);
         if (obj === undefined) {
+            return;
+        }
+        // locked 对象不可交互（selectable/evented false），正常不会产生 modified；
+        // 兜底跳过其提交，保证「锁定 = 不可几何变换」语义不被意外路径绕过
+        if (obj.locked === true) {
             return;
         }
         const attrs = readCommittedAttrs(obj, target);
