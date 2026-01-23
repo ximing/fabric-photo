@@ -180,3 +180,147 @@ describe('useShortcuts', () => {
         editor.destroy();
     });
 });
+
+describe('useShortcuts — Space 临时平移', () => {
+    function releaseKey(key: string, init: KeyboardEventInit = {}, target: Element | Document = document.documentElement): void {
+        fireEvent.keyUp(target, { key, ...init });
+    }
+
+    it('keydown Space 进入 pan，keyup 恢复 normal（endPan 路径）', () => {
+        const editor = new Editor();
+        const startSpy = vi.spyOn(editor, 'startPan');
+        const endSpy = vi.spyOn(editor, 'endPan');
+        renderHook(() => useShortcuts(editor, () => DEFAULT_TOOL_SETTINGS));
+
+        pressKey(' ');
+        expect(startSpy).toHaveBeenCalledTimes(1);
+        expect(editor.getCurrentState()).toBe('pan');
+
+        releaseKey(' ');
+        expect(endSpy).toHaveBeenCalledTimes(1);
+        expect(editor.getCurrentState()).toBe('normal');
+        editor.destroy();
+    });
+
+    it('从非 normal 模式（freedraw）进入，keyup 经 activateTool 恢复原 mode', () => {
+        const editor = new Editor();
+        const freeDrawSpy = vi.spyOn(editor, 'startFreeDrawing');
+        renderHook(() => useShortcuts(editor, () => DEFAULT_TOOL_SETTINGS));
+
+        pressKey('p'); // freedraw
+        expect(editor.getCurrentState()).toBe('freedraw');
+
+        pressKey(' ');
+        expect(editor.getCurrentState()).toBe('pan');
+
+        releaseKey(' ');
+        expect(editor.getCurrentState()).toBe('freedraw');
+        // 第一次 'p' + Space 松开恢复，各透传一次 settings
+        expect(freeDrawSpy).toHaveBeenCalledTimes(2);
+        expect(freeDrawSpy).toHaveBeenLastCalledWith(DEFAULT_TOOL_SETTINGS.freedraw);
+        editor.destroy();
+    });
+
+    it('repeat 的 keydown Space 被忽略（不重复 startPan）', () => {
+        const editor = new Editor();
+        const startSpy = vi.spyOn(editor, 'startPan');
+        renderHook(() => useShortcuts(editor, () => DEFAULT_TOOL_SETTINGS));
+
+        pressKey(' ');
+        pressKey(' ', { repeat: true });
+        pressKey(' ', { repeat: true });
+        expect(startSpy).toHaveBeenCalledTimes(1);
+
+        releaseKey(' ');
+        expect(editor.getCurrentState()).toBe('normal');
+        editor.destroy();
+    });
+
+    it('输入框 target 不触发 Space 平移', () => {
+        const editor = new Editor();
+        const startSpy = vi.spyOn(editor, 'startPan');
+        renderHook(() => useShortcuts(editor, () => DEFAULT_TOOL_SETTINGS));
+
+        const input = document.createElement('input');
+        document.body.appendChild(input);
+        pressKey(' ', {}, input);
+        expect(startSpy).not.toHaveBeenCalled();
+        expect(editor.getCurrentState()).toBe('normal');
+        input.remove();
+        editor.destroy();
+    });
+
+    it('文本编辑态不触发 Space 平移', () => {
+        const editor = new Editor();
+        const startSpy = vi.spyOn(editor, 'startPan');
+        vi.spyOn(editor, 'isTextEditing').mockReturnValue(true);
+        renderHook(() => useShortcuts(editor, () => DEFAULT_TOOL_SETTINGS));
+
+        pressKey(' ');
+        expect(startSpy).not.toHaveBeenCalled();
+        expect(editor.getCurrentState()).toBe('normal');
+        editor.destroy();
+    });
+
+    it('Space 按住期间单字母工具快捷键被屏蔽，松开后回到进入前 mode', () => {
+        const editor = new Editor();
+        const freeDrawSpy = vi.spyOn(editor, 'startFreeDrawing');
+        renderHook(() => useShortcuts(editor, () => DEFAULT_TOOL_SETTINGS));
+
+        pressKey(' ');
+        pressKey('p'); // 被屏蔽
+        expect(editor.getCurrentState()).toBe('pan');
+        expect(freeDrawSpy).not.toHaveBeenCalled();
+
+        releaseKey(' ');
+        expect(editor.getCurrentState()).toBe('normal');
+        expect(freeDrawSpy).not.toHaveBeenCalled();
+        editor.destroy();
+    });
+
+    it('进入前已是 H 键常驻 pan：Space 不挂临时状态，keyup 不退出 pan', () => {
+        const editor = new Editor();
+        const endSpy = vi.spyOn(editor, 'endPan');
+        renderHook(() => useShortcuts(editor, () => DEFAULT_TOOL_SETTINGS));
+
+        pressKey('h');
+        expect(editor.getCurrentState()).toBe('pan');
+
+        pressKey(' ');
+        releaseKey(' ');
+        expect(endSpy).not.toHaveBeenCalled();
+        expect(editor.getCurrentState()).toBe('pan');
+        editor.destroy();
+    });
+
+    it('Space 期间按 Escape 退出后，keyup 不再恢复旧 mode', () => {
+        const editor = new Editor();
+        renderHook(() => useShortcuts(editor, () => DEFAULT_TOOL_SETTINGS));
+
+        pressKey('p'); // freedraw
+        pressKey(' '); // pan
+        pressKey('Escape'); // endAll → normal
+        expect(editor.getCurrentState()).toBe('normal');
+
+        releaseKey(' ');
+        expect(editor.getCurrentState()).toBe('normal'); // 不弹回 freedraw
+        editor.destroy();
+    });
+
+    it('window blur 兜底结束 Space 平移并恢复 mode', () => {
+        const editor = new Editor();
+        const endSpy = vi.spyOn(editor, 'endPan');
+        renderHook(() => useShortcuts(editor, () => DEFAULT_TOOL_SETTINGS));
+
+        pressKey(' ');
+        expect(editor.getCurrentState()).toBe('pan');
+
+        fireEvent(window, new Event('blur'));
+        expect(endSpy).toHaveBeenCalledTimes(1);
+        expect(editor.getCurrentState()).toBe('normal');
+
+        releaseKey(' '); // blur 已收尾，keyup 幂等
+        expect(editor.getCurrentState()).toBe('normal');
+        editor.destroy();
+    });
+});

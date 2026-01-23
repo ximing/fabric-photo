@@ -1,5 +1,14 @@
 import type { Editor } from '../editor';
+import { ZOOM_MAX, ZOOM_MIN } from '../state/editor-state';
 import type { Plugin } from './plugin';
+
+/** 快捷键缩放步长（与 react 顶栏 +/- 按钮一致）。 */
+export const ZOOM_STEP = 0.2;
+
+/** 步进缩放纯函数：current + delta 后 clamp 到 [ZOOM_MIN, ZOOM_MAX]（供 keymap 与单测复用）。 */
+export function stepZoom(current: number, delta: number): number {
+    return Math.min(Math.max(current + delta, ZOOM_MIN), ZOOM_MAX);
+}
 
 function isEditableTarget(target: EventTarget | null): boolean {
     if (typeof HTMLElement === 'undefined' || !(target instanceof HTMLElement)) {
@@ -14,6 +23,8 @@ function isEditableTarget(target: EventTarget | null): boolean {
  * - Delete/Backspace → editor.removeActiveObject()
  * - Mod+C / Mod+V / Mod+X / Mod+D → copy / paste / cut / duplicate
  * - `]` / `[` → bringForward / sendBackward；Mod+`]` / Mod+`[` → bringToFront / sendToBack
+ * - Mod+= / Mod++ → 放大一档（+ZOOM_STEP）；Mod+- → 缩小一档；Mod+0 → 重置为 1
+ *   （preventDefault 防浏览器缩放；clamp 走 stepZoom [ZOOM_MIN, ZOOM_MAX]）
  * 守卫：目标为 input/textarea/contenteditable 或编辑器处于文本编辑态时不触发。
  * node 环境（无 document）下不挂监听，destroy 安全。
  */
@@ -75,6 +86,22 @@ export class Keymap implements Plugin {
         if (mod && key === 'd') {
             event.preventDefault();
             this.editor.duplicateActiveObjects();
+            return;
+        }
+        if (mod && (key === '=' || key === '+')) {
+            // US 布局 Mod+Shift+= 的 key 是 '+'，'='/'+' 均视为放大
+            event.preventDefault();
+            this.editor.setZoom(stepZoom(this.editor.getZoom(), ZOOM_STEP));
+            return;
+        }
+        if (mod && key === '-') {
+            event.preventDefault();
+            this.editor.setZoom(stepZoom(this.editor.getZoom(), -ZOOM_STEP));
+            return;
+        }
+        if (mod && key === '0') {
+            event.preventDefault();
+            this.editor.setZoom(1);
             return;
         }
         if (key === ']' || key === '[') {

@@ -156,6 +156,39 @@ function imageAttrs(obj: ImageObject): Record<string, unknown> {
     return { width: obj.width, height: obj.height };
 }
 
+/** 拖拽旋转的吸附倍角（按住 Shift 时以该角度的整数倍吸附）。 */
+export const ROTATE_SNAP_ANGLE = 15;
+
+/**
+ * Shift 旋转 15° 吸附接线（仅渲染投影，不改 state 语义；旋转提交仍走 object:modified 链路）。
+ * fabric 6.9.1 的 mtr 控制点（rotationWithSnapping）不检查 Shift——snapAngle > 0 即恒吸附；
+ * 这里把对象自己的 mtr actionHandler 包一层：未按 Shift 时临时清零 snapAngle 走自由旋转，
+ * 按住 Shift 才以 ROTATE_SNAP_ANGLE 倍角吸附（snapThreshold 缺省 = snapAngle，量化为整倍数）。
+ * fabric 6 每个实例有独立 controls（createControls per instance），原地包装不影响其他对象。
+ */
+export function applyRotateSnap(fObj: FabricObject): void {
+    fObj.snapAngle = ROTATE_SNAP_ANGLE;
+    const mtr = fObj.controls.mtr;
+    if (mtr === undefined) {
+        return;
+    }
+    const baseHandler = mtr.actionHandler;
+    mtr.actionHandler = (eventData, transform, x, y) => {
+        const target = transform.target;
+        const shiftKey = (eventData as Partial<MouseEvent>).shiftKey === true;
+        if (target === undefined || shiftKey) {
+            return baseHandler(eventData, transform, x, y);
+        }
+        const prevSnapAngle = target.snapAngle;
+        target.snapAngle = 0;
+        try {
+            return baseHandler(eventData, transform, x, y);
+        } finally {
+            target.snapAngle = prevSnapAngle;
+        }
+    };
+}
+
 /** 按 kind 分派创建 fabric 对象；调用方需保证 image 的 src 已 preload。 */
 export function createFabricObject(obj: EditorObject): FabricObject {
     let fObj: FabricObject;
@@ -210,6 +243,7 @@ export function createFabricObject(obj: EditorObject): FabricObject {
             break;
     }
     setFpId(fObj, obj.id);
+    applyRotateSnap(fObj);
     return fObj;
 }
 
