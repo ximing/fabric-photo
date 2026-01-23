@@ -71,6 +71,18 @@ export class FabricRenderer implements Renderer {
         return this.fabricCanvas;
     }
 
+    /** 按 fpId 取 fabric 对象（保持入参序，未知 id 跳过）；仅内核内部使用（exporter）。 */
+    getObjectsByIds(ids: readonly string[]): FabricObject[] {
+        const result: FabricObject[] = [];
+        for (const id of ids) {
+            const fObj = this.objectMap.get(id);
+            if (fObj !== undefined) {
+                result.push(fObj);
+            }
+        }
+        return result;
+    }
+
     get container(): HTMLElement {
         return this.containerEl;
     }

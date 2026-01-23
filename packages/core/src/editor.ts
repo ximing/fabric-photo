@@ -5,7 +5,7 @@ import { DEFAULT_FILTERS, type EditorObject, type FilterSettings, type ImageObje
 import { History } from './plugins/history';
 import { Keymap } from './plugins/keymap';
 import type { Plugin } from './plugins/plugin';
-import { exportDocBlob, exportDocDataURL, exportViewportImage, getViewportDocRect } from './render/exporter';
+import { exportDocBlob, exportDocDataURL, exportSelectionBlob, exportSelectionDataURL, exportViewportImage, getViewportDocRect } from './render/exporter';
 import type { ControllerContext } from './render/controllers/controller';
 import { ArrowController } from './render/controllers/arrow';
 import { CropController } from './render/controllers/crop';
@@ -41,6 +41,21 @@ export interface ViewportInfo {
     height: number;
     left: number;
     top: number;
+}
+
+/**
+ * 导出选项（toDataURL/toBlobData/getExportSize 共用）。
+ * - type：MIME 类型，如 'image/png'（默认）/'image/jpeg'/'image/webp'
+ * - quality：jpeg/webp 质量 0..1（png 忽略）
+ * - multiplier：输出倍率（输出像素 = 导出尺寸 × multiplier），默认 1；非正数按 1 处理
+ * - selectionOnly：仅导出当前选中对象——裁剪到选中集 bbox、不含背景、透明底
+ *   （选中集为空时 toDataURL/toBlobData 抛错，getExportSize 返回 null）
+ */
+export interface ExportImageOptions {
+    type?: string;
+    quality?: number;
+    multiplier?: number;
+    selectionOnly?: boolean;
 }
 
 function sameSelection(a: readonly string[], b: readonly string[]): boolean {
@@ -1267,16 +1282,62 @@ export class Editor {
     }
 
     /**
-     * 导出整图 dataURL（背景原始像素，不受 zoom/pan 影响）；无背景时导出当前画布现状。
-     * @param type - MIME 类型，如 'image/png'（默认）、'image/jpeg'、'image/webp'
+     * 导出 dataURL（背景原始像素 × multiplier，不受 zoom/pan 影响）；无背景时导出当前画布现状。
+     * 入参兼容旧签名：裸 MIME 字符串等价于 `{ type }`。
+     * `selectionOnly: true` 时仅导出选中对象（裁剪到选中集 bbox、不含背景、透明底），空选中抛错。
      */
-    toDataURL(type?: string): string {
-        return exportDocDataURL(this.requireFabricRenderer(), this.currentState.doc.background, type);
+    toDataURL(options?: string | ExportImageOptions): string {
+        const renderer = this.requireFabricRenderer();
+        if (typeof options === 'object' && options.selectionOnly === true) {
+            return exportSelectionDataURL(renderer, this.currentState.selection, options);
+        }
+        return exportDocDataURL(renderer, this.currentState.doc.background, options);
     }
 
-    /** 导出整图 Blob，进制同 toDataURL。 */
-    toBlobData(type?: string): Promise<Blob | null> {
-        return exportDocBlob(this.requireFabricRenderer(), this.currentState.doc.background, type);
+    /** 导出 Blob，进制与选项同 toDataURL。 */
+    toBlobData(options?: string | ExportImageOptions): Promise<Blob | null> {
+        const renderer = this.requireFabricRenderer();
+        if (typeof options === 'object' && options.selectionOnly === true) {
+            return exportSelectionBlob(renderer, this.currentState.selection, options);
+        }
+        return exportDocBlob(renderer, this.currentState.doc.background, options);
+    }
+
+    /**
+     * 预估导出像素尺寸（导出文件名等用途）：整图 = 背景尺寸，仅选中 = 选中对象 doc bbox 并集
+     * （未旋转近似，与 objectBBox 一致），均 × multiplier。无背景整图 / 空选中返回 null。
+     */
+    getExportSize(options?: { multiplier?: number; selectionOnly?: boolean }): { width: number; height: number } | null {
+        const multiplier =
+            options?.multiplier !== undefined && options.multiplier > 0 ? options.multiplier : 1;
+        if (options?.selectionOnly === true) {
+            let minX = Infinity;
+            let minY = Infinity;
+            let maxX = -Infinity;
+            let maxY = -Infinity;
+            let found = false;
+            for (const id of this.currentState.selection) {
+                const obj = this.currentState.getObject(id);
+                if (obj === undefined) {
+                    continue;
+                }
+                const bbox = objectBBox(obj);
+                minX = Math.min(minX, bbox.left);
+                minY = Math.min(minY, bbox.top);
+                maxX = Math.max(maxX, bbox.left + bbox.width);
+                maxY = Math.max(maxY, bbox.top + bbox.height);
+                found = true;
+            }
+            if (!found) {
+                return null;
+            }
+            return { width: Math.round((maxX - minX) * multiplier), height: Math.round((maxY - minY) * multiplier) };
+        }
+        const bg = this.currentState.doc.background;
+        if (bg === null) {
+            return null;
+        }
+        return { width: Math.round(bg.width * multiplier), height: Math.round(bg.height * multiplier) };
     }
 
     /** 当前视口可见区域（容器 CSS 像素）的 dataURL。 */

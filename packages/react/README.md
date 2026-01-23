@@ -40,7 +40,7 @@ function App() {
 | 组件 | 说明 |
 | --- | --- |
 | `FabricPhotoEditor` | 组合骨架 + Editor 生命周期；`src`/`imageName`/`cssMaxWidth`/`cssMaxHeight`/`onReady`/`onChange`/`className`/`children` |
-| `TopBar` | 图名、undo/redo（historyChange 事件驱动禁用态）、缩放（-/百分比复位/+）、导出 PNG |
+| `TopBar` | 图名、undo/redo（historyChange 事件驱动禁用态）、缩放（-/百分比复位/+）、导出弹层（Esc/点外部关闭）：格式 PNG/JPEG/WebP、质量滑杆（仅 JPEG/WebP，0.1..1 步进 0.05 默认 0.9）、倍率 1x/2x/3x、范围整图/仅选中（无选中禁用）；确认导出走 core `toDataURL`，文件名 `<图名>-<宽>x<高>@<倍率>x[-selection].<ext>` |
 | `Toolbar` | 左侧 10 工具图标按钮（选择/裁剪/旋转/箭头/画笔/直线/形状/文字/马赛克/平移） |
 | `ToolOptionBar` | 按当前 mode 渲染：crop→Apply/Cancel；画笔类→线宽+色板；shape→形状类型+色板；mosaic→粒度 |
 | `CanvasView` | 灰底画布区（`#e5e5e5`），ResizeObserver → `editor.notifyResize()` |
