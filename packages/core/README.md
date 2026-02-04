@@ -1,6 +1,6 @@
 # @gmi/fp-core
 
-ProseMirror 式（state / step / transaction / plugin）的 Canvas 图片编辑器内核，UI 无关。
+不可变数据模型（Doc / EditorState / Step / Transaction）驱动的 Canvas 图片编辑器内核，UI 无关。
 文档模型与全部编辑语义都在内核里，fabric 6 只是 state 的「渲染投影」——换上层的
 React/Vue/原生组件包即可得到完整编辑器。
 
