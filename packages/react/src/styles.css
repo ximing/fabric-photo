@@ -165,18 +165,6 @@
     .fp-topbar-btn:disabled {
         opacity: 0.5;
     }
-    .fp-topbar-zoom-value {
-        min-width: 48px;
-        height: 28px;
-        padding: 0 6px;
-        border-radius: 4px;
-        font-size: 12px;
-        text-align: center;
-        color: var(--fp-text);
-    }
-    .fp-topbar-zoom-value:hover {
-        background: var(--fp-bg-hover);
-    }
     .fp-topbar-separator {
         width: 1px;
         height: 16px;
@@ -285,6 +273,48 @@
         border-color: var(--fp-accent);
         color: var(--fp-accent);
         background: var(--fp-accent-soft);
+    }
+
+    /* ===== 缩放胶囊（画布区底部居中） ===== */
+    .fp-zoom-controls {
+        position: absolute;
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        padding: 3px 6px;
+        border-radius: 999px;
+        background: var(--fp-bg-elevated);
+        border: 1px solid var(--fp-border);
+        box-shadow: var(--fp-shadow-pop);
+        backdrop-filter: blur(12px);
+    }
+    .fp-zoom-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 999px;
+        color: var(--fp-text);
+    }
+    .fp-zoom-btn:hover {
+        background: var(--fp-bg-hover);
+    }
+    .fp-zoom-value {
+        min-width: 44px;
+        height: 24px;
+        padding: 0 4px;
+        border-radius: 999px;
+        font-size: 12px;
+        text-align: center;
+        color: var(--fp-text);
+    }
+    .fp-zoom-value:hover {
+        background: var(--fp-bg-hover);
     }
 
     /* ===== 左工具栏（48px，grid 列 1） ===== */

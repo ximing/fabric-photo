@@ -1,10 +1,7 @@
 import { useEffect, useRef, useState, type JSX } from 'react';
-import { Download, Minus, Moon, Plus, Redo2, Sun, Undo2 } from 'lucide-react';
+import { Download, Moon, Redo2, Sun, Undo2 } from 'lucide-react';
 import type { ExportImageOptions } from '@gmi/fp-core';
 import { useEditor, useEditorEvent, useEditorState, useToolSettings } from './hooks';
-
-/** 单次点击的缩放步长（乘区以 0.2 为档）。 */
-const ZOOM_STEP = 0.2;
 
 /** 导出格式三选；MIME 为 `image/${format}`，扩展名与格式同名。 */
 type ExportFormat = 'png' | 'jpeg' | 'webp';
@@ -19,14 +16,12 @@ const MULTIPLIERS = [1, 2, 3] as const;
 // 的 ReactNode 不兼容；运行时是标准 FC，渲染处收窄为 JSX.ElementType
 const UndoIcon = Undo2 as unknown as JSX.ElementType;
 const RedoIcon = Redo2 as unknown as JSX.ElementType;
-const MinusIcon = Minus as unknown as JSX.ElementType;
-const PlusIcon = Plus as unknown as JSX.ElementType;
 const DownloadIcon = Download as unknown as JSX.ElementType;
 const SunIcon = Sun as unknown as JSX.ElementType;
 const MoonIcon = Moon as unknown as JSX.ElementType;
 
 /**
- * 顶栏（grid 行 1）：左图名 / 中 undo·redo / 右 zoom（-、百分比复位、+）与导出。
+ * 顶栏（grid 行 1）：左图名 / 中 undo·redo / 右主题切换与导出。
  * history 不在 EditorState 里：undo/redo 禁用态以 historyChange 事件驱动本地 state，
  * 初值取 editor.isEmptyUndoStack()/isEmptyRedoStack()。
  * 导出为弹层（绝对定位面板，Esc/点外部关闭）：格式 PNG/JPEG/WebP、质量滑杆（仅 JPEG/WebP，
@@ -37,7 +32,6 @@ export function TopBar(props: { className?: string }): JSX.Element {
     const editor = useEditor();
     const { theme, toggleTheme } = useToolSettings();
     const imageName = useEditorState((state) => state.doc.background?.name ?? '');
-    const zoomText = useEditorState((state) => `${Math.round(state.viewport.zoom * 100)}%`);
     const hasSelection = useEditorState((state) => state.selection.length > 0);
     const [undoDisabled, setUndoDisabled] = useState(() => editor.isEmptyUndoStack());
     const [redoDisabled, setRedoDisabled] = useState(() => editor.isEmptyRedoStack());
@@ -129,34 +123,6 @@ export function TopBar(props: { className?: string }): JSX.Element {
                 </button>
             </div>
             <div className="fp-topbar-actions">
-                <button
-                    type="button"
-                    className="fp-topbar-btn"
-                    title="缩小"
-                    aria-label="缩小"
-                    onClick={() => editor.setZoom(editor.getZoom() - ZOOM_STEP)}
-                >
-                    <MinusIcon size={18} aria-hidden />
-                </button>
-                <button
-                    type="button"
-                    className="fp-topbar-zoom-value"
-                    title="重置缩放"
-                    aria-label="重置缩放"
-                    onClick={() => editor.setZoom(1)}
-                >
-                    {zoomText}
-                </button>
-                <button
-                    type="button"
-                    className="fp-topbar-btn"
-                    title="放大"
-                    aria-label="放大"
-                    onClick={() => editor.setZoom(editor.getZoom() + ZOOM_STEP)}
-                >
-                    <PlusIcon size={18} aria-hidden />
-                </button>
-                <span className="fp-topbar-separator" aria-hidden />
                 <button
                     type="button"
                     className="fp-topbar-btn"

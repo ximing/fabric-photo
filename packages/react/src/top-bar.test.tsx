@@ -96,41 +96,6 @@ describe('TopBar', () => {
         editor.destroy();
     });
 
-    it('点击放大 → setZoom 收到约 1.2（初始 1 + 0.2），百分比文案更新为 120%', () => {
-        const editor = new Editor();
-        const zoomSpy = vi.spyOn(editor, 'setZoom');
-        const utils = renderWithEditor(editor);
-
-        expect(button(utils, '重置缩放').textContent).toBe('100%');
-        fireEvent.click(button(utils, '放大'));
-        expect(zoomSpy).toHaveBeenCalledTimes(1);
-        expect(zoomSpy.mock.calls[0][0]).toBeCloseTo(1.2);
-        expect(button(utils, '重置缩放').textContent).toBe('120%');
-        editor.destroy();
-    });
-
-    it('点击缩小 → setZoom 收到约 0.8（初始 1 - 0.2）', () => {
-        const editor = new Editor();
-        const zoomSpy = vi.spyOn(editor, 'setZoom');
-        const utils = renderWithEditor(editor);
-
-        fireEvent.click(button(utils, '缩小'));
-        expect(zoomSpy).toHaveBeenCalledTimes(1);
-        expect(zoomSpy.mock.calls[0][0]).toBeCloseTo(0.8);
-        editor.destroy();
-    });
-
-    it('点击百分比复位：setZoom(1)', () => {
-        const editor = new Editor();
-        const zoomSpy = vi.spyOn(editor, 'setZoom');
-        const utils = renderWithEditor(editor);
-
-        fireEvent.click(button(utils, '重置缩放'));
-        expect(zoomSpy).toHaveBeenCalledTimes(1);
-        expect(zoomSpy).toHaveBeenCalledWith(1);
-        editor.destroy();
-    });
-
     it('无图时图名为空；dispatch SetBackground（带 name）后显示该 name', () => {
         const editor = new Editor();
         const utils = renderWithEditor(editor);

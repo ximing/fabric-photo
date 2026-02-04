@@ -18,6 +18,7 @@ export { Toolbar, TOOLS } from './toolbar';
 export type { ToolDef } from './toolbar';
 export { FloatingOptions } from './floating-options';
 export { TopBar } from './top-bar';
+export { ZoomControls } from './zoom-controls';
 export { PropertiesPanel } from './properties-panel';
 export { LayersPanel } from './layers-panel';
 export type { LayersPanelProps } from './layers-panel';

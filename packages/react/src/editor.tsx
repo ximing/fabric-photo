@@ -10,6 +10,7 @@ import { PropertiesPanel } from './properties-panel';
 import { Toolbar } from './toolbar';
 import { FloatingOptions } from './floating-options';
 import { TopBar } from './top-bar';
+import { ZoomControls } from './zoom-controls';
 
 export interface FabricPhotoEditorProps {
     src?: string;
@@ -19,7 +20,7 @@ export interface FabricPhotoEditorProps {
     onReady?: (editor: Editor) => void;
     onChange?: (state: EditorState) => void;
     className?: string;
-    children?: ReactNode; // 缺省 TopBar + Toolbar + CanvasView（内含 FloatingOptions）+ 右列（LayersPanel + PropertiesPanel）
+    children?: ReactNode; // 缺省 TopBar + Toolbar + CanvasView（内含 FloatingOptions + ZoomControls）+ 右列（LayersPanel + PropertiesPanel）
 }
 
 /**
@@ -41,7 +42,7 @@ function ShortcutsBridge(): null {
  * 后续效应据此判断「真的变了」才调用，避免挂载时重复执行。挂载容器始终渲染（自定义 children
  * 时 Editor 仍需要 DOM）；children 整体包在 EditorProvider 内（Toolbar/FloatingOptions 等子组件经
  * context 取 editor 与 toolSettings），缺省 children 为 TopBar + Toolbar + CanvasView
- * （内含 FloatingOptions 浮动条）+ 右列侧栏（fp-side-panel：LayersPanel 在上、PropertiesPanel 在下）。
+ * （内含 FloatingOptions 浮动条 + ZoomControls 缩放胶囊）+ 右列侧栏（fp-side-panel：LayersPanel 在上、PropertiesPanel 在下）。
  * 布局（grid 骨架、grid-area 落位）全部由 styles.css 的
  * fp-editor / fp-topbar / fp-floating-options / fp-toolbar / fp-canvas-view / fp-canvas-mount /
  * fp-side-panel / fp-layers-panel / fp-props-panel 承载，组件不含内联样式。
@@ -126,6 +127,7 @@ export function FabricPhotoEditor(props: FabricPhotoEditorProps): JSX.Element {
                             <Toolbar />
                             <CanvasView editor={editor}>
                                 <FloatingOptions />
+                                <ZoomControls />
                             </CanvasView>
                             <div className="fp-side-panel">
                                 <LayersPanel />
