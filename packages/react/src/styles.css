@@ -88,7 +88,10 @@
     .fp-editor *::after {
         box-sizing: border-box;
     }
-    .fp-editor button {
+    /* :where 归零特异性：同处 @layer components 时，.fp-editor button (0,1,1)
+       会压过 .fp-seg-btn-active / .fp-tool-btn-active / .fp-option-btn 等单类
+       样式 (0,1,0)，导致选中态底色/边框全丢；归零后重置只兜底，类样式自然胜出 */
+    :where(.fp-editor) button {
         font: inherit;
         color: inherit;
         background: none;
@@ -96,10 +99,10 @@
         padding: 0;
         cursor: pointer;
     }
-    .fp-editor button:disabled {
+    :where(.fp-editor) button:disabled {
         cursor: default;
     }
-    .fp-editor button:focus-visible {
+    :where(.fp-editor) button:focus-visible {
         outline: 2px solid var(--fp-accent);
         outline-offset: 1px;
     }
