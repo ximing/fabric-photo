@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { AddObject, Editor, SetBackground, createId, type ShapeObject } from '@gmi/fp-core';
 import { EditorProvider } from './provider';
@@ -121,20 +121,24 @@ describe('TopBar', () => {
 
         expect(utils.queryByRole('dialog', { name: '导出设置' })).toBeNull();
 
-        fireEvent.click(button(utils, '导出'));
+        // 弹层内有同名「导出」确认按钮，触发按钮以 aria-expanded 区分
+        const trigger = (expanded: boolean): HTMLElement =>
+            utils.getByRole('button', { name: '导出', expanded });
+
+        fireEvent.click(trigger(false));
         expect(utils.getByRole('dialog', { name: '导出设置' })).not.toBeNull();
 
         // 再点触发按钮关闭
-        fireEvent.click(button(utils, '导出'));
+        fireEvent.click(trigger(true));
         expect(utils.queryByRole('dialog', { name: '导出设置' })).toBeNull();
 
         // Esc 关闭
-        fireEvent.click(button(utils, '导出'));
+        fireEvent.click(trigger(false));
         fireEvent.keyDown(document, { key: 'Escape' });
         expect(utils.queryByRole('dialog', { name: '导出设置' })).toBeNull();
 
         // 点外部关闭；点面板内部不关闭
-        fireEvent.click(button(utils, '导出'));
+        fireEvent.click(trigger(false));
         fireEvent.mouseDown(utils.getByRole('dialog', { name: '导出设置' }));
         expect(utils.queryByRole('dialog', { name: '导出设置' })).not.toBeNull();
         fireEvent.mouseDown(document.body);
@@ -149,7 +153,10 @@ describe('TopBar', () => {
         fireEvent.click(button(utils, '导出'));
         expect(utils.queryByRole('slider', { name: '质量' })).toBeNull();
 
-        fireEvent.click(utils.getByRole('radio', { name: 'JPEG' }));
+        const jpeg = utils.getByRole('radio', { name: 'JPEG' });
+        fireEvent.click(jpeg);
+        expect(jpeg.getAttribute('aria-checked')).toBe('true');
+        expect(utils.getByRole('radio', { name: 'PNG' }).getAttribute('aria-checked')).toBe('false');
         const slider = utils.getByRole('slider', { name: '质量' }) as HTMLInputElement;
         expect(slider.value).toBe('0.9');
         expect(slider.min).toBe('0.1');
@@ -169,7 +176,8 @@ describe('TopBar', () => {
         const utils = renderWithEditor(editor);
 
         fireEvent.click(button(utils, '导出'));
-        const scopeRadio = (): HTMLInputElement => utils.getByRole('radio', { name: '仅选中' }) as HTMLInputElement;
+        const scopeRadio = (): HTMLButtonElement =>
+            utils.getByRole('radio', { name: '仅选中' }) as HTMLButtonElement;
         expect(scopeRadio().disabled).toBe(true);
 
         const shape = makeShape();
@@ -197,7 +205,8 @@ describe('TopBar', () => {
             );
         });
         fireEvent.click(button(utils, '导出'));
-        fireEvent.click(button(utils, '确认导出'));
+        // 确认按钮与触发按钮同名「导出」，限定在弹层内取
+        fireEvent.click(within(utils.getByRole('dialog', { name: '导出设置' })).getByRole('button', { name: '导出' }));
 
         expect(dataSpy).toHaveBeenCalledTimes(1);
         expect(dataSpy).toHaveBeenCalledWith({ type: 'image/png', multiplier: 1, selectionOnly: false });
@@ -237,7 +246,7 @@ describe('TopBar', () => {
         fireEvent.change(utils.getByRole('slider', { name: '质量' }), { target: { value: '0.5' } });
         fireEvent.click(utils.getByRole('radio', { name: '2x' }));
         fireEvent.click(utils.getByRole('radio', { name: '仅选中' }));
-        fireEvent.click(button(utils, '确认导出'));
+        fireEvent.click(within(utils.getByRole('dialog', { name: '导出设置' })).getByRole('button', { name: '导出' }));
 
         expect(dataSpy).toHaveBeenCalledWith({ type: 'image/jpeg', quality: 0.5, multiplier: 2, selectionOnly: true });
         const anchor = clickSpy.mock.instances[0] as HTMLAnchorElement;

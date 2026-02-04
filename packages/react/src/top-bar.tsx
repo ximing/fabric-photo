@@ -146,73 +146,81 @@ export function TopBar(props: { className?: string }): JSX.Element {
                     </button>
                     {exportOpen && (
                         <div className="fp-export-panel" role="dialog" aria-label="导出设置">
-                            <div className="fp-export-row" role="radiogroup" aria-label="格式">
-                                <span className="fp-export-label">格式</span>
+                            <span className="fp-export-label">格式</span>
+                            <div className="fp-seg" role="radiogroup" aria-label="格式">
                                 {(['png', 'jpeg', 'webp'] as const).map((f) => (
-                                    <label key={f} className="fp-export-choice">
-                                        <input
-                                            type="radio"
-                                            name="fp-export-format"
-                                            checked={format === f}
-                                            onChange={() => setFormat(f)}
-                                        />
-                                        {f.toUpperCase()}
-                                    </label>
+                                    <button
+                                        key={f}
+                                        type="button"
+                                        role="radio"
+                                        aria-checked={format === f}
+                                        className={
+                                            format === f ? 'fp-seg-btn fp-seg-btn-active' : 'fp-seg-btn'
+                                        }
+                                        onClick={() => setFormat(f)}
+                                    >
+                                        {f === 'jpeg' ? 'JPEG' : f.toUpperCase()}
+                                    </button>
                                 ))}
                             </div>
                             {format !== 'png' && (
-                                <div className="fp-export-row">
+                                <>
                                     <span className="fp-export-label">质量</span>
-                                    <input
-                                        type="range"
-                                        aria-label="质量"
-                                        min={QUALITY_MIN}
-                                        max={QUALITY_MAX}
-                                        step={QUALITY_STEP}
-                                        value={quality}
-                                        onChange={(event) => setQuality(Number(event.target.value))}
-                                    />
-                                    <span className="fp-export-value">{quality.toFixed(2)}</span>
-                                </div>
-                            )}
-                            <div className="fp-export-row" role="radiogroup" aria-label="倍率">
-                                <span className="fp-export-label">倍率</span>
-                                {MULTIPLIERS.map((m) => (
-                                    <label key={m} className="fp-export-choice">
+                                    <div className="fp-export-row">
                                         <input
-                                            type="radio"
-                                            name="fp-export-multiplier"
-                                            checked={multiplier === m}
-                                            onChange={() => setMultiplier(m)}
+                                            type="range"
+                                            aria-label="质量"
+                                            min={QUALITY_MIN}
+                                            max={QUALITY_MAX}
+                                            step={QUALITY_STEP}
+                                            value={quality}
+                                            onChange={(event) => setQuality(Number(event.target.value))}
                                         />
+                                        <span className="fp-export-value">{quality.toFixed(2)}</span>
+                                    </div>
+                                </>
+                            )}
+                            <span className="fp-export-label">倍率</span>
+                            <div className="fp-seg" role="radiogroup" aria-label="倍率">
+                                {MULTIPLIERS.map((m) => (
+                                    <button
+                                        key={m}
+                                        type="button"
+                                        role="radio"
+                                        aria-checked={multiplier === m}
+                                        className={m === multiplier ? 'fp-seg-btn fp-seg-btn-active' : 'fp-seg-btn'}
+                                        onClick={() => setMultiplier(m)}
+                                    >
                                         {m}x
-                                    </label>
+                                    </button>
                                 ))}
                             </div>
-                            <div className="fp-export-row" role="radiogroup" aria-label="范围">
-                                <span className="fp-export-label">范围</span>
-                                <label className="fp-export-choice">
-                                    <input
-                                        type="radio"
-                                        name="fp-export-scope"
-                                        checked={scope === 'full'}
-                                        onChange={() => setScope('full')}
-                                    />
+                            <span className="fp-export-label">范围</span>
+                            <div className="fp-seg" role="radiogroup" aria-label="范围">
+                                <button
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={scope === 'full'}
+                                    className={scope === 'full' ? 'fp-seg-btn fp-seg-btn-active' : 'fp-seg-btn'}
+                                    onClick={() => setScope('full')}
+                                >
                                     整图
-                                </label>
-                                <label className="fp-export-choice">
-                                    <input
-                                        type="radio"
-                                        name="fp-export-scope"
-                                        disabled={!hasSelection}
-                                        checked={scope === 'selection'}
-                                        onChange={() => setScope('selection')}
-                                    />
+                                </button>
+                                <button
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={scope === 'selection'}
+                                    disabled={!hasSelection}
+                                    className={
+                                        scope === 'selection' ? 'fp-seg-btn fp-seg-btn-active' : 'fp-seg-btn'
+                                    }
+                                    onClick={() => setScope('selection')}
+                                >
                                     仅选中
-                                </label>
+                                </button>
                             </div>
                             <button type="button" className="fp-export-confirm" onClick={handleExport}>
-                                确认导出
+                                导出
                             </button>
                         </div>
                     )}
