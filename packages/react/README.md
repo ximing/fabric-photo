@@ -58,8 +58,9 @@ function App() {
 | `useEditor` | `() => Editor` | 取 context 中的 core Editor（须在 `EditorProvider`/`FabricPhotoEditor` 内） |
 | `useEditorState` | `<T>(selector: (state: EditorState) => T) => T` | 订阅 core state 切片，selector 结果变化才重渲染 |
 | `useEditorEvent` | `(event, handler) => void` | 订阅 core 事件（如 `historyChange`），自动退订 |
-| `useToolSettings` | `() => { toolSettings, setToolSettings }` | React 层工具预设（线宽/颜色/形状类型/粒度等），激活绘制工具时透传给 core |
-| `useThemeState` | `() => ThemeState`（`{ theme, toggleTheme }`） | 主题状态（dark/light）：初值 localStorage("fp-theme") → 系统偏好 → light；`FabricPhotoEditor` 根 div 挂 `data-theme` 承载明暗变量 |
+| `useToolSettings` | `() => EditorUIState`（`{ toolSettings, setToolSettings, theme, toggleTheme }`） | UI 层状态：React 层工具预设（线宽/颜色/形状类型/粒度等，激活绘制工具时透传给 core）+ 主题切片（只要主题请用 `useTheme`） |
+| `useTheme` | `() => ThemeState`（`{ theme, toggleTheme }`） | 主题切片薄封装（读 `EditorUIContext`，须在 `EditorProvider`/`FabricPhotoEditor` 内） |
+| `useThemeState` | `() => ThemeState`（`{ theme, toggleTheme }`） | 主题状态（dark/light）：初值 localStorage("fp-theme") → 系统偏好 → light；localStorage 读写失败（禁用/沙箱 SecurityError）静默跳过持久化；`FabricPhotoEditor` 根 div 挂 `data-theme` 承载明暗变量 |
 
 配套导出：`DEFAULT_TOOL_SETTINGS`、`modeToTool(mode)`、`activateTool(editor, toolId, settings)`、`applyColor(editor, settings, setSettings, tool, selectedObjects, color)`（色板实时生效路由：有选中改对象、否则写工具预设并同步 editor）。
 

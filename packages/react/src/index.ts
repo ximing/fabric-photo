@@ -6,7 +6,7 @@ export { CanvasView } from './canvas-view';
 export type { CanvasViewProps } from './canvas-view';
 export { EditorProvider } from './provider';
 export type { EditorProviderProps } from './provider';
-export { useEditor, useEditorState, useEditorEvent, useToolSettings } from './hooks';
+export { useEditor, useEditorState, useEditorEvent, useToolSettings, useTheme } from './hooks';
 export { DEFAULT_TOOL_SETTINGS, modeToTool, activateTool, applyColor } from './tool-settings';
 export { useThemeState } from './theme';
 export type { Theme, ThemeState } from './theme';

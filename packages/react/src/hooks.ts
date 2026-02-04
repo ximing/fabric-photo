@@ -1,6 +1,7 @@
 import { useCallback, useContext, useEffect, useRef, useSyncExternalStore } from 'react';
 import type { Editor, EditorEventMap, EditorState } from '@gmi/fp-core';
 import { EditorContext, EditorUIContext, type EditorUIState } from './context';
+import type { ThemeState } from './theme';
 
 /** 取 provider 注入的 Editor；无 provider 抛错。 */
 export function useEditor(): Editor {
@@ -83,4 +84,10 @@ export function useToolSettings(): EditorUIState {
         throw new Error('useToolSettings must be used within an EditorProvider');
     }
     return uiState;
+}
+
+/** 取主题状态（`{ theme, toggleTheme }`）；useToolSettings 的主题切片薄封装，无 provider 抛错。 */
+export function useTheme(): ThemeState {
+    const { theme, toggleTheme } = useToolSettings();
+    return { theme, toggleTheme };
 }
