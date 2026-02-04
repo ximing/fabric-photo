@@ -43,13 +43,14 @@ function paletteValue(objects: readonly EditorObject[], preset: string): string 
 }
 
 /**
- * 工具选项条（顶栏与画布区之间，grid 行 2）：容器始终占位，按当前 mode 渲染内容。
+ * 浮动工具选项条：定位在画布区顶部居中（.fp-floating-options 绝对定位，由 styles.css 承载），
+ * 仅 crop/brush/shape/mosaic 渲染内容，其余 mode（text/normal/pan）返回 null——不占布局、不留空壳。
  * crop → Apply/Cancel；freedraw/line/arrow → 线宽（写 toolSettings + setBrush 实时生效）+ 色板；
  * shape → 形状类型（写 toolSettings + setDrawingShape）+ 色板（描边色）；mosaic → 粒度
- * （仅写 toolSettings，不重启模式，下次 startMosaicDrawing 生效）；text/normal/pan → 空。
+ * （仅写 toolSettings，不重启模式，下次 startMosaicDrawing 生效）。
  * 色板改色统一走 applyColor 路由（选中对象优先改对象，否则写工具预设并实时同步 editor）。
  */
-export function ToolOptionBar(props: { className?: string }): JSX.Element {
+export function FloatingOptions(props: { className?: string }): JSX.Element | null {
     const editor = useEditor();
     const { toolSettings, setToolSettings } = useToolSettings();
     const mode = useEditorState((state) => state.mode);
@@ -147,10 +148,10 @@ export function ToolOptionBar(props: { className?: string }): JSX.Element {
         );
     }
 
-    const rootClassName = props.className === undefined ? 'fp-option-bar' : `fp-option-bar ${props.className}`;
-    return (
-        <div className={rootClassName}>
-            {content}
-        </div>
-    );
+    if (content === null) {
+        return null;
+    }
+    const rootClassName =
+        props.className === undefined ? 'fp-floating-options' : `fp-floating-options ${props.className}`;
+    return <div className={rootClassName}>{content}</div>;
 }

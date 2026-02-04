@@ -16,7 +16,7 @@ export { ColorPalette, PALETTE_COLORS } from './color-palette';
 export type { ColorPaletteProps } from './color-palette';
 export { Toolbar, TOOLS } from './toolbar';
 export type { ToolDef } from './toolbar';
-export { ToolOptionBar } from './tool-option-bar';
+export { FloatingOptions } from './floating-options';
 export { TopBar } from './top-bar';
 export { PropertiesPanel } from './properties-panel';
 export { LayersPanel } from './layers-panel';
