@@ -5,6 +5,7 @@ import { useEditor, useToolSettings } from './hooks';
 import { LayersPanel } from './layers-panel';
 import { EditorProvider } from './provider';
 import { useShortcuts } from './shortcuts';
+import { useThemeState } from './theme';
 import { PropertiesPanel } from './properties-panel';
 import { Toolbar } from './toolbar';
 import { ToolOptionBar } from './tool-option-bar';
@@ -49,6 +50,7 @@ export function FabricPhotoEditor(props: FabricPhotoEditorProps): JSX.Element {
     const { src, imageName = 'image', cssMaxWidth, cssMaxHeight, onReady, onChange, className, children } = props;
     const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
     const [editor, setEditor] = useState<Editor | null>(null);
+    const themeState = useThemeState();
     // latest-ref：回调身份变化不触发 Editor 重建
     const onReadyRef = useRef(onReady);
     onReadyRef.current = onReady;
@@ -114,9 +116,9 @@ export function FabricPhotoEditor(props: FabricPhotoEditorProps): JSX.Element {
 
     const rootClassName = className === undefined ? 'fp-editor' : `fp-editor ${className}`;
     return (
-        <div className={rootClassName}>
+        <div className={rootClassName} data-theme={themeState.theme}>
             {editor !== null ? (
-                <EditorProvider editor={editor}>
+                <EditorProvider editor={editor} themeState={themeState}>
                     <ShortcutsBridge />
                     {children ?? (
                         <>

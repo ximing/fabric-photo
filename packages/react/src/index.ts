@@ -8,6 +8,8 @@ export { EditorProvider } from './provider';
 export type { EditorProviderProps } from './provider';
 export { useEditor, useEditorState, useEditorEvent, useToolSettings } from './hooks';
 export { DEFAULT_TOOL_SETTINGS, modeToTool, activateTool, applyColor } from './tool-settings';
+export { useThemeState } from './theme';
+export type { Theme, ThemeState } from './theme';
 export { useShortcuts, TOOL_SHORTCUTS } from './shortcuts';
 export type { ToolId, ToolSettings } from './tool-settings';
 export { ColorPalette, PALETTE_COLORS } from './color-palette';

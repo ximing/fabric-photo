@@ -282,6 +282,21 @@ describe('TopBar', () => {
         editor.destroy();
     });
 
+    it('点击「切换主题」：toggleTheme 被调（经 context），按钮图标随 theme 变化', () => {
+        const editor = new Editor();
+        const utils = renderWithEditor(editor);
+
+        const toggle = button(utils, '切换主题');
+        // 初值 light（jsdom 无 matchMedia）→ 显示 Moon（切到暗色）
+        expect(toggle.querySelector('svg')).not.toBeNull();
+        act(() => {
+            fireEvent.click(toggle);
+        });
+        expect(localStorage.getItem('fp-theme')).toBe('dark');
+        editor.destroy();
+        localStorage.clear();
+    });
+
     it('className 语义占位（fp-topbar，grid 落位在 styles.css）并可追加自定义 class', () => {
         const editor = new Editor();
         const utils = render(
