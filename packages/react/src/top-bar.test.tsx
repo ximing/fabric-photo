@@ -271,6 +271,163 @@ describe('TopBar', () => {
         localStorage.clear();
     });
 
+    describe('导出弹层 segmented 键盘导航', () => {
+        const radio = (utils: ReturnType<typeof render>, name: string): HTMLButtonElement =>
+            utils.getByRole('radio', { name }) as HTMLButtonElement;
+        const openPanel = (utils: ReturnType<typeof render>): void => {
+            fireEvent.click(button(utils, '导出'));
+        };
+        const withSelection = (editor: Editor): void => {
+            const shape = makeShape();
+            act(() => {
+                editor.dispatch(editor.newTransaction().addStep(new AddObject(shape)));
+            });
+            act(() => {
+                editor.selectObjects([shape.id]);
+            });
+        };
+
+        it('roving tabindex：每组选中项 0、其余 -1（三组各自独立）', () => {
+            const editor = new Editor();
+            const utils = renderWithEditor(editor);
+            openPanel(utils);
+
+            expect(radio(utils, 'PNG').tabIndex).toBe(0);
+            expect(radio(utils, 'JPEG').tabIndex).toBe(-1);
+            expect(radio(utils, 'WEBP').tabIndex).toBe(-1);
+            expect(radio(utils, '1x').tabIndex).toBe(0);
+            expect(radio(utils, '2x').tabIndex).toBe(-1);
+            expect(radio(utils, '3x').tabIndex).toBe(-1);
+            expect(radio(utils, '整图').tabIndex).toBe(0);
+            expect(radio(utils, '仅选中').tabIndex).toBe(-1);
+            editor.destroy();
+        });
+
+        it('ArrowRight 移动即选中：焦点、aria-checked、tabIndex 同步到下一项', () => {
+            const editor = new Editor();
+            const utils = renderWithEditor(editor);
+            openPanel(utils);
+
+            const png = radio(utils, 'PNG');
+            png.focus();
+            fireEvent.keyDown(png, { key: 'ArrowRight', code: 'ArrowRight' });
+
+            const jpeg = radio(utils, 'JPEG');
+            expect(jpeg.getAttribute('aria-checked')).toBe('true');
+            expect(radio(utils, 'PNG').getAttribute('aria-checked')).toBe('false');
+            expect(document.activeElement).toBe(jpeg);
+            expect(jpeg.tabIndex).toBe(0);
+            expect(radio(utils, 'PNG').tabIndex).toBe(-1);
+            // 与点击该按钮等效：切到 JPEG 出现质量滑杆
+            expect(utils.getByRole('slider', { name: '质量' })).not.toBeNull();
+            editor.destroy();
+        });
+
+        it('末项 ArrowRight 回绕首项；首项 ArrowLeft 回绕末项；ArrowDown/ArrowUp 同向', () => {
+            const editor = new Editor();
+            const utils = renderWithEditor(editor);
+            openPanel(utils);
+
+            // 末项 → 首项
+            fireEvent.click(radio(utils, 'WEBP'));
+            const webp = radio(utils, 'WEBP');
+            webp.focus();
+            fireEvent.keyDown(webp, { key: 'ArrowRight', code: 'ArrowRight' });
+            expect(radio(utils, 'PNG').getAttribute('aria-checked')).toBe('true');
+            expect(document.activeElement).toBe(radio(utils, 'PNG'));
+
+            // 首项 ArrowLeft → 末项
+            fireEvent.keyDown(radio(utils, 'PNG'), { key: 'ArrowLeft', code: 'ArrowLeft' });
+            expect(radio(utils, 'WEBP').getAttribute('aria-checked')).toBe('true');
+            expect(document.activeElement).toBe(radio(utils, 'WEBP'));
+
+            // ArrowDown 等同 ArrowRight，ArrowUp 等同 ArrowLeft
+            fireEvent.keyDown(radio(utils, 'WEBP'), { key: 'ArrowDown', code: 'ArrowDown' });
+            expect(radio(utils, 'PNG').getAttribute('aria-checked')).toBe('true');
+            fireEvent.keyDown(radio(utils, 'PNG'), { key: 'ArrowUp', code: 'ArrowUp' });
+            expect(radio(utils, 'WEBP').getAttribute('aria-checked')).toBe('true');
+            editor.destroy();
+        });
+
+        it('跳过 disabled：无选区时范围组从「整图」ArrowRight 回绕自身；有选区后落到「仅选中」', () => {
+            const editor = new Editor();
+            const utils = renderWithEditor(editor);
+            openPanel(utils);
+
+            const full = radio(utils, '整图');
+            full.focus();
+            fireEvent.keyDown(full, { key: 'ArrowRight', code: 'ArrowRight' });
+            // 唯一可用项：选中与焦点均保持
+            expect(radio(utils, '整图').getAttribute('aria-checked')).toBe('true');
+            expect(document.activeElement).toBe(radio(utils, '整图'));
+            expect(radio(utils, '整图').tabIndex).toBe(0);
+
+            withSelection(editor);
+            expect(radio(utils, '仅选中').disabled).toBe(false);
+            fireEvent.keyDown(radio(utils, '整图'), { key: 'ArrowRight', code: 'ArrowRight' });
+            expect(radio(utils, '仅选中').getAttribute('aria-checked')).toBe('true');
+            expect(document.activeElement).toBe(radio(utils, '仅选中'));
+            expect(radio(utils, '仅选中').tabIndex).toBe(0);
+            expect(radio(utils, '整图').tabIndex).toBe(-1);
+            editor.destroy();
+        });
+
+        it('选中项变为 disabled 后 tabIndex 落到第一个可用项', () => {
+            const editor = new Editor();
+            const utils = renderWithEditor(editor);
+            withSelection(editor);
+            openPanel(utils);
+
+            fireEvent.click(radio(utils, '仅选中'));
+            expect(radio(utils, '仅选中').tabIndex).toBe(0);
+
+            act(() => {
+                editor.selectObjects([]);
+            });
+            // 兜底 effect 把 scope 退回整图；roving 落点随之回到「整图」
+            expect(radio(utils, '整图').getAttribute('aria-checked')).toBe('true');
+            expect(radio(utils, '整图').tabIndex).toBe(0);
+            expect(radio(utils, '仅选中').tabIndex).toBe(-1);
+            editor.destroy();
+        });
+
+        it('Home/End 跳到首/末可用项', () => {
+            const editor = new Editor();
+            const utils = renderWithEditor(editor);
+            openPanel(utils);
+
+            const one = radio(utils, '1x');
+            one.focus();
+            fireEvent.keyDown(one, { key: 'End', code: 'End' });
+            expect(radio(utils, '3x').getAttribute('aria-checked')).toBe('true');
+            expect(document.activeElement).toBe(radio(utils, '3x'));
+
+            fireEvent.keyDown(radio(utils, '3x'), { key: 'Home', code: 'Home' });
+            expect(radio(utils, '1x').getAttribute('aria-checked')).toBe('true');
+            expect(document.activeElement).toBe(radio(utils, '1x'));
+            editor.destroy();
+        });
+
+        it('三组互不串扰：格式组方向键移动后倍率/范围的选中与 tabIndex 不变', () => {
+            const editor = new Editor();
+            const utils = renderWithEditor(editor);
+            openPanel(utils);
+
+            const png = radio(utils, 'PNG');
+            png.focus();
+            fireEvent.keyDown(png, { key: 'ArrowRight', code: 'ArrowRight' });
+            expect(radio(utils, 'JPEG').getAttribute('aria-checked')).toBe('true');
+
+            expect(radio(utils, '1x').getAttribute('aria-checked')).toBe('true');
+            expect(radio(utils, '1x').tabIndex).toBe(0);
+            expect(radio(utils, '2x').tabIndex).toBe(-1);
+            expect(radio(utils, '整图').getAttribute('aria-checked')).toBe('true');
+            expect(radio(utils, '整图').tabIndex).toBe(0);
+            expect(radio(utils, '仅选中').tabIndex).toBe(-1);
+            editor.destroy();
+        });
+    });
+
     it('className 语义占位（fp-topbar，grid 落位在 styles.css）并可追加自定义 class', () => {
         const editor = new Editor();
         const utils = render(

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type JSX } from 'react';
 import { Download, Moon, Redo2, Sun, Undo2 } from 'lucide-react';
 import type { ExportImageOptions } from '@gmi/fp-core';
 import { useEditor, useEditorEvent, useEditorState, useTheme } from './hooks';
+import { SegmentedControl, type SegmentedOption } from './segmented';
 
 /** 导出格式三选；MIME 为 `image/${format}`，扩展名与格式同名。 */
 type ExportFormat = 'png' | 'jpeg' | 'webp';
@@ -11,6 +12,12 @@ const QUALITY_MAX = 1;
 const QUALITY_STEP = 0.05;
 const QUALITY_DEFAULT = 0.9;
 const MULTIPLIERS = [1, 2, 3] as const;
+
+const FORMAT_OPTIONS = [
+    { value: 'png', label: 'PNG' },
+    { value: 'jpeg', label: 'JPEG' },
+    { value: 'webp', label: 'WEBP' }
+] as const satisfies readonly SegmentedOption<ExportFormat>[];
 
 // lucide-react 0.344 的类型基于 React 18 JSX 命名空间，与 @types/react 19
 // 的 ReactNode 不兼容；运行时是标准 FC，渲染处收窄为 JSX.ElementType
@@ -147,22 +154,12 @@ export function TopBar(props: { className?: string }): JSX.Element {
                     {exportOpen && (
                         <div className="fp-export-panel" role="dialog" aria-label="导出设置">
                             <span className="fp-export-label">格式</span>
-                            <div className="fp-seg" role="radiogroup" aria-label="格式">
-                                {(['png', 'jpeg', 'webp'] as const).map((f) => (
-                                    <button
-                                        key={f}
-                                        type="button"
-                                        role="radio"
-                                        aria-checked={format === f}
-                                        className={
-                                            format === f ? 'fp-seg-btn fp-seg-btn-active' : 'fp-seg-btn'
-                                        }
-                                        onClick={() => setFormat(f)}
-                                    >
-                                        {f === 'jpeg' ? 'JPEG' : f.toUpperCase()}
-                                    </button>
-                                ))}
-                            </div>
+                            <SegmentedControl
+                                ariaLabel="格式"
+                                options={FORMAT_OPTIONS}
+                                value={format}
+                                onChange={setFormat}
+                            />
                             {format !== 'png' && (
                                 <>
                                     <span className="fp-export-label">质量</span>
@@ -181,44 +178,24 @@ export function TopBar(props: { className?: string }): JSX.Element {
                                 </>
                             )}
                             <span className="fp-export-label">倍率</span>
-                            <div className="fp-seg" role="radiogroup" aria-label="倍率">
-                                {MULTIPLIERS.map((m) => (
-                                    <button
-                                        key={m}
-                                        type="button"
-                                        role="radio"
-                                        aria-checked={multiplier === m}
-                                        className={m === multiplier ? 'fp-seg-btn fp-seg-btn-active' : 'fp-seg-btn'}
-                                        onClick={() => setMultiplier(m)}
-                                    >
-                                        {m}x
-                                    </button>
-                                ))}
-                            </div>
+                            <SegmentedControl
+                                ariaLabel="倍率"
+                                options={MULTIPLIERS.map((m) => ({ value: m, label: `${m}x` }))}
+                                value={multiplier}
+                                onChange={setMultiplier}
+                            />
                             <span className="fp-export-label">范围</span>
-                            <div className="fp-seg" role="radiogroup" aria-label="范围">
-                                <button
-                                    type="button"
-                                    role="radio"
-                                    aria-checked={scope === 'full'}
-                                    className={scope === 'full' ? 'fp-seg-btn fp-seg-btn-active' : 'fp-seg-btn'}
-                                    onClick={() => setScope('full')}
-                                >
-                                    整图
-                                </button>
-                                <button
-                                    type="button"
-                                    role="radio"
-                                    aria-checked={scope === 'selection'}
-                                    disabled={!hasSelection}
-                                    className={
-                                        scope === 'selection' ? 'fp-seg-btn fp-seg-btn-active' : 'fp-seg-btn'
-                                    }
-                                    onClick={() => setScope('selection')}
-                                >
-                                    仅选中
-                                </button>
-                            </div>
+                            <SegmentedControl
+                                ariaLabel="范围"
+                                options={
+                                    [
+                                        { value: 'full', label: '整图' },
+                                        { value: 'selection', label: '仅选中', disabled: !hasSelection }
+                                    ] as const satisfies readonly SegmentedOption<'full' | 'selection'>[]
+                                }
+                                value={scope}
+                                onChange={setScope}
+                            />
                             <button type="button" className="fp-export-confirm" onClick={handleExport}>
                                 导出
                             </button>
