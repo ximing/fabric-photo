@@ -1,9 +1,10 @@
-import { useEffect, useRef, type JSX } from 'react';
+import { useEffect, useRef, type JSX, type ReactNode } from 'react';
 import type { Editor } from '@gmi/fp-core';
 
 export interface CanvasViewProps {
     editor: Editor;
     className?: string;
+    children?: ReactNode; // 浮动 UI（FloatingOptions / ZoomControls），绝对定位叠加在画布区
 }
 
 /**
@@ -31,5 +32,9 @@ export function CanvasView(props: CanvasViewProps): JSX.Element {
     }, [editor]);
 
     const cls = className === undefined ? 'fp-canvas-view' : `fp-canvas-view ${className}`;
-    return <div ref={ref} className={cls} />;
+    return (
+        <div ref={ref} className={cls}>
+            {props.children}
+        </div>
+    );
 }
