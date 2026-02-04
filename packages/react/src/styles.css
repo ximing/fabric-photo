@@ -184,13 +184,14 @@
         z-index: 20;
         display: flex;
         flex-direction: column;
-        gap: 8px;
-        min-width: 220px;
-        padding: 10px 12px;
-        background: var(--fp-bg-panel);
+        gap: 6px;
+        width: 220px;
+        padding: 12px;
+        background: var(--fp-bg-elevated);
         border: 1px solid var(--fp-border);
-        border-radius: 6px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        border-radius: 10px;
+        box-shadow: var(--fp-shadow-pop);
+        backdrop-filter: blur(12px);
         font-size: 12px;
         color: var(--fp-text);
     }
@@ -200,22 +201,36 @@
         gap: 8px;
     }
     .fp-export-label {
-        flex: 0 0 28px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
         color: var(--fp-text-dim);
     }
-    .fp-export-choice {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        cursor: pointer;
+    /* segmented 控件：底槽 + 等宽分段，选中段 accent 底 */
+    .fp-seg {
+        display: flex;
+        gap: 2px;
+        padding: 2px;
+        border-radius: 6px;
+        background: var(--fp-bg-app);
     }
-    .fp-export-choice:has(input:disabled) {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-    .fp-export-row input[type='range'] {
+    .fp-seg-btn {
         flex: 1 1 0;
-        min-width: 0;
+        height: 24px;
+        border-radius: 4px;
+        font-size: 12px;
+        color: var(--fp-text-dim);
+    }
+    .fp-seg-btn:hover:not(:disabled) {
+        color: var(--fp-text);
+    }
+    .fp-seg-btn:disabled {
+        opacity: 0.5;
+    }
+    .fp-seg-btn-active,
+    .fp-seg-btn-active:hover {
+        background: var(--fp-accent);
+        color: #ffffff;
     }
     .fp-export-value {
         flex: 0 0 32px;
@@ -225,7 +240,7 @@
     /* accent 底上的白字明暗通用，保留字面 #ffffff */
     .fp-export-confirm {
         height: 28px;
-        border-radius: 4px;
+        border-radius: 6px;
         background: var(--fp-accent);
         color: #ffffff;
         font-size: 12px;
