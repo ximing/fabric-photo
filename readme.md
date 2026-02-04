@@ -2,7 +2,7 @@
 
 🎨 基于 Canvas 的纯前端图片编辑器，无需后端支持，提供丰富的图片编辑功能。
 
-新一代架构：ProseMirror 式内核（state / step / transaction）+ fabric 6 渲染投影 + Figma 式 React 组件。
+新一代架构：不可变数据模型内核（state / step / transaction）+ fabric 6 渲染投影 + Figma 式 React 组件。
 
 ![截图](./assets/main.png)
 
@@ -12,7 +12,7 @@
 
 | 目录 | 包名 | 说明 |
 | --- | --- | --- |
-| `packages/core` | `@gmi/fp-core` | 编辑器内核：ProseMirror 式 state / step / transaction，UI 无关，fabric 6 仅作渲染投影 |
+| `packages/core` | `@gmi/fp-core` | 编辑器内核：不可变 Doc / EditorState / Step / Transaction，UI 无关，fabric 6 仅作渲染投影 |
 | `packages/react` | `@gmi/fp-react` | Figma 式 React 组件包：顶栏 / 工具栏 / 属性面板 / 画布，零编辑逻辑 |
 | `demo` | `fabric-photo-demo` | 演示站（Vite + React），GitHub Pages 部署源 |
 
@@ -27,6 +27,20 @@
 - 🔍 **缩放 / 平移**：视口自由操控
 - ↩️ **撤销/重做**：完整的操作历史管理
 - 📤 **导出功能**：导出为 PNG/Blob 格式
+
+## 🏗️ 仓库数据模型
+
+本仓库采用不可变数据模型驱动编辑器，核心概念如下：
+
+| 概念 | 说明 |
+| --- | --- |
+| **Doc** | 文档模型，描述背景图、全部对象（贴图/形状/文本/涂鸦等）、滤镜参数等完整编辑状态，为不可变数据结构 |
+| **EditorState** | 编辑器状态的不可变快照，包含 `doc`、`selection`（选中集）、`viewport`（视口）、`mode`（当前交互模式） |
+| **Step** | 对 Doc 的最小原子修改，成对实现 `apply`（应用）/ `invert`（反转），保证每一步都可逆 |
+| **Transaction** | 一组 Step + 状态变更（selection/mode/viewport 变化）+ 元数据（meta）的打包单位 |
+| **Editor.dispatch()** | 状态落账管线：filter → apply → appendTransaction → 置新 state → history 收账 → 渲染同步 → 事件通知 |
+
+所有编辑操作都通过 `Editor.dispatch(newTransaction())` 提交，`History` 插件基于 Step 反转机制提供可撤销的 undo/redo。fabric 6 仅作为 state 的渲染投影，每种交互模式由一个 controller 负责，拖拽预览直改 fabric 对象、手势结束才提交 Step，保证数据层与渲染层解耦。
 
 ## 🚀 快速开始
 
@@ -116,4 +130,3 @@ function App() {
 ## 🙏 致谢
 
 - [Fabric.js](http://fabricjs.com/) - 强大的 Canvas 库
-- [ProseMirror](https://prosemirror.net/) - 可逆操作栈架构灵感
