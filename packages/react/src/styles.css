@@ -15,6 +15,21 @@
 @layer components {
     /* ===== 布局骨架 ===== */
     .fp-editor {
+        /* ===== 主题 tokens（亮色默认） ===== */
+        --fp-bg-app: #f5f5f5;
+        --fp-bg-panel: #ffffff;
+        --fp-bg-elevated: rgba(255, 255, 255, 0.92);
+        --fp-bg-hover: #f0f0f0;
+        --fp-border: #e5e5e5;
+        --fp-text: #1e1e1e;
+        --fp-text-dim: #666666;
+        --fp-accent: #0074d9;
+        --fp-accent-soft: rgba(0, 116, 217, 0.1);
+        --fp-shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.12);
+        --fp-danger: #d32f2f;
+        --fp-danger-soft: #fdecec;
+        --fp-warn-bg: #fff7e0;
+        --fp-warn-text: #8a6d1a;
         display: grid;
         grid-template-areas:
             'top top top'
@@ -24,13 +39,49 @@
         grid-template-columns: 48px 1fr 240px;
         width: 100%;
         height: 100%;
-        background: #ffffff;
-        color: #1e1e1e;
+        background: var(--fp-bg-panel);
+        color: var(--fp-text);
         font-family:
             -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC',
             'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
         font-size: 13px;
         line-height: 1.4;
+    }
+    /* 暗色：系统偏好（未被显式 light 覆盖时）与显式 dark 两条路径；
+       两块值相同但都必须存在（media 表达「跟随系统」，data-theme 表达「手动覆盖」） */
+    @media (prefers-color-scheme: dark) {
+        .fp-editor:not([data-theme='light']) {
+            --fp-bg-app: #181818;
+            --fp-bg-panel: #252526;
+            --fp-bg-elevated: rgba(45, 45, 45, 0.92);
+            --fp-bg-hover: #3a3a3a;
+            --fp-border: #3a3a3a;
+            --fp-text: #cccccc;
+            --fp-text-dim: #999999;
+            --fp-accent: #0d99ff;
+            --fp-accent-soft: rgba(13, 153, 255, 0.15);
+            --fp-shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.55);
+            --fp-danger: #e05555;
+            --fp-danger-soft: rgba(224, 85, 85, 0.12);
+            --fp-warn-bg: rgba(240, 192, 64, 0.12);
+            --fp-warn-text: #d8b13a;
+        }
+    }
+    .fp-editor[data-theme='dark'] {
+        --fp-bg-app: #181818;
+        --fp-bg-panel: #252526;
+        --fp-bg-elevated: rgba(45, 45, 45, 0.92);
+        --fp-bg-hover: #3a3a3a;
+        --fp-border: #3a3a3a;
+        --fp-text: #cccccc;
+        --fp-text-dim: #999999;
+        --fp-accent: #0d99ff;
+        --fp-accent-soft: rgba(13, 153, 255, 0.15);
+        --fp-shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.55);
+        --fp-danger: #e05555;
+        --fp-danger-soft: rgba(224, 85, 85, 0.12);
+        --fp-warn-bg: rgba(240, 192, 64, 0.12);
+        --fp-warn-text: #d8b13a;
     }
     /* preflight 关闭，盒模型在组件作用域内补齐 */
     .fp-editor *,
@@ -49,6 +100,10 @@
     .fp-editor button:disabled {
         cursor: default;
     }
+    .fp-editor button:focus-visible {
+        outline: 2px solid var(--fp-accent);
+        outline-offset: 1px;
+    }
 
     /* canvas 挂载容器：透明叠加在灰底 CanvasView 之上（同一 grid 区）。
        min-width/min-height 必须归零：grid 项默认 min-size:auto，fabric 的
@@ -66,7 +121,7 @@
         grid-area: canvas;
         min-width: 0;
         min-height: 0;
-        background-color: #e5e5e5;
+        background-color: var(--fp-bg-app);
     }
 
     /* ===== 顶栏（48px，grid 行 1） ===== */
@@ -77,8 +132,8 @@
         justify-content: space-between;
         gap: 12px;
         padding: 0 12px;
-        background: #ffffff;
-        border-bottom: 1px solid #e5e5e5;
+        background: var(--fp-bg-panel);
+        border-bottom: 1px solid var(--fp-border);
     }
     .fp-topbar-name {
         flex: 1 1 0;
@@ -86,7 +141,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        color: #333333;
+        color: var(--fp-text);
     }
     .fp-topbar-history,
     .fp-topbar-actions {
@@ -100,11 +155,11 @@
         justify-content: center;
         width: 28px;
         height: 28px;
-        border-radius: 4px;
-        color: #333333;
+        border-radius: 6px;
+        color: var(--fp-text);
     }
     .fp-topbar-btn:hover:not(:disabled) {
-        background: #f0f0f0;
+        background: var(--fp-bg-hover);
     }
     .fp-topbar-btn:disabled {
         opacity: 0.5;
@@ -116,16 +171,16 @@
         border-radius: 4px;
         font-size: 12px;
         text-align: center;
-        color: #333333;
+        color: var(--fp-text);
     }
     .fp-topbar-zoom-value:hover {
-        background: #f0f0f0;
+        background: var(--fp-bg-hover);
     }
     .fp-topbar-separator {
         width: 1px;
         height: 16px;
         margin: 0 4px;
-        background: #e0e0e0;
+        background: var(--fp-border);
     }
 
     /* 导出弹层：锚在导出按钮 wrapper 上，右对齐下挂 */
@@ -143,12 +198,12 @@
         gap: 8px;
         min-width: 220px;
         padding: 10px 12px;
-        background: #ffffff;
-        border: 1px solid #e0e0e0;
+        background: var(--fp-bg-panel);
+        border: 1px solid var(--fp-border);
         border-radius: 6px;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
         font-size: 12px;
-        color: #333333;
+        color: var(--fp-text);
     }
     .fp-export-row {
         display: flex;
@@ -157,7 +212,7 @@
     }
     .fp-export-label {
         flex: 0 0 28px;
-        color: #777777;
+        color: var(--fp-text-dim);
     }
     .fp-export-choice {
         display: inline-flex;
@@ -178,15 +233,13 @@
         text-align: right;
         font-variant-numeric: tabular-nums;
     }
+    /* accent 底上的白字明暗通用，保留字面 #ffffff */
     .fp-export-confirm {
         height: 28px;
         border-radius: 4px;
-        background: #0d99ff;
+        background: var(--fp-accent);
         color: #ffffff;
         font-size: 12px;
-    }
-    .fp-export-confirm:hover {
-        background: #0b89e8;
     }
 
     /* ===== 工具选项条（auto 高，grid 行 2） ===== */
@@ -197,8 +250,8 @@
         gap: 8px;
         min-height: 40px;
         padding: 6px 12px;
-        background: #ffffff;
-        border-bottom: 1px solid #e5e5e5;
+        background: var(--fp-bg-panel);
+        border-bottom: 1px solid var(--fp-border);
     }
     .fp-option-group {
         display: inline-flex;
@@ -211,20 +264,20 @@
         justify-content: center;
         height: 28px;
         padding: 0 10px;
-        border: 1px solid #dddddd;
-        border-radius: 4px;
-        background: #ffffff;
+        border: 1px solid var(--fp-border);
+        border-radius: 6px;
+        background: var(--fp-bg-panel);
         font-size: 12px;
-        color: #333333;
+        color: var(--fp-text);
     }
     .fp-option-btn:hover {
-        background: #f5f5f5;
+        background: var(--fp-bg-hover);
     }
     .fp-option-btn-active,
     .fp-option-btn-active:hover {
-        border-color: #0d99ff;
-        color: #0d99ff;
-        background: rgba(13, 153, 255, 0.08);
+        border-color: var(--fp-accent);
+        color: var(--fp-accent);
+        background: var(--fp-accent-soft);
     }
 
     /* ===== 左工具栏（48px，grid 列 1） ===== */
@@ -235,8 +288,8 @@
         align-items: center;
         gap: 2px;
         padding: 4px 0;
-        background: #ffffff;
-        border-right: 1px solid #e5e5e5;
+        background: var(--fp-bg-panel);
+        border-right: 1px solid var(--fp-border);
     }
     .fp-tool-btn {
         display: flex;
@@ -245,15 +298,15 @@
         width: 40px;
         height: 40px;
         border-radius: 6px;
-        color: #333333;
+        color: var(--fp-text);
     }
     .fp-tool-btn:hover {
-        background: #f0f0f0;
+        background: var(--fp-bg-hover);
     }
     .fp-tool-btn-active,
     .fp-tool-btn-active:hover {
-        background: rgba(13, 153, 255, 0.12);
-        color: #0d99ff;
+        background: var(--fp-accent-soft);
+        color: var(--fp-accent);
     }
     /* 图标按钮的文字标签仅作无障碍/语义占位，视觉上隐藏 */
     .fp-tool-btn-label {
@@ -276,8 +329,8 @@
         display: flex;
         flex-direction: column;
         min-height: 0;
-        background: #ffffff;
-        border-left: 1px solid #e5e5e5;
+        background: var(--fp-bg-panel);
+        border-left: 1px solid var(--fp-border);
     }
     .fp-side-panel .fp-layers-panel,
     .fp-side-panel .fp-props-panel {
@@ -295,8 +348,8 @@
         gap: 12px;
         padding: 12px;
         overflow-y: auto;
-        background: #ffffff;
-        border-left: 1px solid #e5e5e5;
+        background: var(--fp-bg-panel);
+        border-left: 1px solid var(--fp-border);
         font-size: 12px;
     }
     .fp-props-canvas,
@@ -316,13 +369,13 @@
     .fp-color-field-label,
     .fp-number-field-label,
     .fp-text-field-label {
-        color: #666666;
+        color: var(--fp-text-dim);
     }
     .fp-props-readonly-value {
-        color: #1e1e1e;
+        color: var(--fp-text);
     }
     .fp-props-multi-count {
-        color: #1e1e1e;
+        color: var(--fp-text);
     }
     .fp-color-field {
         display: flex;
@@ -332,7 +385,7 @@
     .fp-color-field-value {
         font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         font-size: 11px;
-        color: #888888;
+        color: var(--fp-text-dim);
     }
     .fp-number-field,
     .fp-text-field {
@@ -344,31 +397,31 @@
         width: 100%;
         height: 28px;
         padding: 0 8px;
-        border: 1px solid #dddddd;
+        border: 1px solid var(--fp-border);
         border-radius: 4px;
         font: inherit;
         color: inherit;
-        background: #ffffff;
+        background: var(--fp-bg-panel);
     }
     .fp-number-field input:focus {
         outline: none;
-        border-color: #0d99ff;
-        box-shadow: 0 0 0 1px #0d99ff;
+        border-color: var(--fp-accent);
+        box-shadow: 0 0 0 1px var(--fp-accent);
     }
     .fp-text-field textarea {
         min-height: 64px;
         padding: 6px 8px;
-        border: 1px solid #dddddd;
+        border: 1px solid var(--fp-border);
         border-radius: 4px;
         font: inherit;
         color: inherit;
-        background: #ffffff;
+        background: var(--fp-bg-panel);
         resize: vertical;
     }
     .fp-text-field textarea:focus {
         outline: none;
-        border-color: #0d99ff;
-        box-shadow: 0 0 0 1px #0d99ff;
+        border-color: var(--fp-accent);
+        box-shadow: 0 0 0 1px var(--fp-accent);
     }
     .fp-props-group {
         display: flex;
@@ -376,7 +429,10 @@
         gap: 6px;
     }
     .fp-props-group-label {
-        color: #666666;
+        color: var(--fp-text-dim);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     .fp-props-style-toggles {
         display: flex;
@@ -398,38 +454,38 @@
     .fp-props-toggle {
         height: 26px;
         padding: 0 10px;
-        border: 1px solid #dddddd;
-        border-radius: 4px;
-        background: #ffffff;
+        border: 1px solid var(--fp-border);
+        border-radius: 6px;
+        background: var(--fp-bg-panel);
         font-size: 12px;
-        color: #333333;
+        color: var(--fp-text);
     }
     .fp-props-toggle:hover {
-        background: #f5f5f5;
+        background: var(--fp-bg-hover);
     }
     .fp-props-toggle-active,
     .fp-props-toggle-active:hover {
-        border-color: #0d99ff;
-        color: #0d99ff;
-        background: rgba(13, 153, 255, 0.08);
+        border-color: var(--fp-accent);
+        color: var(--fp-accent);
+        background: var(--fp-accent-soft);
     }
     .fp-props-delete {
         height: 30px;
         padding: 0 12px;
-        border: 1px solid #f0c0c0;
-        border-radius: 4px;
-        background: #ffffff;
+        border: 1px solid var(--fp-danger);
+        border-radius: 6px;
+        background: var(--fp-bg-panel);
         font-size: 12px;
-        color: #d32f2f;
+        color: var(--fp-danger);
     }
     .fp-props-delete:hover {
-        background: #fdecec;
+        background: var(--fp-danger-soft);
     }
     .fp-props-locked-hint {
         padding: 6px 8px;
         border-radius: 4px;
-        background: #fff7e0;
-        color: #8a6d1a;
+        background: var(--fp-warn-bg);
+        color: var(--fp-warn-text);
     }
 
     /* ===== 滤镜调整（属性面板背景/图像调整组） ===== */
@@ -445,17 +501,17 @@
         gap: 8px;
     }
     .fp-filter-field-label {
-        color: #666666;
+        color: var(--fp-text-dim);
     }
     .fp-filter-field-value {
         font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         font-size: 11px;
-        color: #888888;
+        color: var(--fp-text-dim);
     }
     .fp-filter-field input[type='range'] {
         width: 100%;
         margin: 0;
-        accent-color: #0d99ff;
+        accent-color: var(--fp-accent);
     }
 
     /* ===== 色板 ===== */
@@ -465,7 +521,8 @@
         flex-wrap: wrap;
         gap: 6px;
     }
-    /* 20x20 圆角带边框；边框对全部色块生效，白色块（#ffffff）也有可见边框 */
+    /* 20x20 圆角带边框；边框对全部色块生效，白色块（#ffffff）也有可见边框。
+       色块自身边框 rgba(0,0,0,0.25) 明暗通用，保留字面值 */
     .fp-swatch {
         width: 20px;
         height: 20px;
@@ -480,8 +537,8 @@
     .fp-swatch-active,
     .fp-swatch-active:hover {
         box-shadow:
-            0 0 0 2px #ffffff,
-            0 0 0 4px #0d99ff;
+            0 0 0 2px var(--fp-bg-panel),
+            0 0 0 4px var(--fp-accent);
     }
     /* 自定义取色：与色块同尺寸同圆角 */
     .fp-color-custom {
@@ -513,20 +570,23 @@
         flex: 0 1 auto;
         max-height: 45%;
         min-height: 0;
-        background: #ffffff;
-        border-left: 1px solid #e5e5e5;
-        border-bottom: 1px solid #e5e5e5;
+        background: var(--fp-bg-panel);
+        border-left: 1px solid var(--fp-border);
+        border-bottom: 1px solid var(--fp-border);
         font-size: 12px;
     }
     .fp-layers-header {
         flex: 0 0 auto;
         padding: 8px 12px;
-        color: #666666;
-        border-bottom: 1px solid #f0f0f0;
+        color: var(--fp-text-dim);
+        border-bottom: 1px solid var(--fp-border);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     .fp-layers-empty {
         padding: 16px 12px;
-        color: #999999;
+        color: var(--fp-text-dim);
         text-align: center;
     }
     .fp-layers-list {
@@ -544,33 +604,33 @@
         height: 28px;
         padding: 0 6px;
         border-radius: 4px;
-        color: #333333;
+        color: var(--fp-text);
         cursor: default;
         user-select: none;
         border-top: 2px solid transparent;
         border-bottom: 2px solid transparent;
     }
     .fp-layer-item:hover {
-        background: #f5f5f5;
+        background: var(--fp-bg-hover);
     }
     .fp-layer-item-selected,
     .fp-layer-item-selected:hover {
-        background: rgba(13, 153, 255, 0.12);
-        color: #0d99ff;
+        background: var(--fp-accent-soft);
+        color: var(--fp-accent);
     }
     .fp-layer-item-hidden .fp-layer-item-name,
     .fp-layer-item-hidden .fp-layer-item-icon {
         opacity: 0.4;
     }
     .fp-layer-item-drop-above {
-        border-top-color: #0d99ff;
+        border-top-color: var(--fp-accent);
     }
     .fp-layer-item-drop-below {
-        border-bottom-color: #0d99ff;
+        border-bottom-color: var(--fp-accent);
     }
     .fp-layer-item-icon {
         flex: 0 0 auto;
-        color: #666666;
+        color: var(--fp-text-dim);
     }
     .fp-layer-item-selected .fp-layer-item-icon {
         color: inherit;
@@ -590,13 +650,13 @@
         width: 22px;
         height: 22px;
         border-radius: 4px;
-        color: #666666;
+        color: var(--fp-text-dim);
     }
     .fp-layer-btn:hover {
-        background: #ececec;
+        background: var(--fp-bg-hover);
     }
     .fp-layer-btn-active,
     .fp-layer-btn-active:hover {
-        color: #0d99ff;
+        color: var(--fp-accent);
     }
 }
