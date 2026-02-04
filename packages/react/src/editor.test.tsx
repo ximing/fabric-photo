@@ -1,4 +1,4 @@
-import { act, render } from '@testing-library/react';
+import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { beforeAll, beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import type { EditorState } from '@gmi/fp-core';
 import { CanvasView } from './canvas-view';
@@ -75,6 +75,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+    // vitest 未开 globals，testing-library 自动清理未注册；新增用例经 getByRole 查 document.body，需手动清理
+    cleanup();
     vi.unstubAllGlobals();
 });
 
@@ -188,6 +190,19 @@ describe('FabricPhotoEditor', () => {
         // src 未实际变化时不重复加载
         rerender(<FabricPhotoEditor src="https://example.com/b.png" imageName="photo" />);
         expect(ed.loadImageFromURL).toHaveBeenCalledTimes(2);
+    });
+
+    it('根 div 带 data-theme；点 TopBar 切换主题后 data-theme 与 localStorage 同步', () => {
+        const utils = render(<FabricPhotoEditor />);
+        const root = utils.container.querySelector('.fp-editor') as HTMLElement;
+        expect(root.dataset.theme).toBe('light');
+
+        act(() => {
+            fireEvent.click(utils.getByRole('button', { name: '切换主题' }));
+        });
+        expect(root.dataset.theme).toBe('dark');
+        expect(localStorage.getItem('fp-theme')).toBe('dark');
+        localStorage.clear();
     });
 
     it('unmount 时退订并 destroy editor', () => {

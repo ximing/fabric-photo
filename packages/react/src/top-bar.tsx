@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type JSX } from 'react';
-import { Download, Minus, Plus, Redo2, Undo2 } from 'lucide-react';
+import { Download, Minus, Moon, Plus, Redo2, Sun, Undo2 } from 'lucide-react';
 import type { ExportImageOptions } from '@gmi/fp-core';
-import { useEditor, useEditorEvent, useEditorState } from './hooks';
+import { useEditor, useEditorEvent, useEditorState, useToolSettings } from './hooks';
 
 /** 单次点击的缩放步长（乘区以 0.2 为档）。 */
 const ZOOM_STEP = 0.2;
@@ -22,6 +22,8 @@ const RedoIcon = Redo2 as unknown as JSX.ElementType;
 const MinusIcon = Minus as unknown as JSX.ElementType;
 const PlusIcon = Plus as unknown as JSX.ElementType;
 const DownloadIcon = Download as unknown as JSX.ElementType;
+const SunIcon = Sun as unknown as JSX.ElementType;
+const MoonIcon = Moon as unknown as JSX.ElementType;
 
 /**
  * 顶栏（grid 行 1）：左图名 / 中 undo·redo / 右 zoom（-、百分比复位、+）与导出。
@@ -33,6 +35,7 @@ const DownloadIcon = Download as unknown as JSX.ElementType;
  */
 export function TopBar(props: { className?: string }): JSX.Element {
     const editor = useEditor();
+    const { theme, toggleTheme } = useToolSettings();
     const imageName = useEditorState((state) => state.doc.background?.name ?? '');
     const zoomText = useEditorState((state) => `${Math.round(state.viewport.zoom * 100)}%`);
     const hasSelection = useEditorState((state) => state.selection.length > 0);
@@ -152,6 +155,16 @@ export function TopBar(props: { className?: string }): JSX.Element {
                     onClick={() => editor.setZoom(editor.getZoom() + ZOOM_STEP)}
                 >
                     <PlusIcon size={18} aria-hidden />
+                </button>
+                <span className="fp-topbar-separator" aria-hidden />
+                <button
+                    type="button"
+                    className="fp-topbar-btn"
+                    title="切换主题"
+                    aria-label="切换主题"
+                    onClick={toggleTheme}
+                >
+                    {theme === 'dark' ? <SunIcon size={18} aria-hidden /> : <MoonIcon size={18} aria-hidden />}
                 </button>
                 <span className="fp-topbar-separator" aria-hidden />
                 <div className="fp-topbar-export" ref={exportRef}>
