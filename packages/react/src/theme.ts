@@ -20,16 +20,26 @@ function systemTheme(): Theme {
 /**
  * 主题状态：初值 localStorage("fp-theme") → 系统偏好 → light；
  * toggle 写 localStorage（仅用户显式选择后持久化，未选择前跟随系统）。
+ * localStorage 读写均 try/catch：禁用/沙箱环境（SecurityError）静默跳过持久化，主题照常切换。
  */
 export function useThemeState(): ThemeState {
     const [theme, setTheme] = useState<Theme>(() => {
-        const saved = typeof localStorage === 'undefined' ? null : localStorage.getItem(STORAGE_KEY);
+        let saved: string | null = null;
+        try {
+            saved = typeof localStorage === 'undefined' ? null : localStorage.getItem(STORAGE_KEY);
+        } catch {
+            saved = null;
+        }
         return saved === 'dark' || saved === 'light' ? saved : systemTheme();
     });
     const toggleTheme = useCallback(() => {
         setTheme((prev) => {
             const next: Theme = prev === 'dark' ? 'light' : 'dark';
-            localStorage.setItem(STORAGE_KEY, next);
+            try {
+                localStorage.setItem(STORAGE_KEY, next);
+            } catch {
+                // localStorage 不可用（禁用/沙箱）：静默，仅内存切换
+            }
             return next;
         });
     }, []);

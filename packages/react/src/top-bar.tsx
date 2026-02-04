@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type JSX } from 'react';
 import { Download, Moon, Redo2, Sun, Undo2 } from 'lucide-react';
 import type { ExportImageOptions } from '@gmi/fp-core';
-import { useEditor, useEditorEvent, useEditorState, useToolSettings } from './hooks';
+import { useEditor, useEditorEvent, useEditorState, useTheme } from './hooks';
 
 /** 导出格式三选；MIME 为 `image/${format}`，扩展名与格式同名。 */
 type ExportFormat = 'png' | 'jpeg' | 'webp';
@@ -30,7 +30,7 @@ const MoonIcon = Moon as unknown as JSX.ElementType;
  */
 export function TopBar(props: { className?: string }): JSX.Element {
     const editor = useEditor();
-    const { theme, toggleTheme } = useToolSettings();
+    const { theme, toggleTheme } = useTheme();
     const imageName = useEditorState((state) => state.doc.background?.name ?? '');
     const hasSelection = useEditorState((state) => state.selection.length > 0);
     const [undoDisabled, setUndoDisabled] = useState(() => editor.isEmptyUndoStack());
