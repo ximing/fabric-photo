@@ -2,6 +2,23 @@
 Started: 2026年 2月15日 星期日 23时33分46秒 CST
 ---
 
+## 2026-03-11 - US-006
+- 创建 src/consts.ts TypeScript 版本，添加完整类型定义
+- 定义 KeyMirror 工具类型生成不可变的常量对象类型
+- 为 moduleNames, commandNames, eventNames, states, keyCodes, fObjectOptions, rejectMessages 添加接口类型
+- 使用 readonly 修饰符确保所有类型不可变性
+- 修复了 CLEAR_OBJECTS 缺失于 commandNames 的问题（原代码使用 commandNames.CLEAR_OBJECTS 但定义在 eventNames 中）
+- TypeScript 编译通过，构建通过
+- 保留 consts.js 用于运行时（渐进式迁移模式）
+- Files changed:
+  - src/consts.ts (新建)
+- **Learnings for future iterations:**
+  - 使用 readonly 修饰符确保常量对象的不可变性
+  - KeyMirror 工具类型可以将字符串字面量数组转换为键值相同的对象类型
+  - 修复了 CLEAR_OBJECTS 的问题 - 原代码使用 commandNames.CLEAR_OBJECTS 但实际定义在 eventNames 中
+  - 保留 .js 文件用于运行时是渐进式迁移的常见模式
+---
+
 ## 2026-03-08 - SR US-009
 - Added `getDueCardsForAllSREnabledUsers()` to SpacedRepetitionService: queries all SR-enabled users, fetches their due cards (nextReviewAt <= now), groups by userId with srDailyLimit
 - Added `registerSpacedRepetitionPushTask()` to SchedulerService: registers daily 08:00 cron task
