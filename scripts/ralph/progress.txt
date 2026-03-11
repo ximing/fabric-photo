@@ -2,6 +2,24 @@
 Started: 2026年 2月15日 星期日 23时33分46秒 CST
 ---
 
+## 2026-03-11 - US-011
+- 创建 src/lib/shape-resize-helper.ts TypeScript 版本，添加完整类型定义
+- 定义 Point、OriginPositions 接口类型
+- 为所有辅助函数添加适当的类型标注：setStartPoint, getPositionsOfRotatedOrigin, hasCenterOrigin 等
+- 使用本地 Point 接口而非导入，因为 @types/fabric 的 Point 未导出
+- 使用类型断言处理 shape.origins 和 shape.startPoint 的动态属性
+- TypeScript 编译通过 (typecheck passes)
+- 构建通过 (build passes)
+- 保留 shape-resize-helper.js 用于运行时（渐进式迁移模式）
+- Files changed:
+  - src/lib/shape-resize-helper.ts (新建)
+- **Learnings for future iterations:**
+  - 使用本地定义的 Point 接口（{x: number, y: number}）处理坐标类型
+  - 使用 `as unknown as { ... }` 类型断言处理动态属性如 shape.origins
+  - 保留 .js 文件用于运行时是渐进式迁移的常见模式
+  - shape.startPoint 是动态添加的属性，需要使用类型断言处理
+  - 路径问题：src/lib/ 下的文件应使用 `../types/fabric.js` 而非 `./types/fabric.js`
+
 ## 2026-03-11 - US-010
 - 创建 src/lib/canvas-to-blob.ts TypeScript 版本，添加完整类型定义
 - 定义 BlobBuilder、DataURLtoBlobFunction 接口类型
