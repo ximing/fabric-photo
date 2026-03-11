@@ -659,3 +659,26 @@ Started: 2026年 2月15日 星期日 23时33分46秒 CST
   - 保留 .js 文件用于运行时是渐进式迁移的常见模式
   - Arrow 类与 Cropzone 类共享许多相同的辅助方法
   - fabric.util.createClass 继承的类需要使用 callSuper 调用父类方法
+
+## 2026-03-12 - US-018
+- 创建 src/index.ts TypeScript 版本
+- 添加 FabricPhoto 类和所有 API 方法
+- 定义 FabricPhotoOptions、Handlers 等接口类型
+- 使用 `as unknown as SpecificType` 模式处理模块类型转换
+- 修复 fabric UMD 全局引用问题（使用 fabric 导入）
+- 修复 Document 类型问题（使用 document.documentElement）
+- 修复回调函数签名问题（使用箭头函数包装）
+- 修复 forEach 调用问题（使用类型转换）
+- 修复 CustomEvents.mixin 类型问题（使用类型转换）
+- TypeScript 编译通过 (typecheck passes)
+- 构建通过 (build passes)
+- 保留 .js 文件用于运行时（渐进式迁移模式）
+- Files changed:
+  - src/index.ts (新建)
+- **Learnings for future iterations:**
+  - 使用 `as unknown as SpecificType` 模式处理模块类型转换
+  - fabric UMD 全局需要通过导入 `import { fabric } from './types/fabric.js'` 解决
+  - 回调函数签名不匹配时使用箭头函数包装
+  - forEach 从 util 导入时需要类型兼容的对象或数组
+  - CustomEvents.mixin 需要类型转换以匹配构造函数签名
+  - 定义本地 FabricPoint 类型处理 getPointer 返回值（fabric.d.ts 未导出 Point）
