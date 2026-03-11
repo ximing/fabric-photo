@@ -415,3 +415,20 @@ Started: 2026年 2月15日 星期日 23时33分46秒 CST
   - 当导入 ./consts.js 时，TypeScript 会自动查找 consts.ts（如果存在）
   - 后续 US-023 会更新 rollup.config.js 以支持直接编译 .ts 文件
 ---
+
+## 2026-03-11 - US-005
+- 创建 src/commands/base.ts TypeScript 版本
+- 定义 CommandActions 和 CommandCallback 接口类型
+- 使用 private 修饰符封装内部方法
+- 添加适当的类型标注和 JSDoc 注释
+- TypeScript 编译通过 (typecheck passes)
+- 构建通过 (build passes)
+- 保留 base.js 用于运行时（渐进式迁移模式）
+- Files changed:
+  - src/commands/base.ts (新建)
+- **Learnings for future iterations:**
+  - 使用 private 修饰符封装内部实现，避免外部直接访问
+  - 使用 type 别名定义函数类型，使代码更清晰
+  - 返回 this 实现链式调用是常见的命令模式
+  - 保留 .js 文件用于运行时是渐进式迁移的常见模式
+---
