@@ -61,11 +61,13 @@ export default class ImageLoader extends Base {
 
             canvas.setBackgroundImage(img, () => {
                 const oImage = canvas.backgroundImage;
+                const element =
+                    oImage && typeof oImage.getElement === 'function' ? oImage.getElement() : null;
 
-                if (oImage.getElement()) {
+                if (element) {
                     resolve(oImage);
                 } else {
-                    reject();
+                    reject(rejectMessages.loadImage);
                 }
             }, imageOption);
         });

@@ -1,3 +1,6 @@
+@use "sass:color";
+@use "../variable" as *;
+
 //上面的六种颜色是要删掉的,不要再项目中引用了
 //灰白色,这里只是取一些更普通的名称
 //$color-darker               : rgba(0,0,0,.87);/*#333333*/
@@ -58,13 +61,13 @@ $group-file-header-tab-background-color: transparent;
 
 
 $btn-bg-base            : $primary;
-$border-color-base      : darken($primary, 5%);
+$border-color-base      : color.adjust($primary, $lightness: -5%);
 $btn-primary-color      : #fff;
 $btn-primary-bg         : $primary;
 
 $btn-ghost-color        : #FFFFFF;
 $btn-ghost-bg           : $supplement;
-$btn-ghost-border       : darken($supplement, 5%);
+$btn-ghost-border       : color.adjust($supplement, $lightness: -5%);
 
 $btn-disable-color      : #ccc;
 $btn-disable-bg         : #f3f5f7;

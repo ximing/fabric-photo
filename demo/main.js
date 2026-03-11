@@ -446,9 +446,11 @@ export default class WrapContainer extends Component {
         this.fp.toDataURL('image/png');
     }
     render() {
+        const appEnv =
+            typeof process !== 'undefined' && process.env ? process.env.APP_ENV : undefined;
         let btnClassname = classnames({
             'file-button': true,
-            'file-button--pc': process.env.APP_ENV === 'pc',
+            'file-button--pc': appEnv === 'pc',
             'upload-success': true
         });
         let menus = null;

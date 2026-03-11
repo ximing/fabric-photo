@@ -1,7 +1,5 @@
-@import "./variable";
-@import "./mixin/iconfont";
-@import "./mixin/clearfix";
-@import "./theme/_default";
-@import "./normalize";
-@import "./iconfont";
-@import "./main";
+@use "./variable";
+@use "./theme/default";
+@use "./normalize";
+@use "./iconfont";
+@use "./main";

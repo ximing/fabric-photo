@@ -1,6 +1,6 @@
 const { join } = require('path');
-const babel = require('rollup-plugin-babel');
-const alias = require('rollup-plugin-alias');
+const babel = require('@rollup/plugin-babel').default;
+const alias = require('@rollup/plugin-alias');
 
 const cwd = __dirname;
 
