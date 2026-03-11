@@ -228,7 +228,7 @@
         "运行时功能正常"
       ],
       "priority": 16,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
