@@ -12,7 +12,8 @@
         "install:website": "cd website && pnpm install",
         "build:website": "cd website && rm -rf .umi dist && pnpm run docs:build",
         "build": "rollup -c",
-        "typecheck": "tsc --noEmit"
+        "typecheck": "tsc --noEmit",
+        "tsc": "tsc"
     },
     "publishConfig": {
         "access": "public",

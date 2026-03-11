@@ -376,3 +376,14 @@ Started: 2026年 2月15日 星期日 23时33分46秒 CST
   - 后续 US 将逐步把 JS 文件转换为 TS 并启用 checkJs: true
   - @types/fabric 已经提供fabric的类型定义，无需手动创建
 ---
+
+## 2026-03-11 - US-002
+- 安装 typescript 和 @types/fabric 依赖（已在上个 US 完成）
+- 添加 "tsc": "tsc" 脚本到 package.json
+- TypeScript 类型检查通过
+- Files changed:
+  - package.json (添加 tsc 脚本)
+- **Learnings for future iterations:**
+  - 使用 "tsc": "tsc" 脚本可以快速运行 TypeScript 编译
+  - "typecheck": "tsc --noEmit" 用于仅做类型检查而不输出文件
+---
