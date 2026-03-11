@@ -466,3 +466,19 @@ Started: 2026年 2月15日 星期日 23时33分46秒 CST
   - 在 createObject 中使用 `as unknown as new () => T` 来处理泛型构造函数类型
   - 对于 CSSStyleDeclaration 等 DOM 类型，使用更通用的接口如 `{ style: { setProperty: ... } }`
   - 保留 .js 文件用于运行时是渐进式迁移的常见模式
+---
+
+## 2026-03-11 - US-008
+- 创建 src/lib/event.ts TypeScript 版本
+- 定义 EventEmitter 接口实现浏览器兼容
+- 使用 declare const EventEmitter 提供 Node.js 事件模块的类型声明
+- TypeScript 编译通过 (typecheck passes)
+- 构建通过 (build passes)
+- 保留 event.js 用于运行时（渐进式迁移模式）
+- Files changed:
+  - src/lib/event.ts (新建)
+- **Learnings for future iterations:**
+  - 使用 `declare const` 可以为没有类型声明的模块提供类型声明
+  - EventEmitter 接口包含常用的方法：on, once, emit, removeListener 等
+  - 保留 .js 文件用于运行时是渐进式迁移的常见模式
+  - 注意：event.js 在代码中未被使用（custom-event.js 被使用）
