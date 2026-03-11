@@ -3,8 +3,8 @@
  * Provides rotation functionality for canvas images
  */
 import { fabric } from 'fabric';
-import type { Object as FabricObject } from '../types/fabric.js';
-import ModuleBase from './base.js';
+import type { Object as FabricObject } from '../types/fabric';
+import ModuleBase from './base';
 import consts from '../consts';
 
 const { rejectMessages } = consts;

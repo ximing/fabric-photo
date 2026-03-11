@@ -2,10 +2,10 @@
  * Mosaic module - uses MosaicShape with addMosicRectWithUpdate
  * Provides mosaic effect using MosaicShape custom shape
  */
-import type { Canvas, Object as FabricObject } from '../types/fabric.js';
-import ModuleBase from './base.js';
-import consts from '../consts.js';
-import MosaicShape from '../shape/mosaic.js';
+import type { Canvas, Object as FabricObject } from '../types/fabric';
+import ModuleBase from './base';
+import consts from '../consts';
+import MosaicShape from '../shape/mosaic';
 
 /**
  * Mosaic setting

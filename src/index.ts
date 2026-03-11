@@ -1,8 +1,8 @@
 /**
  * FabricPhoto - Main entry point for the image editor
  */
-import type { Canvas, Object as FabricObject, Image as FabricImage, Group } from './types/fabric.js';
-import { fabric } from './types/fabric.js';
+import type { Canvas, Object as FabricObject, Image as FabricImage, Group } from './types/fabric';
+import { fabric } from 'fabric';
 
 type FabricPoint = { x: number; y: number };
 

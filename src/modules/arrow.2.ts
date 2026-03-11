@@ -2,9 +2,9 @@
  * Arrow drawing module - uses Path for arrow shape
  */
 import { fabric } from 'fabric';
-import type { Object as FabricObject } from '../types/fabric.js';
-import Base from './base.js';
-import consts from '../consts.js';
+import type { Object as FabricObject } from '../types/fabric';
+import Base from './base';
+import consts from '../consts';
 
 const abs = Math.abs;
 const arrowPath =

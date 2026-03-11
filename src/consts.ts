@@ -1,5 +1,5 @@
-import type { Canvas, Object as FabricObject } from './types/fabric.js';
-import util from './lib/util.js';
+import type { Canvas, Object as FabricObject } from './types/fabric';
+import util from './lib/util';
 
 /**
  * KeyMirror type - creates an object where keys and values are the same

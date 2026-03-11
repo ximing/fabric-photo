@@ -3,9 +3,9 @@
  * Provides mosaic effect by adding individual rectangles to canvas
  */
 import { fabric } from 'fabric';
-import type { Canvas, Object as FabricObject, Group, Rect } from '../types/fabric.js';
-import ModuleBase from './base.js';
-import consts from '../consts.js';
+import type { Canvas, Object as FabricObject, Group, Rect } from '../types/fabric';
+import ModuleBase from './base';
+import consts from '../consts';
 
 /**
  * Mosaic setting

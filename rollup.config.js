@@ -1,11 +1,11 @@
 const { join } = require('path');
-const babel = require('@rollup/plugin-babel').default;
+const typescript = require('@rollup/plugin-typescript');
 const alias = require('@rollup/plugin-alias');
 
 const cwd = __dirname;
 
 const baseConfig = {
-    input: join(cwd, 'src/index.js'),
+    input: join(cwd, 'src/index.ts'),
     external: ['react', 'react-dom', 'jquery'],
     output: [
         {
@@ -24,7 +24,9 @@ const baseConfig = {
                 // }
             ]
         }),
-        babel()
+        typescript({
+            tsconfig: './tsconfig.json'
+        })
     ]
 };
 const esmConfig = {

@@ -2,9 +2,9 @@
  * Arrow drawing module - uses Line, Triangle, and Circle
  */
 import { fabric } from 'fabric';
-import type { Canvas, Object as FabricObject } from '../types/fabric.js';
-import Base from './base.js';
-import consts from '../consts.js';
+import type { Canvas, Object as FabricObject } from '../types/fabric';
+import Base from './base';
+import consts from '../consts';
 
 /**
  * Arrow setting interface

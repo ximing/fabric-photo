@@ -3,10 +3,10 @@
  * Provides text editing functionality on canvas
  */
 import { fabric } from 'fabric';
-import type { Text as FabricText } from '../types/fabric.js';
-import ModuleBase from './base.js';
+import type { Text as FabricText } from '../types/fabric';
+import ModuleBase from './base';
 import consts from '../consts';
-import util from '../lib/util.js';
+import util from '../lib/util';
 
 const defaultStyles = {
     fill: '#000000',
