@@ -730,3 +730,31 @@ Started: 2026年 2月15日 星期日 23时33分46秒 CST
   - getContext('2d') 可能返回 null，需要 null 检查
   - 保留 .js 文件用于运行时是渐进式迁移的常见模式
   - MosaicShape.addMosicRectWithUpdate 方法用于动态添加马赛克矩形
+---
+
+## 2026-03-12 - US-021
+- 创建 src/modules/arrow.ts TypeScript 版本
+- 创建 src/modules/arrow.2.ts TypeScript 版本
+- 定义 ArrowSetting、Point、ArrowListeners 接口类型
+- 为所有模块类和事件处理函数添加适当的类型标注
+- 使用 fabric.Color 直接从 fabric 导入（不是从类型文件）
+- 使用 inline 事件类型 { target: FabricObject; e: MouseEvent } 替代 FabricEvent
+- 使用 `as unknown as { customType: string }` 处理 customType 动态属性
+- 使用 `as unknown as { originX: string; originY: string }` 处理 Path origin 属性
+- 使用 `as unknown as Record<string, unknown>` 处理 SelectionStyle 类型不兼容
+- 添加 getZoom(): number 到 RootModule 接口
+- TypeScript 编译通过 (typecheck passes)
+- 构建通过 (build passes)
+- 保留 .js 文件用于运行时（渐进式迁移模式）
+- Files changed:
+  - src/modules/arrow.ts (新建)
+  - src/modules/arrow.2.ts (新建)
+  - src/modules/base.ts (添加 getZoom 方法到 RootModule 接口)
+  - scripts/ralph/prd.json (更新 passes: true)
+- **Learnings for future iterations:**
+  - 使用 fabric.Color 直接从 fabric 导入（不是从类型文件导出）
+  - 使用 inline 事件类型 { target: FabricObject; e: MouseEvent } 而非 FabricEvent
+  - 使用 `as unknown as { customType: string }` 类型断言处理动态属性
+  - Path 对象的 setOriginX/setOriginY 方法需要使用 originX/originY 属性替代
+  - 需要在 base.ts 的 RootModule 接口中添加 getZoom() 方法
+  - 保留 .js 文件用于运行时是渐进式迁移的常见模式
