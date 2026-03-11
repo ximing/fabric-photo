@@ -599,3 +599,24 @@ Started: 2026年 2月15日 星期日 23时33分46秒 CST
   - 保留 .js 文件用于运行时是渐进式迁移的常见模式
   - 模块路径问题：src/modules/ 下的文件应使用 `../types/fabric.js` 而非 `./types/fabric.js`
 
+## 2026-03-12 - US-015
+- 创建 src/modules/main.ts TypeScript 版本
+- 为 Main 类添加完整的类型定义
+- 定义 ViewPortInfo、ViewPortImageResult、MaxDimension 接口
+- 使用 fabric 导入处理 Path.prototype.selectable
+- 修复 jQuery 元素类型断言（使用 .get(0) 方法）
+- 处理 dataURLtoBlob 可能为 false 的情况
+- 导出 Dimension 和 ImagePropertiesSetting 类型供其他模块使用
+- TypeScript 编译通过 (typecheck passes)
+- 构建通过 (build passes)
+- 保留 main.js 用于运行时（渐进式迁移模式）
+- Files changed:
+  - src/modules/main.ts (新建)
+  - src/modules/base.ts (添加类型导出)
+- **Learnings for future iterations:**
+  - 使用 fabric 导入处理 Path.prototype.selectable 问题
+  - jQuery 对象使用 `.get(0)` 方法获取原生元素
+  - dataURLtoBlob 在某些环境可能不可用，需要检查是否为 false
+  - Dimension 接口的 width/height 是可选的，使用明确的返回类型可以避免类型问题
+  - 保留 .js 文件用于运行时是渐进式迁移的常见模式
+

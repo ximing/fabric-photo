@@ -7,7 +7,7 @@ import type { Canvas, Image } from '../types/fabric.js';
 /**
  * Dimension object for canvas sizing
  */
-interface Dimension {
+export interface Dimension {
     width?: string | number;
     height?: string | number;
     [key: string]: string | number | undefined;
@@ -16,7 +16,7 @@ interface Dimension {
 /**
  * Image properties setting
  */
-interface ImagePropertiesSetting {
+export interface ImagePropertiesSetting {
     [key: string]: unknown;
 }
 
