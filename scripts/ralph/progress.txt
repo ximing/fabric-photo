@@ -449,3 +449,20 @@ Started: 2026年 2月15日 星期日 23时33分46秒 CST
   - 返回 this 实现链式调用是常见的命令模式
   - 保留 .js 文件用于运行时是渐进式迁移的常见模式
 ---
+
+## 2026-03-11 - US-007
+- 创建 src/lib/util.ts TypeScript 版本，添加完整类型定义
+- 定义各类接口类型：BrowserInfo, CreateObjectFunction, InheritFunction, StampFunction 等
+- 为所有工具函数添加适当的类型标注
+- 使用类型守卫 (type predicates) 如 isString, isNumber, isArray 等
+- 简化 bind 函数实现，使用更清晰的类型签名
+- TypeScript 编译通过 (typecheck passes)
+- 构建通过 (build passes)
+- 保留 util.js 用于运行时（渐进式迁移模式）
+- Files changed:
+  - src/lib/util.ts (新建)
+- **Learnings for future iterations:**
+  - 使用类型守卫 (type predicates) 如 `obj is string` 可以提供更好的类型推断
+  - 在 createObject 中使用 `as unknown as new () => T` 来处理泛型构造函数类型
+  - 对于 CSSStyleDeclaration 等 DOM 类型，使用更通用的接口如 `{ style: { setProperty: ... } }`
+  - 保留 .js 文件用于运行时是渐进式迁移的常见模式
