@@ -682,3 +682,27 @@ Started: 2026年 2月15日 星期日 23时33分46秒 CST
   - forEach 从 util 导入时需要类型兼容的对象或数组
   - CustomEvents.mixin 需要类型转换以匹配构造函数签名
   - 定义本地 FabricPoint 类型处理 getPointer 返回值（fabric.d.ts 未导出 Point）
+
+## 2026-03-12 - US-019
+- 创建 src/modules/draw.ts、line.ts、shape.ts TypeScript 版本
+- 定义 BrushSettings、LineListeners、ShapeOptions、ShapeHandlers、Point 接口类型
+- 为所有模块类和事件处理函数添加适当的类型标注
+- 使用 `as unknown as HTMLElement` 处理 document 类型断言
+- 修复 Ellipse 类型问题（使用 fabric.Ellipse 直接创建）
+- 修复 inArray 返回类型比较问题（使用 !inArray 替代 < 0 比较）
+- 修复 resizeHelper.resize 缺少第三个参数问题
+- TypeScript 编译通过 (typecheck passes)
+- 构建通过 (build passes)
+- 保留 .js 文件用于运行时（渐进式迁移模式）
+- Files changed:
+  - src/modules/draw.ts (新建)
+  - src/modules/line.ts (新建)
+  - src/modules/shape.ts (新建)
+  - scripts/ralph/prd.json (更新 passes: true)
+- **Learnings for future iterations:**
+  - 使用 `as unknown as HTMLElement` 处理 document 类型断言
+  - fabric.Ellipse 需要使用 `extend` 合并 options 并标记 type: 'circle'
+  - inArray 返回 number，使用 `!inArray()` 替代 `inArray() < 0` 比较
+  - resizeHelper.resize 需要三个参数：obj, pointer, isScaling
+  - Point 接口定义 {x: number, y: number} 用于坐标类型
+  - 模块构造函数中定义 this._handlers 用于绑定事件处理函数
