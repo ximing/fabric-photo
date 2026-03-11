@@ -557,3 +557,26 @@ Started: 2026年 2月15日 星期日 23时33分46秒 CST
   - EventEmitter 接口包含常用的方法：on, once, emit, removeListener 等
   - 保留 .js 文件用于运行时是渐进式迁移的常见模式
   - 注意：event.js 在代码中未被使用（custom-event.js 被使用）
+
+## 2026-03-12 - US-013
+- 创建 src/commands/remove.ts TypeScript 版本
+- 为 remove 命令添加适当的类型标注，包括 FabricObject、ModuleMap 类型
+- 使用类型断言处理 forEachObject 回调参数类型
+- 创建 src/commands/rotation-image.ts TypeScript 版本
+- 定义 RotationModule 接口，包含 getCurrentAngle、rotate、setAngle 方法
+- 使用索引签名 `[key: string]: any` 解决动态方法调用问题
+- 创建 src/commands/zoom.ts TypeScript 版本
+- 为 zoom 命令添加 getZoom、set适当的类型标注，包括Zoom 方法
+- TypeScript 编译通过 (typecheck passes)
+- 构建通过 (build passes)
+- 保留 .js 文件用于运行时（渐进式迁移模式）
+- Files changed:
+  - src/commands/remove.ts (新建)
+  - src/commands/rotation-image.ts (新建)
+  - src/commands/zoom.ts (新建)
+- **Learnings for future iterations:**
+  - forEachObject 回调需要显式类型标注，如 `(obj: FabricObject) => void`
+  - 动态方法调用需要使用索引签名 `[key: string]: any` 或类型断言
+  - 使用 `as RotationModule` 类型断言处理模块访问
+  - 保留 .js 文件用于运行时是渐进式迁移的常见模式
+  - CommandFunction 类型使用 `...args: any[]` 以支持不同参数类型的 execute/undo 函数
