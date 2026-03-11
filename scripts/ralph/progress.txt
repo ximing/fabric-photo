@@ -638,3 +638,24 @@ Started: 2026年 2月15日 星期日 23时33分46秒 CST
   - 保留 .js 文件用于运行时是渐进式迁移的常见模式
   - 模块接口需要定义 getName(): string 方法
 
+
+## 2026-03-12 - US-017
+- 创建 src/shape/arrow.ts、cropzone.ts、mosaic.ts TypeScript 版本
+- 为所有 shape 类添加适当的类型标注
+- 定义 CropzoneCoordinates、MosaicRectItem、Point 等接口类型
+- 使用 Record<string, unknown> 类型处理 options 对象
+- 使用类型断言处理类内部动态属性如 _minPoint、_maxPoint、_mosaicRects
+- 为 arrow.ts 添加缺失的辅助方法（从 cropzone.js 复制逻辑）
+- TypeScript 编译通过 (typecheck passes)
+- 构建通过 (build passes)
+- 保留 .js 文件用于运行时（渐进式迁移模式）
+- Files changed:
+  - src/shape/arrow.ts (新建)
+  - src/shape/cropzone.ts (新建)
+  - src/shape/mosaic.ts (新建)
+- **Learnings for future iterations:**
+  - 使用 Record<string, unknown> 类型处理 options 对象
+  - 类内部动态属性使用类型断言处理，如 `this as unknown as { _minPoint: Point }`
+  - 保留 .js 文件用于运行时是渐进式迁移的常见模式
+  - Arrow 类与 Cropzone 类共享许多相同的辅助方法
+  - fabric.util.createClass 继承的类需要使用 callSuper 调用父类方法
