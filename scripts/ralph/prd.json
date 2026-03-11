@@ -44,7 +44,7 @@
         "类型检查通过"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

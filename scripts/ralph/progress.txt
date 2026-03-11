@@ -387,3 +387,15 @@ Started: 2026年 2月15日 星期日 23时33分46秒 CST
   - 使用 "tsc": "tsc" 脚本可以快速运行 TypeScript 编译
   - "typecheck": "tsc --noEmit" 用于仅做类型检查而不输出文件
 ---
+
+## 2026-03-11 - US-003
+- 创建 src/types/fabric.d.ts 类型声明文件
+- 重新导出 @types/fabric 中的主要类型：Canvas, Object, Image, Group, Rect, Circle, Triangle, Line, Path, Polygon, Polyline, Text, IText 等
+- TypeScript 类型检查通过，ESLint 通过，构建正常
+- Files changed:
+  - src/types/fabric.d.ts (新建)
+- **Learnings for future iterations:**
+  - @types/fabric 已经提供 fabric 的类型定义，此文件作为项目的类型声明入口
+  - 可以通过 import { Canvas, Object, Image } from '../types/fabric.js' 导入类型
+  - 注意：导出时不能有重复的标识符，会导致 ESLint 报错
+---
