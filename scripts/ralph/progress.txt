@@ -360,3 +360,19 @@ Started: 2026年 2月15日 星期日 23时33分46秒 CST
   - Browse Cards route is '/cards/browser' which is a separate page from My Decks
   - No /home route exists in App.tsx - /cards serves as the main entry point
 ---
+
+## 2026-03-11 - US-001
+- 安装 typescript 和 @types/fabric 依赖
+- 创建 tsconfig.json 配置文件，包含 strict: true、target: ES2015、module: ESNext
+- 添加 typecheck 脚本到 package.json
+- 配置 allowJs: true、checkJs: false 以支持 JS 文件逐步迁移
+- TypeScript 编译无错误，build 正常
+- Files changed:
+  - package.json (添加 typecheck 脚本)
+  - pnpm-lock.yaml (添加 typescript 和 @types/fabric)
+  - tsconfig.json (新建)
+- **Learnings for future iterations:**
+  - 使用 checkJs: false 可以在不修改现有 JS 文件的情况下启用 TypeScript 配置
+  - 后续 US 将逐步把 JS 文件转换为 TS 并启用 checkJs: true
+  - @types/fabric 已经提供fabric的类型定义，无需手动创建
+---
