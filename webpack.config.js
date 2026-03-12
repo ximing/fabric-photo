@@ -8,7 +8,7 @@ const { DefinePlugin } = webpack;
 module.exports = {
     mode: 'development',
     entry: {
-        index: ['./demo/index.js']
+        index: ['./website/src/demo/index.tsx']
     },
     output: {
         filename: '[name].js',
@@ -23,7 +23,7 @@ module.exports = {
         static: [
             path.join(__dirname, 'html'),
             path.join(__dirname, 'public'),
-            path.join(__dirname, 'demo')
+            path.join(__dirname, 'website/public')
         ],
         compress: true,
         port: parseInt(process.env.PORT, 10) || 9876,
@@ -44,7 +44,7 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /\.(js|ts)$/,
+                test: /\.(js|jsx|ts|tsx)$/,
                 use: [
                     {
                         loader: 'babel-loader'
@@ -71,7 +71,7 @@ module.exports = {
         lodash: '_'
     },
     resolve: {
-        extensions: ['.ts', '.js', '.json'],
+        extensions: ['.tsx', '.ts', '.jsx', '.js', '.json'],
         fallback: {
             url: false,
             http: false,

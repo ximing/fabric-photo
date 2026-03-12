@@ -1,15 +1,15 @@
-/**
- * Created by yeanzhi on 17/1/13.
- */
-'use strict';
 import React, { Component } from 'react';
 import classnames from 'classnames';
 
-import { FabricPhoto, consts } from '../src/index';
+import { FabricPhoto, consts } from '../../../src/index';
 
-export default class WrapContainer extends Component {
-    constructor() {
-        super();
+declare const $: any;
+
+export default class WrapContainer extends Component<Record<string, never>, any> {
+    private fp: any;
+
+    constructor(props: Record<string, never>) {
+        super(props);
         this.state = {
             editState: consts.states.NORMAL,
             arrow: {
@@ -30,20 +30,20 @@ export default class WrapContainer extends Component {
     }
 
     componentDidMount() {
-        window.fabricPhoto = this.fp = new FabricPhoto('#upload-file-image-preview', {
+        (window as any).fabricPhoto = (this.fp = new FabricPhoto('#upload-file-image-preview', {
             cssMaxWidth: 700,
             cssMaxHeight: 400
-        });
-        this.fp.once('loadImage', (oImage) => {
+        }));
+        this.fp.once('loadImage', (_oImage: any) => {
             this.fp.clearUndoStack();
         });
         //this.fp.loadImageFromURL('http://mss.ximing.ren/v1/mss_814dc1610cda4b2e8febd6ea2c809db5/image/1484297783302.jpg', 'image name');
-        this.fp.loadImageFromURL('/demo.jpeg', 'image name');
+        this.fp.loadImageFromURL('/images/demo.jpeg', 'image name');
         //this.fp.loadImageFromURL('http://mss.ximing.ren/v1/mss_814dc1610cda4b2e8febd6ea2c809db5/image/1484297784312.png', 'image name');
         // this.fp.loadImageFromURL('http://mss.ximing.ren/v1/mss_814dc1610cda4b2e8febd6ea2c809db5/image/1484297783376.jpeg', 'image name');
         //this.fp.loadImageFromURL('http://mss.ximing.ren/v1/mss_814dc1610cda4b2e8febd6ea2c809db5/image/1484297783036.png', 'image name');
         //this.fp.loadImageFromURL('http://mss.ximing.ren/v1/mss_814dc1610cda4b2e8febd6ea2c809db5/image/1486378338826.png','带文字的')
-        this.fp.on('selectObject', (obj) => {
+        this.fp.on('selectObject', (obj: any) => {
             //console.log('selectObject--->',obj);
             if (obj.type === 'rect' || obj.type === 'circle' || obj.type === 'triangle') {
                 this.setState({
@@ -57,7 +57,7 @@ export default class WrapContainer extends Component {
                 this.activateTextMode();
             }
         });
-        this.fp.on('activateText', (obj) => {
+        this.fp.on('activateText', (obj: any) => {
             //console.log('activateText----obj--->',obj);
             // add new text on cavas
             if (obj.type === 'new') {
@@ -95,7 +95,7 @@ export default class WrapContainer extends Component {
             endFreeDrawing: () => {
                 //$freeDrawingSubMenu.hide();
             },
-            adjustObject: (obj, type) => {
+            adjustObject: (obj: any, type: any) => {
                 if (obj.type === 'text' && type === 'scale') {
                     //$inputFontSizeRange.val(obj.getFontSize());
                 }
@@ -423,7 +423,7 @@ export default class WrapContainer extends Component {
         );
     }
 
-    zoomOut(delta) {
+    zoomOut(delta: number) {
         let nextZoom = this.fp.getZoom() + delta;
         if (nextZoom > 4) {
             return;
@@ -431,7 +431,7 @@ export default class WrapContainer extends Component {
         this.fp.setZoom(nextZoom);
     }
 
-    zoomIn(delta) {
+    zoomIn(delta: number) {
         let nextZoom = this.fp.getZoom() - delta;
         if (nextZoom < 1) {
             return;
