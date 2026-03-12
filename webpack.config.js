@@ -44,7 +44,7 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /\.js$/,
+                test: /\.(js|ts)$/,
                 use: [
                     {
                         loader: 'babel-loader'
@@ -71,6 +71,7 @@ module.exports = {
         lodash: '_'
     },
     resolve: {
+        extensions: ['.ts', '.js', '.json'],
         fallback: {
             url: false,
             http: false,

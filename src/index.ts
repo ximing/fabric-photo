@@ -498,11 +498,9 @@ class FabricPhoto {
 
         const callback = this._callbackAfterImageLoading.bind(this);
         const command = commandFactory.create(commands.LOAD_IMAGE, imageName, url);
-        command.setExecuteCallback = (command as { setExecuteCallback?: (cb: () => void) => typeof command }).setExecuteCallback?.bind(command);
-        command.setUndoCallback = (command as { setUndoCallback?: (cb: (obj: unknown) => void) => typeof command }).setUndoCallback?.bind(command);
 
-        (command as { setExecuteCallback?: (cb: () => void) => void; setUndoCallback?: (cb: (oImage: FabricImage) => void) => void }).setExecuteCallback?.(() => callback);
-        (command as { setExecuteCallback?: (cb: () => void) => void; setUndoCallback?: (cb: (oImage: FabricImage) => void) => void }).setUndoCallback?.((oImage: FabricImage) => {
+        (command as { setExecuteCallback?: (cb: (oImage: FabricImage) => void) => void; setUndoCallback?: (cb: (oImage: FabricImage | null) => void) => void }).setExecuteCallback?.(callback);
+        (command as { setExecuteCallback?: (cb: (oImage: FabricImage) => void) => void; setUndoCallback?: (cb: (oImage: FabricImage | null) => void) => void }).setUndoCallback?.((oImage: FabricImage | null) => {
             if (oImage) {
                 callback(oImage);
             } else {
@@ -1431,6 +1429,13 @@ class FabricPhoto {
             },
             this
         );
+    }
+
+    /**
+     * @deprecated Use destroy() instead.
+     */
+    destory() {
+        this.destroy();
     }
 
     /**

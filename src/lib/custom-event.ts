@@ -40,8 +40,21 @@ class CustomEvents {
      * Mix CustomEvents prototype to a function's prototype
      * @param func - Function to mix into
      */
-    static mixin(func: new (...args: unknown[]) => CustomEvents): void {
-        Object.assign(func.prototype, CustomEvents.prototype);
+    static mixin(func: new (...args: unknown[]) => unknown): void {
+        Object.getOwnPropertyNames(CustomEvents.prototype).forEach((propName) => {
+            if (propName === 'constructor') {
+                return;
+            }
+
+            if (Object.prototype.hasOwnProperty.call(func.prototype, propName)) {
+                return;
+            }
+
+            const descriptor = Object.getOwnPropertyDescriptor(CustomEvents.prototype, propName);
+            if (descriptor) {
+                Object.defineProperty(func.prototype, propName, descriptor);
+            }
+        });
     }
 
     /**
