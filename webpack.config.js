@@ -61,6 +61,19 @@ module.exports = {
                 use: ['style-loader', 'css-loader', 'postcss-loader', 'sass-loader']
             },
             {
+                test: /\.module\.css$/,
+                use: [
+                    'style-loader',
+                    {
+                        loader: 'css-loader',
+                        options: {
+                            modules: true
+                        }
+                    },
+                    'postcss-loader'
+                ]
+            },
+            {
                 test: /\.(png|jpg|jpeg|gif|woff|svg|eot|ttf|woff2)$/i,
                 type: 'asset/resource'
             }
