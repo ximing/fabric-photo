@@ -7,8 +7,8 @@
         "docs:build": "dumi build",
         "docs:deploy": "gh-pages -d dist",
         "build": "father-build",
-        "deploy": "npm run docs:build && npm run docs:deploy",
-        "release": "npm run build && npm publish",
+        "deploy": "pnpm run docs:build && pnpm run docs:deploy",
+        "release": "pnpm run build && pnpm publish",
         "prettier": "prettier --write \"**/*.{js,jsx,tsx,ts,less,md,json}\"",
         "test": "umi-test",
         "test:coverage": "umi-test --coverage"
@@ -21,10 +21,10 @@
     },
     "devDependencies": {
         "@umijs/plugin-sass": "^1.1.1",
-        "@umijs/test": "^3.0.5",
-        "dumi": "^1.0.13",
-        "father-build": "^1.17.2",
-        "gh-pages": "^3.0.0",
+        "@umijs/test": "^4.6.31",
+        "dumi": "^2.4.23",
+        "father-build": "^1.22.5",
+        "gh-pages": "^6.3.0",
         "yorkie": "^2.0.0"
     }
 }

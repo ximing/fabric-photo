@@ -1,0 +1,339 @@
+{
+  "project": "fabric-photo",
+  "branchName": "ralph/typescript-src",
+  "description": "使用 TypeScript 重写 src 目录 - 完全替换所有 JS 文件为 TS",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "添加 TypeScript 配置文件",
+      "description": "作为开发者，我需要配置 TypeScript 编译环境，以便项目能够正确编译。",
+      "acceptanceCriteria": [
+        "创建 tsconfig.json 文件",
+        "配置 strict: true 开启严格模式",
+        "配置 target: ES2015 或更高版本",
+        "配置 module: ESNext 支持 ES 模块",
+        "配置 outDir 指向 dist 目录",
+        "配置 include 包含 src 目录",
+        "TypeScript 编译无错误"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "安装 TypeScript 依赖",
+      "description": "作为开发者，我需要安装 TypeScript 依赖，以便项目能够使用 TypeScript 编译。",
+      "acceptanceCriteria": [
+        "安装 typescript 作为 devDependencies",
+        "安装 @types/fabric 类型声明",
+        "更新 package.json 添加 tsc 编译脚本",
+        "类型检查通过"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "创建 fabric 类型声明文件",
+      "description": "作为开发者，我需要为 fabric.js 创建类型声明文件，以便在 TypeScript 中使用时有类型提示。",
+      "acceptanceCriteria": [
+        "创建 src/types/fabric.d.ts 类型声明文件",
+        "声明 Canvas, Object, Image 等主要类型",
+        "类型检查通过"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "重写 src/command.js 为 TypeScript",
+      "description": "作为开发者，我需要将根命令文件重写为 TypeScript。",
+      "acceptanceCriteria": [
+        "重写 src/command.js 为 command.ts",
+        "添加适当的类型标注",
+        "TypeScript 编译无错误",
+        "运行时功能正常"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "重写 src/commands/base.js 为 TypeScript",
+      "description": "作为开发者，我需要将命令基类重写为 TypeScript。",
+      "acceptanceCriteria": [
+        "重写 src/commands/base.js 为 commands/base.ts",
+        "添加适当的类型标注",
+        "TypeScript 编译无错误",
+        "运行时功能正常"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "重写 src/consts.js 为 TypeScript",
+      "description": "作为开发者，我需要将常量文件重写为 TypeScript。",
+      "acceptanceCriteria": [
+        "重写 src/consts.js 为 consts.ts",
+        "添加适当的类型标注",
+        "TypeScript 编译无错误",
+        "运行时功能正常"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "重写 src/lib/util.js 为 TypeScript",
+      "description": "作为开发者，我需要将工具函数文件重写为 TypeScript。",
+      "acceptanceCriteria": [
+        "重写 src/lib/util.js 为 lib/util.ts",
+        "添加适当的类型标注",
+        "TypeScript 编译无错误",
+        "运行时功能正常"
+      ],
+      "priority": 7,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "重写 src/lib/event.js 为 TypeScript",
+      "description": "作为开发者，我需要将事件处理文件重写为 TypeScript。",
+      "acceptanceCriteria": [
+        "重写 src/lib/event.js 为 lib/event.ts",
+        "添加适当的类型标注",
+        "TypeScript 编译无错误",
+        "运行时功能正常"
+      ],
+      "priority": 8,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "重写 src/lib/custom-event.js 为 TypeScript",
+      "description": "作为开发者，我需要将自定义事件文件重写为 TypeScript。",
+      "acceptanceCriteria": [
+        "重写 src/lib/custom-event.js 为 lib/custom-event.ts",
+        "添加适当的类型标注",
+        "TypeScript 编译无错误",
+        "运行时功能正常"
+      ],
+      "priority": 9,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "重写 src/lib/canvas-to-blob.js 为 TypeScript",
+      "description": "作为开发者，我需要将 canvas 转 blob 文件重写为 TypeScript。",
+      "acceptanceCriteria": [
+        "重写 src/lib/canvas-to-blob.js 为 lib/canvas-to-blob.ts",
+        "添加适当的类型标注",
+        "TypeScript 编译无错误",
+        "运行时功能正常"
+      ],
+      "priority": 10,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "重写 src/lib/shape-resize-helper.js 为 TypeScript",
+      "description": "作为开发者，我需要将形状调整辅助文件重写为 TypeScript。",
+      "acceptanceCriteria": [
+        "重写 src/lib/shape-resize-helper.js 为 lib/shape-resize-helper.ts",
+        "添加适当的类型标注",
+        "TypeScript 编译无错误",
+        "运行时功能正常"
+      ],
+      "priority": 11,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "重写 src/commands 目录为 TypeScript (部分)",
+      "description": "作为开发者，我需要将部分命令文件重写为 TypeScript。",
+      "acceptanceCriteria": [
+        "重写 src/commands/add-object.js",
+        "重写 src/commands/clear.js",
+        "重写 src/commands/load-image.js",
+        "TypeScript 编译无错误",
+        "运行时功能正常"
+      ],
+      "priority": 12,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-013",
+      "title": "重写 src/commands 目录为 TypeScript (剩余)",
+      "description": "作为开发者，我需要将剩余的命令文件重写为 TypeScript。",
+      "acceptanceCriteria": [
+        "重写 src/commands/remove.js",
+        "重写 src/commands/rotation-image.js",
+        "重写 src/commands/zoom.js",
+        "TypeScript 编译无错误",
+        "运行时功能正常"
+      ],
+      "priority": 13,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-014",
+      "title": "重写 src/modules/base.js 为 TypeScript",
+      "description": "作为开发者，我需要将模块基类重写为 TypeScript。",
+      "acceptanceCriteria": [
+        "重写 src/modules/base.js 为 modules/base.ts",
+        "添加适当的类型标注",
+        "TypeScript 编译无错误",
+        "运行时功能正常"
+      ],
+      "priority": 14,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-015",
+      "title": "重写 src/modules/main.js 为 TypeScript",
+      "description": "作为开发者，我需要将主模块重写为 TypeScript。",
+      "acceptanceCriteria": [
+        "重写 src/modules/main.js 为 modules/main.ts",
+        "添加适当的类型标注",
+        "TypeScript 编译无错误",
+        "运行时功能正常"
+      ],
+      "priority": 15,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-016",
+      "title": "重写 src/module.js 为 TypeScript",
+      "description": "作为开发者，我需要将模块入口文件重写为 TypeScript。",
+      "acceptanceCriteria": [
+        "重写 src/module.js 为 module.ts",
+        "添加适当的类型标注",
+        "TypeScript 编译无错误",
+        "运行时功能正常"
+      ],
+      "priority": 16,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-017",
+      "title": "重写 src/shape 目录为 TypeScript",
+      "description": "作为开发者，我需要将 shape 目录下的文件重写为 TypeScript。",
+      "acceptanceCriteria": [
+        "重写 src/shape/arrow.js 为 shape/arrow.ts",
+        "重写 src/shape/cropzone.js 为 shape/cropzone.ts",
+        "重写 src/shape/mosaic.js 为 shape/mosaic.ts",
+        "TypeScript 编译无错误",
+        "运行时功能正常"
+      ],
+      "priority": 17,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-018",
+      "title": "重写 src/index.js 为 TypeScript",
+      "description": "作为开发者，我需要将入口文件重写为 TypeScript。",
+      "acceptanceCriteria": [
+        "重写 src/index.js 为 index.ts",
+        "添加适当的类型标注和导出",
+        "TypeScript 编译无错误",
+        "导出 API 功能正常"
+      ],
+      "priority": 18,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-019",
+      "title": "重写 src/modules (drawing模块) 为 TypeScript",
+      "description": "作为开发者，我需要将绘制相关模块重写为 TypeScript。",
+      "acceptanceCriteria": [
+        "重写 src/modules/draw.js",
+        "重写 src/modules/line.js",
+        "重写 src/modules/shape.js",
+        "TypeScript 编译无错误",
+        "运行时功能正常"
+      ],
+      "priority": 19,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-020",
+      "title": "重写 src/modules (图像模块) 为 TypeScript",
+      "description": "作为开发者，我需要将图像处理相关模块重写为 TypeScript。",
+      "acceptanceCriteria": [
+        "重写 src/modules/mosaic.js",
+        "重写 src/modules/mosaic.1.js",
+        "重写 src/modules/mosaic.2.js",
+        "TypeScript 编译无错误",
+        "运行时功能正常"
+      ],
+      "priority": 20,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-021",
+      "title": "重写 src/modules (箭头模块) 为 TypeScript",
+      "description": "作为开发者，我需要将箭头相关模块重写为 TypeScript。",
+      "acceptanceCriteria": [
+        "重写 src/modules/arrow.js",
+        "重写 src/modules/arrow.2.js",
+        "TypeScript 编译无错误",
+        "运行时功能正常"
+      ],
+      "priority": 21,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-022",
+      "title": "重写 src/modules (其他模块) 为 TypeScript",
+      "description": "作为开发者，我需要将其他模块重写为 TypeScript。",
+      "acceptanceCriteria": [
+        "重写 src/modules/cropper.js",
+        "重写 src/modules/image-loader.js",
+        "重写 src/modules/pan.js",
+        "重写 src/modules/rotation.js",
+        "重写 src/modules/text.js",
+        "TypeScript 编译无错误",
+        "运行时功能正常"
+      ],
+      "priority": 22,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-023",
+      "title": "更新构建配置并删除旧JS文件",
+      "description": "作为开发者，我需要更新构建配置以支持 TypeScript，并删除已重写的旧 JS 文件。",
+      "acceptanceCriteria": [
+        "更新 rollup.config.js 使用 TypeScript",
+        "删除所有已重写的 .js 文件",
+        "项目能够正常构建",
+        "运行时功能正常"
+      ],
+      "priority": 23,
+      "passes": true,
+      "notes": ""
+    }
+  ]
+}
