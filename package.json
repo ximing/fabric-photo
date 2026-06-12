@@ -21,7 +21,7 @@
     },
     "dependencies": {
         "classnames": "^2.5.1",
-        "fabric": "1.7.3",
+        "fabric": "7.4.0",
         "lucide-react": "^0.344.0",
         "tailwindcss": "^3.4.1"
     },
