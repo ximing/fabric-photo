@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@gmi/fp-core": "workspace:*",
-    "lucide-react": "^0.344.0"
+    "lucide-react": "^0.577.0"
   },
   "peerDependencies": {
     "react": ">=18",
