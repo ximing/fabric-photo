@@ -19,7 +19,7 @@
 
 ## 3. 全局规则
 
-- 包管理器统一使用 pnpm（`pnpm@10.33.0`）
+- 包管理器统一使用 pnpm（`pnpm@10.33.0`）；Node 22（见 `.nvmrc`）
 - 全部包 TypeScript strict；改动后必须通过 `pnpm typecheck`（即 `pnpm -r typecheck`）
 - fabric 锁定 6.x，且只允许出现在 `packages/core` 内部：core 的公开 API 与 react 包均不得暴露 fabric 类型
 - `packages/react` 只允许 import `@gmi/fp-core` 的公开 API（`packages/core/src/index.ts` 导出面），不得触碰 core 内部路径
