@@ -1,0 +1,62 @@
+# Dependabot version updates for the pnpm workspace + GitHub Actions.
+# Security alerts / security PRs are already enabled at the repo level.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directories:
+      - /
+      - /packages/core
+      - /packages/react
+      - /demo
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 8
+    labels:
+      - dependencies
+    commit-message:
+      prefix: 'chore'
+      include: scope
+    groups:
+      production-minor-and-patch:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+      development-minor-and-patch:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+    ignore:
+      # fabric 锁定 6.x；升 7 是主版本迁移，见 README 安全说明
+      - dependency-name: fabric
+        update-types:
+          - version-update:semver-major
+      - dependency-name: tailwindcss
+        update-types:
+          - version-update:semver-major
+      - dependency-name: typescript
+        update-types:
+          - version-update:semver-major
+      - dependency-name: lucide-react
+        update-types:
+          - version-update:semver-major
+      - dependency-name: jsdom
+        update-types:
+          - version-update:semver-major
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    labels:
+      - dependencies
+    commit-message:
+      prefix: 'ci'
+      include: scope
+    groups:
+      github-actions:
+        patterns:
+          - '*'
