@@ -120,7 +120,7 @@ function App() {
 1. **不触及 SVG 攻击面**：两条漏洞均只存在于 fabric 的 SVG 导出/序列化路径。本项目导出仅走位图（PNG/Blob，见「导出功能」），代码中不调用 `toSVG` / `toObject` SVG 序列化相关 API，攻击面不可达。
 2. **锁 6.x 是架构决定**：fabric 仅作为内核 state 的渲染投影被封装在 `@gmi/fp-core` 内部（公开 API 不暴露任何 fabric 类型），升级到 fabric 7 属于主版本迁移，收益仅为消除两条不可达告警，风险/收益不匹配。
 
-其余依赖漏洞通过 root `package.json` 的 `pnpm.overrides` 钉版修复（`tar >=7.5.21`、`esbuild >=0.28.1`），新增依赖时请复查 `pnpm audit`。
+其余依赖漏洞通过 root `package.json` 的 `pnpm.overrides` 钉版修复（`tar >=7.5.21`、`esbuild >=0.28.1`、`nanoid ^3.3.18`），新增依赖时请复查 `pnpm audit`。
 
 ## 📄 License
 
