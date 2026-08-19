@@ -17,17 +17,6 @@ updates:
     commit-message:
       prefix: 'chore'
       include: scope
-    groups:
-      production-minor-and-patch:
-        dependency-type: production
-        update-types:
-          - minor
-          - patch
-      development-minor-and-patch:
-        dependency-type: development
-        update-types:
-          - minor
-          - patch
     ignore:
       # fabric 锁定 6.x；升 7 是主版本迁移，见 README 安全说明
       - dependency-name: fabric
@@ -39,9 +28,8 @@ updates:
       - dependency-name: typescript
         update-types:
           - version-update:semver-major
+      # 0.x 跨小版本常不兼容；Dependabot 用 pnpm -r 更新时还会误装进其他 workspace
       - dependency-name: lucide-react
-        update-types:
-          - version-update:semver-major
       - dependency-name: jsdom
         update-types:
           - version-update:semver-major
