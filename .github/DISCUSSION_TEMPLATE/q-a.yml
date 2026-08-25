@@ -1,0 +1,54 @@
+title: "[提问] "
+labels:
+  - question
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 遇到的问题
+      description: 简明描述你想达成什么、实际发生了什么。
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+      description: |
+        越具体越好；可贴 `Editor.dispatch()` 或调用代码片段。
+      render: ts
+    validations:
+      required: false
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: 已尝试的排查
+      description: 已经检查过哪些东西？（如 typecheck / vitest / 画布截图 / 浏览器控制台）
+    validations:
+      required: false
+
+  - type: dropdown
+    id: env-pkg
+    attributes:
+      label: 使用哪个包
+      options:
+        - "@gmi/fp-core（含无头模式）"
+        - "@gmi/fp-react"
+        - demo 演示站
+        - 自行 fork / 集成
+    validations:
+      required: true
+
+  - type: input
+    id: env-browser
+    attributes:
+      label: 浏览器与版本
+      description: 如 Chrome 130、Safari 17。canvas 行为在不同浏览器上差异较大。
+      placeholder: "Chrome 130"
+    validations:
+      required: false
+
+  - markdown: |
+      > 💡 提示：本项目锁定 fabric 6.x，是基于渲染投影的架构决定；
+      > 请勿建议通过升级 fabric 解决问题（理由见 README「安全说明」）。

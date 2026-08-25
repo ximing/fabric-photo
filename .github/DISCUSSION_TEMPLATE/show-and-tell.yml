@@ -1,0 +1,36 @@
+title: "[作品展示] "
+body:
+  - type: textarea
+    id: intro
+    attributes:
+      label: 作品介绍
+      description: 用 fabric-photo 做了什么？讲讲背景或思路。
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: features
+    attributes:
+      label: 用到的功能
+      description: 勾选你用到的编辑能力（对应 README 功能特性）。
+      options:
+        - label: 图片裁剪（蚂蚁线 / 矩形直裁）
+        - label: 旋转
+        - label: 绘图工具（涂鸦 / 直线 / 箭头）
+        - label: 形状绘制（矩形 / 圆形 / 三角形）
+        - label: 文本编辑
+        - label: 马赛克
+        - label: 缩放 / 平移视口
+        - label: 撤销 / 重做
+        - label: 导出 PNG / Blob
+
+  - type: input
+    id: link
+    attributes:
+      label: 截图或在线链接
+      description: |
+        可贴图片、在线 demo 站，或你 fork 后部署的页面。
+        官方演示站：https://ximing.github.io/fabric-photo/
+      placeholder: "https://..."
+    validations:
+      required: false

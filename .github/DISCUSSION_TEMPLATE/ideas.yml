@@ -1,0 +1,60 @@
+title: "[功能建议] "
+labels:
+  - enhancement
+body:
+  - type: dropdown
+    id: scope
+    attributes:
+      label: 涉及范围
+      description: 这个建议主要影响哪个包？
+      options:
+        - "@gmi/fp-core（内核：Doc / Step / Transaction）"
+        - "@gmi/fp-react（Figma 式 React 组件）"
+        - demo 演示站（Vite + React，GitHub Pages）
+        - 跨包 / 架构级
+    validations:
+      required: true
+
+  - type: textarea
+    id: goals
+    attributes:
+      label: 目标
+      description: 这个功能想解决什么问题？用短列表说明。
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: non-goals
+    attributes:
+      label: 非目标
+      description: 这个功能 _不_ 打算解决什么？避免范围蔓延。
+      value: |
+        1.
+        2.
+    validations:
+      required: false
+
+  - type: textarea
+    id: background
+    attributes:
+      label: 背景与现状
+      description: 有哪些现有替代方案或先例？为什么现在需要它？
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 提案
+      description: |
+        希望如何实现？是否愿意贡献 PR？
+        若涉及内核架构（Doc / Step / Transaction），请说明对 dispatch 管线
+        （filter → apply → appendTransaction → state → history → renderer → 事件）
+        以及 undo/redo 收账的影响。
+      render: ts
+    validations:
+      required: true
