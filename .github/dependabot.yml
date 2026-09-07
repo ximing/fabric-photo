@@ -1,5 +1,8 @@
-# Dependabot version updates for the pnpm workspace + GitHub Actions.
-# Security alerts / security PRs are already enabled at the repo level.
+# Dependabot 配置
+# 计划性版本更新（version updates）已禁用：不再开常规依赖升级 PR。
+# 安全更新（security updates）在仓库 Settings → Code security 处开启，
+# 与本文件无关——出现漏洞时 Dependabot 仍会照常提安全修复 PR。
+# 需要常规升级时，临时把对应 ecosystem 的 open-pull-requests-limit 调回 >0 即可。
 version: 2
 updates:
   - package-ecosystem: npm
@@ -11,12 +14,14 @@ updates:
     schedule:
       interval: weekly
       day: monday
-    open-pull-requests-limit: 8
+    # 0 = 关闭计划性版本更新 PR；安全 PR 不受此限制
+    open-pull-requests-limit: 0
     labels:
       - dependencies
     commit-message:
       prefix: 'chore'
       include: scope
+    # 仍记录锁定/忽略规则，便于重新放开时复用
     ignore:
       # fabric 锁定 6.x；升 7 是主版本迁移，见 README 安全说明
       - dependency-name: fabric
@@ -39,6 +44,8 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    # 0 = 关闭计划性版本更新 PR；安全 PR 不受此限制
+    open-pull-requests-limit: 0
     labels:
       - dependencies
     commit-message:
