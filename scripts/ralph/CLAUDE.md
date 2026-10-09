@@ -11,9 +11,9 @@ You are an autonomous coding agent working on a software project.
 5. Implement that single user story
 6. Run quality checks (e.g., typecheck, lint, test - use whatever your project requires)
 7. Update CLAUDE.md files if you discover reusable patterns (see below)
-8. If checks pass, commit ALL changes with message: `feat: [Story ID] - [Story Title]`
-9. Update the PRD to set `passes: true` for the completed story
-10. Append your progress to `progress.txt`
+8. Update the PRD to set `passes: true` for the completed story
+9. Append your progress to `progress.txt`
+10. Do not create git commits unless the user explicitly asks
 
 ## Progress Report Format
 
@@ -47,7 +47,7 @@ Only add patterns that are **general and reusable**, not story-specific details.
 
 ## Update CLAUDE.md Files
 
-Before committing, check if any edited files have learnings worth preserving in nearby CLAUDE.md files:
+Before finishing a story, check if any edited files have learnings worth preserving in nearby CLAUDE.md files:
 
 1. **Identify directories with edited files** - Look at which directories you modified
 2. **Check for existing CLAUDE.md** - Look for CLAUDE.md in those directories or parent directories
@@ -75,8 +75,8 @@ Only update CLAUDE.md if you have **genuinely reusable knowledge** that would he
 
 ## Quality Requirements
 
-- ALL commits must pass your project's quality checks (typecheck, lint, test)
-- Do NOT commit broken code
+- Changes must pass your project's quality checks (typecheck, lint, test)
+- Do not leave broken code
 - Keep changes focused and minimal
 - Follow existing code patterns
 
@@ -102,6 +102,5 @@ If there are still stories with `passes: false`, end your response normally (ano
 ## Important
 
 - Work on ONE story per iteration
-- Commit frequently
 - Keep CI green
 - Read the Codebase Patterns section in progress.txt before starting
