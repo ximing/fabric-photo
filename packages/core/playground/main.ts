@@ -173,6 +173,9 @@ editor.on('historyChange', (sizes) => {
 editor.on('loadImage', ({ name, width, height }) => {
     console.log('loadImage', name, width, height);
 });
+editor.on('loadImageError', ({ url, error }) => {
+    console.error('loadImageError', url, error);
+});
 editor.on('clearImage', () => {
     console.log('clearImage');
 });

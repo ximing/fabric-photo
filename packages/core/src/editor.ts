@@ -96,6 +96,14 @@ export class Editor {
     private readonly mosaicController?: MosaicController;
     /** crop controller（同上，仅 FabricRenderer 存在时创建）。 */
     private readonly cropController?: CropController;
+    /** 背景图加载代数：每次 `loadImageFromURL` 开始 ++；await 回来对不上则不 dispatch。 */
+    private loadGeneration = 0;
+    /** 贴图加载代数：重叠 `addImageObject` 后发请求赢。 */
+    private addImageGeneration = 0;
+    /** 是否有进行中的 `loadImageFromURL`（瞬时态，不进 Doc / EditorState）。 */
+    private imageLoading = false;
+    /** `destroy()` 后拒绝再 dispatch / 完成中的加载。 */
+    private destroyed = false;
 
     constructor(options: EditorOptions = {}) {
         this.currentState = new EditorState();
@@ -149,11 +157,24 @@ export class Editor {
         return this.historyPlugin;
     }
 
+    /** 是否有进行中的 `loadImageFromURL`（不在 Doc / EditorState 上，瞬时态不能 undo）。 */
+    get isLoadingImage(): boolean {
+        return this.imageLoading;
+    }
+
     newTransaction(): Transaction {
         return new Transaction(this.currentState);
     }
 
     dispatch(tr: Transaction): void {
+        if (this.destroyed) {
+            return;
+        }
+        // 加载中丢掉改 doc 的事务；viewport / selection / mode-only 放行。
+        // 即将落盘的 SetBackground 在 await 回来后先关 loading 再 dispatch，因此不会被挡。
+        if (this.imageLoading && tr.docChanged) {
+            return;
+        }
         const oldState = this.currentState;
         // ① filterTransaction：任一 false → 整体丢弃
         for (const plugin of this.plugins) {
@@ -163,7 +184,7 @@ export class Editor {
         }
         // ② apply
         let newState = oldState.apply(tr);
-        // ③ appendTransaction：返回值继续 apply
+        // ③ appendTransaction：返回值继续 apply（不重入 dispatch，不独立进历史）
         for (const plugin of this.plugins) {
             const appended = plugin.appendTransaction?.(tr, oldState, newState);
             if (appended !== null && appended !== undefined) {
@@ -271,15 +292,40 @@ export class Editor {
 
     /**
      * 从 URL 加载背景图：探测原始宽高 → dispatch SetBackground → fire loadImage。
-     * 加载失败 reject 且 state 不变。
+     * 开始时 fire loadImageStart、`isLoadingImage` 为 true；await 期间丢掉改 doc 的事务。
+     * 重叠调用后发请求赢（generation）；`destroy` 于 await 期间回来不 dispatch。
+     * 加载失败 fire loadImageError、reject，且 state 不变、清 loading。
      */
     async loadImageFromURL(url: string, imageName: string): Promise<void> {
         if (!url || !imageName) {
             throw new Error('loadImageFromURL requires both url and imageName');
         }
-        const img = await preloadImage(url);
+        if (this.destroyed) {
+            return;
+        }
+        const generation = ++this.loadGeneration;
+        this.imageLoading = true;
+        this.emitter.emit('loadImageStart', { url, name: imageName });
+        let img: HTMLImageElement;
+        try {
+            img = await preloadImage(url);
+        } catch (error: unknown) {
+            if (this.destroyed) {
+                return;
+            }
+            if (generation === this.loadGeneration) {
+                this.imageLoading = false;
+            }
+            this.emitter.emit('loadImageError', { url, error });
+            throw error;
+        }
+        if (this.destroyed || generation !== this.loadGeneration) {
+            return;
+        }
         const width = img.naturalWidth || img.width;
         const height = img.naturalHeight || img.height;
+        // 先关 loading 再同步 dispatch，这笔 SetBackground 不会被加载中 filter 丢掉
+        this.imageLoading = false;
         this.dispatch(
             this.newTransaction().addStep(new SetBackground({ src: url, width, height, name: imageName, angle: 0 }))
         );
@@ -308,7 +354,29 @@ export class Editor {
         if (bg === null) {
             throw new Error('addImageObject requires a loaded background image');
         }
-        const img = await preloadImage(imgUrl);
+        if (this.destroyed) {
+            return;
+        }
+        const loadGen = this.loadGeneration;
+        const addGen = ++this.addImageGeneration;
+        let img: HTMLImageElement;
+        try {
+            img = await this.preloadOrReport(imgUrl);
+        } catch (error: unknown) {
+            if (this.destroyed) {
+                return;
+            }
+            throw error;
+        }
+        if (
+            this.destroyed ||
+            addGen !== this.addImageGeneration ||
+            loadGen !== this.loadGeneration ||
+            this.currentState.doc.background !== bg ||
+            this.imageLoading
+        ) {
+            return;
+        }
         const width = img.naturalWidth || img.width;
         const height = img.naturalHeight || img.height;
         const object: ImageObject = {
@@ -325,6 +393,16 @@ export class Editor {
         };
         this.dispatch(this.newTransaction().addStep(new AddObject(object)));
         this.emitter.emit('objectAdded', { object });
+    }
+
+    /** preload 失败时 fire loadImageError 再抛出，让 promise API 与事件通道同时可见。 */
+    private async preloadOrReport(url: string): Promise<HTMLImageElement> {
+        try {
+            return await preloadImage(url);
+        } catch (error: unknown) {
+            this.emitter.emit('loadImageError', { url, error });
+            throw error;
+        }
     }
 
     // —— 便捷查询 ——
@@ -1354,6 +1432,8 @@ export class Editor {
     }
 
     destroy(): void {
+        this.destroyed = true;
+        this.imageLoading = false;
         this.renderer?.destroy();
         for (const plugin of this.plugins) {
             plugin.destroy?.();

@@ -61,6 +61,8 @@ export class FabricRenderer implements Renderer {
     /** fpId → 上次同步用的 EditorObject 引用（不可变更新检测） */
     private readonly refMap = new Map<string, EditorObject>();
     private readonly pendingSrcs = new Set<string>();
+    /** 同一 src 投影失败只 fire 一次 loadImageError（syncBackground 与 ensureImageAndRefresh 可能共用同一 pending promise）。 */
+    private readonly reportedErrorSrcs = new Set<string>();
     private bgRef: BackgroundImage | null | undefined; // undefined = 从未同步
     private bgGeneration = 0;
     private mode: EditorMode = 'normal';
@@ -231,6 +233,7 @@ export class FabricRenderer implements Renderer {
         this.objectMap.clear();
         this.refMap.clear();
         this.pendingSrcs.clear();
+        this.reportedErrorSrcs.clear();
     }
 
     // —— 内部 ——
@@ -258,6 +261,7 @@ export class FabricRenderer implements Renderer {
             this.fabricCanvas.backgroundImage = undefined;
             return;
         }
+        this.reportedErrorSrcs.delete(bg.src);
         void preloadImage(bg.src)
             .then((imgEl) => {
                 if (this.destroyed || generation !== this.bgGeneration) {
@@ -275,8 +279,11 @@ export class FabricRenderer implements Renderer {
                 this.fabricCanvas.backgroundImage = img;
                 this.fabricCanvas.requestRenderAll();
             })
-            .catch(() => {
-                // 加载失败静默跳过；错误通道由 Task 9 图片加载流程统一处理
+            .catch((error: unknown) => {
+                if (this.destroyed || generation !== this.bgGeneration) {
+                    return;
+                }
+                this.reportImageLoadError(bg.src, error);
             });
     }
 
@@ -330,6 +337,7 @@ export class FabricRenderer implements Renderer {
             return;
         }
         this.pendingSrcs.add(src);
+        this.reportedErrorSrcs.delete(src);
         void preloadImage(src)
             .then(() => {
                 this.pendingSrcs.delete(src);
@@ -340,9 +348,35 @@ export class FabricRenderer implements Renderer {
                 this.syncSelection(this.lastState);
                 this.fabricCanvas.requestRenderAll();
             })
-            .catch(() => {
+            .catch((error: unknown) => {
                 this.pendingSrcs.delete(src);
+                if (this.destroyed) {
+                    return;
+                }
+                this.reportImageLoadError(src, error);
             });
+    }
+
+    /**
+     * 投影加载失败：仅当 src 仍是当前背景或某个 image 对象时 fire loadImageError。
+     * 渲染层不回退 RemoveObject / 不改 state（编辑语义不归投影）。
+     */
+    private reportImageLoadError(url: string, error: unknown): void {
+        if (this.destroyed || this.reportedErrorSrcs.has(url)) {
+            return;
+        }
+        const state = this.lastState;
+        if (state === undefined) {
+            return;
+        }
+        const stillNeeded =
+            state.doc.background?.src === url ||
+            state.doc.objects.some((obj) => obj.kind === 'image' && obj.src === url);
+        if (!stillNeeded) {
+            return;
+        }
+        this.reportedErrorSrcs.add(url);
+        this.controllerContext?.fire('loadImageError', { url, error });
     }
 
     private syncSelection(state: EditorState): void {

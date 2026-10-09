@@ -7,7 +7,11 @@ export type EditorEventMap = {
     'change:mode': { mode: EditorMode; prevMode: EditorMode };
     'change:selection': { selection: readonly string[] };
     'change:viewport': { viewport: Viewport };
+    /** 背景图开始从 URL 加载（`isLoadingImage` 为 true）。成功落盘见 `loadImage`。 */
+    loadImageStart: { url: string; name: string };
     loadImage: { name: string; width: number; height: number };
+    /** 背景/贴图加载失败（CORS/404/坏 dataURL 等）。promise API 仍 reject；渲染层投影失败也会 fire。 */
+    loadImageError: { url: string; error: unknown };
     clearImage: Record<string, never>;
     historyChange: { undoSize: number; redoSize: number };
     objectAdded: { object: EditorObject };

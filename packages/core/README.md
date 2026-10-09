@@ -45,9 +45,15 @@ editor.on('loadImage', ({ width, height }) => {
 | `get state(): EditorState` | 当前不可变状态（doc / selection / viewport / mode） |
 | `get history(): History` | History 插件实例（undo/redo 栈尺寸等） |
 | `newTransaction(): Transaction` | 基于当前 state 新建事务 |
-| `dispatch(tr: Transaction): void` | 固定管线：filter → apply → append → 置 state → history → renderer → 事件 → 插件 |
+| `dispatch(tr: Transaction): void` | 固定管线：filter → apply → append → 置 state → history → renderer → 事件 → 插件。`isLoadingImage` 时丢掉改 `doc` 的事务（viewport/selection/mode-only 放行） |
 | `subscribe(listener): () => void` | 订阅 state 变化，返回退订函数 |
 | `on / once / off(name, handler?)` | 订阅语义事件（见下方事件清单） |
+
+### 插件
+
+`EditorOptions.plugins` 可追加自定义 `Plugin`（`history` / `keymap` 始终默认注册）。钩子：`filterTransaction` / `appendTransaction` / `onTransaction` / `destroy`。
+
+`appendTransaction` 是 **v1 有意简化**：返回值在本次 dispatch 里直接 `apply` 进最终 state，不重新走 filter、不重入 dispatch、不独立进历史。History 用原事务一次性收账。因此它只能用于必须与原事务捆绑的修正（如 selection 跟随），不能用于用户可能想单独撤销的改动——自动归一化应写进原 Step / Editor API，或另 `dispatch` 一笔事务。
 
 ### 撤销 / 重做
 
@@ -62,9 +68,10 @@ editor.on('loadImage', ({ width, height }) => {
 
 | 签名 | 说明 |
 | --- | --- |
-| `loadImageFromURL(url: string, imageName: string): Promise<void>` | 加载背景图并 fire `loadImage`；失败 reject 且 state 不变 |
-| `loadImageFromFile(imgFile: File, imageName?: string): Promise<void>` | FileReader → dataURL → `loadImageFromURL` |
-| `addImageObject(imgUrl: string): Promise<void>` | 贴一张新图片对象到背景中心并 fire `objectAdded`（需已加载背景） |
+| `loadImageFromURL(url: string, imageName: string): Promise<void>` | 加载背景图：开始 fire `loadImageStart`、`isLoadingImage` 为 true；成功 dispatch `SetBackground` 并 fire `loadImage`。重叠调用后发请求赢（generation）；`destroy` 于 await 期间回来不 dispatch。失败 fire `loadImageError`、reject 且 state 不变、清 loading |
+| `loadImageFromFile(imgFile: File, imageName?: string): Promise<void>` | FileReader → dataURL → `loadImageFromURL`（继承 generation / 加载中 filter） |
+| `addImageObject(imgUrl: string): Promise<void>` | 贴一张新图片对象到背景中心并 fire `objectAdded`（需已加载背景）；preload 失败 fire `loadImageError`、reject 且不落对象。await 期间 `destroy` / 换背景 / 重叠调用后发请求赢则不 dispatch |
+| `get isLoadingImage(): boolean` | 是否有进行中的 `loadImageFromURL`（瞬时态，不在 Doc / EditorState 上，不能 undo） |
 
 ### 便捷查询
 
@@ -276,7 +283,7 @@ UpdateObject 入历史）。吸附计算为纯函数 `computeSnap`（`src/render
 
 | 签名 | 说明 |
 | --- | --- |
-| `destroy(): void` | 销毁 renderer、插件、全部订阅与事件监听 |
+| `destroy(): void` | 销毁 renderer、插件、全部订阅与事件监听；进行中的 `loadImageFromURL` / `addImageObject` 回来不 dispatch |
 
 ## 事件清单（EditorEventMap）
 
@@ -288,7 +295,9 @@ UpdateObject 入历史）。吸附计算为纯函数 `computeSnap`（`src/render
 | `change:mode` | `{ mode, prevMode }` | 模式切换（startXxx/endXxx/endAll 等） |
 | `change:selection` | `{ selection: readonly string[] }` | 选中集变化（点击选择、deactivateAll、删除对象等） |
 | `change:viewport` | `{ viewport }` | zoom/pan 变化（setZoom、拖拽平移、refit 等） |
-| `loadImage` | `{ name, width, height }` | `loadImageFromURL` / `loadImageFromFile` 成功 |
+| `loadImageStart` | `{ url, name }` | `loadImageFromURL` / `loadImageFromFile` 开始加载（`isLoadingImage` 变为 true） |
+| `loadImage` | `{ name, width, height }` | `loadImageFromURL` / `loadImageFromFile` 成功落盘（`isLoadingImage` 变为 false） |
+| `loadImageError` | `{ url, error }` | 背景/贴图加载失败（`loadImageFromURL` / `addImageObject` 的 preload，或渲染层对当前背景/image 对象的投影加载）。promise API 仍 reject；当前这次失败时 `isLoadingImage` 变为 false |
 | `clearImage` | `{}` | 背景从有到无（含 undo 加载/换图） |
 | `historyChange` | `{ undoSize, redoSize }` | undo/redo 栈尺寸变化 |
 | `objectAdded` | `{ object }` | `addImageObject` / `addShape` / `addText` 成功 |
