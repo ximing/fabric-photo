@@ -53,6 +53,10 @@ export function createTextObject(text: string, left: number, top: number, styles
  *   （对齐旧「空文本自动 remove」）
  * - 编辑中点击别处仅退出编辑不新建（对齐旧 isPrevEditing 语义）；deactivate 时
  *   若仍在编辑先 exitEditing（同步触发 editing:exited 完成提交）
+ * - 外部 RemoveObject/undo 走 renderer.syncObjects → canvas.remove：fabric 不对
+ *   非 active 的 IText 调 exitEditing（text 模式本来就不选中），editing:exited
+ *   不会 fire。startEditing 同时 once('removed')：摘掉时卸载 exited、清 ref、
+ *   exitEditing 收 hiddenTextarea，且不 dispatch UpdateObject
  * - text 模式下 IText 保持 evented（selectable 仍由 renderer 关闭）供双击命中；
  *   编辑态不选中对象，因此 fabric 原生 onDeselect 退出路径不触发，退出全由本 controller 显式驱动
  */
@@ -62,6 +66,8 @@ export class TextController implements Controller {
     private ctx: ControllerContext | undefined;
     private active = false;
     private editing: IText | undefined;
+    /** startEditing 挂的 once('editing:exited'|'removed') 成对卸载。 */
+    private unbindEditing: (() => void) | undefined;
 
     isEditing(): boolean {
         return this.editing !== undefined;
@@ -91,12 +97,38 @@ export class TextController implements Controller {
             return;
         }
         this.editing?.exitEditing(); // 先提交当前编辑（同步 fire editing:exited）
+        this.unbindEditing?.();
         this.editing = itext;
         itext.set({ editable: true });
-        itext.once('editing:exited', () => {
+        let offExited: () => void = () => undefined;
+        let offRemoved: () => void = () => undefined;
+        offExited = itext.once('editing:exited', () => {
+            this.unbindEditing = undefined;
+            offRemoved();
             this.commitEditing(itext);
         });
+        offRemoved = itext.once('removed', () => {
+            this.unbindEditing = undefined;
+            offExited();
+            this.abandonEditing(itext);
+        });
+        this.unbindEditing = () => {
+            offExited();
+            offRemoved();
+            this.unbindEditing = undefined;
+        };
         itext.enterEditing();
+    }
+
+    /** canvas.remove 摘掉正在编辑的 IText：清 ref / 收 IME 控件，不把草稿写回 state。 */
+    private abandonEditing(itext: IText): void {
+        itext.set({ editable: false });
+        if (this.editing === itext) {
+            this.editing = undefined;
+        }
+        if (itext.isEditing) {
+            itext.exitEditing();
+        }
     }
 
     private commitEditing(itext: IText): void {
@@ -115,6 +147,10 @@ export class TextController implements Controller {
         const obj = ctx.getState().getObject(fpId);
         if (obj === undefined || obj.kind !== 'text') {
             return; // 编辑期间对象已被移除（如 clearObjects），无需提交
+        }
+        // canvas.remove 后 object.canvas 为 undefined；同 id 可能已被 undo 还原到新 IText
+        if (itext.canvas === undefined) {
+            return;
         }
         const text = itext.text;
         if (text.trim() === '') {
@@ -185,6 +221,8 @@ export class TextController implements Controller {
         const { canvas } = this.ctx;
         // 仍在编辑 → 先退出（同步触发 editing:exited 完成提交，此时 ctx 仍有效）
         this.editing?.exitEditing();
+        this.unbindEditing?.();
+        this.editing = undefined;
         canvas.off('mouse:down', this.onMouseDown);
         canvas.off('mouse:dblclick', this.onDblClick);
         canvas.off('object:added', this.onObjectAdded);

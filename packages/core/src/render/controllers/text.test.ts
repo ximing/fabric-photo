@@ -45,19 +45,67 @@ function lastAddedText(dispatched: Transaction[]): TextObject {
     return (step as AddObject).object as TextObject;
 }
 
-/** 伪 IText：承载 commitEditing 需要的 text/data/exitEditing（node 环境无法构造真 IText）。 */
+type FakeHandler = () => void;
+
+/** 伪 IText：once/off/fire 最小事件总线；simulateCanvasRemove 对齐 fabric Canvas.remove（不 fire editing:exited）。 */
 function makeFakeIText(text: string, fpId: string) {
-    return {
+    const listeners = new Map<string, Set<FakeHandler>>();
+    const addListener = (name: string, fn: FakeHandler): (() => void) => {
+        let set = listeners.get(name);
+        if (set === undefined) {
+            set = new Set();
+            listeners.set(name, set);
+        }
+        set.add(fn);
+        return () => {
+            listeners.get(name)?.delete(fn);
+        };
+    };
+    const itext = {
         text,
         data: { fpId },
         isEditing: true,
+        /** 在画布上时非空；Canvas.remove 后为 undefined（对齐 fabric _onObjectRemoved）。 */
+        canvas: {} as object | undefined,
         set: vi.fn(),
-        once: vi.fn(),
-        enterEditing: vi.fn(),
-        exitEditing: vi.fn(function (this: { isEditing: boolean }) {
+        once: vi.fn((name: string, fn: FakeHandler) => {
+            const wrapped: FakeHandler = () => {
+                off();
+                fn();
+            };
+            const off = addListener(name, wrapped);
+            return off;
+        }),
+        off: vi.fn((name: string, fn?: FakeHandler) => {
+            if (fn === undefined) {
+                listeners.delete(name);
+                return;
+            }
+            listeners.get(name)?.delete(fn);
+        }),
+        enterEditing: vi.fn(function (this: { isEditing: boolean }) {
+            this.isEditing = true;
+        }),
+        exitEditing: vi.fn(function (this: { isEditing: boolean; fire: (n: string) => void }) {
             this.isEditing = false;
-        })
-    } as unknown as IText;
+            this.fire('editing:exited');
+        }),
+        fire(name: string): void {
+            for (const fn of [...(listeners.get(name) ?? [])]) {
+                fn();
+            }
+        },
+        /** 模拟 renderer.syncObjects → canvas.remove：只 fire removed，不 exitEditing。 */
+        simulateCanvasRemove(): void {
+            this.canvas = undefined;
+            this.fire('removed');
+        }
+    };
+    return itext as unknown as IText & { fire: (name: string) => void; simulateCanvasRemove: () => void };
+}
+
+function startEditing(controller: TextController, itext: IText): void {
+    (controller as unknown as { startEditing(target: IText): void }).startEditing(itext);
 }
 
 describe('createTextObject', () => {
@@ -160,5 +208,63 @@ describe('TextController', () => {
         expect(harness.canvas.off).toHaveBeenCalledWith('mouse:down', expect.any(Function));
         expect(harness.canvas.off).toHaveBeenCalledWith('mouse:dblclick', expect.any(Function));
         expect(harness.canvas.defaultCursor).toBe('default');
+    });
+
+    it('startEditing 后 exitEditing：文本变化 → UpdateObject', () => {
+        const textObj = createTextObject('原文', 0, 0);
+        const state = new EditorState({ doc: { background: null, objects: [textObj] } });
+        const harness = makeHarness(state);
+        const controller = new TextController();
+        controller.activate(harness.ctx);
+
+        const itext = makeFakeIText('新文本', textObj.id);
+        startEditing(controller, itext);
+        expect(controller.isEditing()).toBe(true);
+        itext.exitEditing();
+        expect(controller.isEditing()).toBe(false);
+        expect(harness.dispatched).toHaveLength(1);
+        expect(harness.dispatched[0].steps[0]).toBeInstanceOf(UpdateObject);
+        expect((harness.dispatched[0].steps[0] as UpdateObject).attrs).toEqual({ text: '新文本' });
+    });
+
+    it('canvas.remove 不触发 editing:exited：中止编辑、不 UpdateObject，事后 exited 也不补提交', () => {
+        const textObj = createTextObject('原文', 0, 0);
+        const state = new EditorState({ doc: { background: null, objects: [textObj] } });
+        const harness = makeHarness(state);
+        const controller = new TextController();
+        controller.activate(harness.ctx);
+
+        const itext = makeFakeIText('IME未提交', textObj.id);
+        startEditing(controller, itext);
+        expect(controller.isEditing()).toBe(true);
+
+        // fabric Canvas.remove：fire removed，不 fire editing:exited（text 模式 IText 非 active）
+        itext.simulateCanvasRemove();
+
+        expect(controller.isEditing()).toBe(false);
+        expect(itext.exitEditing).toHaveBeenCalledTimes(1);
+        expect(harness.dispatched).toHaveLength(0);
+
+        // 同 id 仍在 state（undo 还原后新 IText 上画布、旧实例监听若未卸会误提交）
+        itext.fire('editing:exited');
+        expect(harness.dispatched).toHaveLength(0);
+        expect(controller.isEditing()).toBe(false);
+    });
+
+    it('deactivate 时对象已被 canvas.remove：不抛错、不补 UpdateObject', () => {
+        const textObj = createTextObject('原文', 0, 0);
+        const state = new EditorState({ doc: { background: null, objects: [textObj] } });
+        const harness = makeHarness(state);
+        const controller = new TextController();
+        controller.activate(harness.ctx);
+        const itext = makeFakeIText('IME未提交', textObj.id);
+        startEditing(controller, itext);
+        itext.simulateCanvasRemove();
+
+        expect(() => {
+            controller.deactivate();
+        }).not.toThrow();
+        expect(harness.dispatched).toHaveLength(0);
+        expect(controller.isEditing()).toBe(false);
     });
 });
