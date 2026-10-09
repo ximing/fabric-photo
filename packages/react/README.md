@@ -1,6 +1,6 @@
 # @gmi/fp-react
 
-基于 [`@gmi/fp-core`](../core) 的 Figma 式 React 图片编辑器 UI 组件包：顶栏（撤销/重做、缩放、导出）、左工具栏（10 个工具）、工具选项条（裁剪 Apply/Cancel、线宽、形状类型、马赛克粒度、色板）、灰底画布区、右列图层面板（顺序/选中/隐藏/锁定）与选中驱动的属性面板。全部交互走 core 的命令/事务层，操作均可撤销。
+基于 [`@gmi/fp-core`](../core) 的照片标注编辑器：缺省壳是铺满的画布、贴顶的两枚玻璃胶囊（左：图名、上传、撤销/重做；右：缩放、主题、导出）、底部工具坞（图标 + 中文，三组：查看 / 标注 / 照片）、坞上方的工具选项、按需打开的调整浮层与图层浮层、有选中才出现的属性卡。全部交互走 core 的命令/事务层，操作均可撤销。
 
 ## 安装
 
@@ -27,26 +27,27 @@ function App() {
                 src="/photo.jpg"
                 onReady={(editor) => console.log('ready', editor)}
                 onChange={(state) => console.log('mode', state.mode)}
+                onError={({ url, error }) => console.error('image load failed', url, error)}
             />
         </div>
     );
 }
 ```
 
-`<FabricPhotoEditor>` 渲染完整骨架（TopBar + Toolbar + CanvasView（内含 FloatingOptions 浮动条 + ZoomControls 缩放胶囊）+ 右列侧栏：LayersPanel 在上、PropertiesPanel 在下），并负责创建/销毁 core `Editor`。注意父容器需提供尺寸（编辑器根节点 `width/height: 100%`）。
+`<FabricPhotoEditor>` 缺省 children 为 TopBar + CanvasView + 内部的 DefaultChrome（底部工具坞、坞上方选项、调整/图层浮层、有选中才出现的属性卡），并负责创建/销毁 core `Editor`。注意父容器需提供尺寸（编辑器根节点 `width/height: 100%`）。DefaultChrome 不从包入口导出。
 
 ## 组件清单
 
 | 组件 | 说明 |
 | --- | --- |
-| `FabricPhotoEditor` | 组合骨架 + Editor 生命周期；`src`/`imageName`/`cssMaxWidth`/`cssMaxHeight`/`onReady`/`onChange`/`className`/`children` |
-| `TopBar` | 图名、undo/redo（historyChange 事件驱动禁用态）、主题切换、导出弹层（Esc/点外部关闭）：格式 PNG/JPEG/WebP、质量滑杆（仅 JPEG/WebP，0.1..1 步进 0.05 默认 0.9）、倍率 1x/2x/3x、范围整图/仅选中（无选中禁用）；确认导出走 core `toDataURL`，文件名 `<图名>-<宽>x<高>@<倍率>x[-selection].<ext>` |
-| `Toolbar` | 左侧 10 工具图标按钮（选择/裁剪/旋转/箭头/画笔/直线/形状/文字/马赛克/平移） |
-| `FloatingOptions` | 画布顶部浮动工具选项条，仅绘制/crop 模式出现（其余 mode 返回 null）：crop→Apply/Cancel；画笔类→线宽+色板；shape→形状类型+色板；mosaic→粒度 |
-| `ZoomControls` | 画布底部居中浮动缩放胶囊：− / 百分比（点击复位 100%）/ ＋，步长 0.2（`setZoom`） |
-| `CanvasView` | 灰底画布区（`#e5e5e5`），ResizeObserver → `editor.notifyResize()` |
-| `LayersPanel` | 图层面板：列出 doc.objects（顶层在前 = 数组倒序），每项类型图标 + 名称（kind 中文名 + 同类序号，如「矩形 3」）+ 隐藏/锁定切换按钮；点击选中、Shift 加选/减选（`selectObjects`），HTML5 拖拽排序（`moveObjectToIndex`），选中项高亮，空列表占位文案 |
-| `PropertiesPanel` | 选中驱动表单：shape/text/path 颜色与尺寸（可撤销）、mosaic 只读信息、多选删除；多选有「对齐分布」按钮组（6 对齐 + 2 分布，`alignActiveObjects`/`distributeActiveObjects`，≥3 选中才启用分布）；单选/多选均有「不透明度」滑杆（0..100 ↔ 0..1，`setObjectOpacity` + mergeKey 连续拖动一个 undo 条目）、图层顺序（置顶/上移/下移/置底）与翻转（水平/垂直）按钮组；单选 locked 对象显示「已锁定」提示并禁用几何类控件（描边宽度/字号/线宽）；无选中显示画布属性 +「背景调整」滤镜组（已加载背景时，亮度/对比度/饱和度/模糊滑杆 + 灰度/褐色/反色 + 重置，mergeKey 连续拖动一个 undo 条目）；单选 image 带同样的「图像调整」组（作用于该对象） |
+| `FabricPhotoEditor` | 组合骨架 + Editor 生命周期；`src`/`imageName`/`cssMaxWidth`/`cssMaxHeight`/`onReady`/`onChange`/`onError`/`className`/`children`。缺省 children 为 TopBar + CanvasView + DefaultChrome，不再包含右列 `fp-side-panel`。`onError` 订阅 core `loadImageError`（须在 `src` 的 `loadImageFromURL` 之前挂上）；promise reject 仍被组件 catch 以防未处理 rejection。背景图加载中根节点加 `fp-editor-loading`，画布区渲染 `fp-canvas-loading` overlay（订阅 `isLoadingImage` / `loadImageStart`） |
+| `TopBar` | 图名、上传图片（`loadImageFromFile`，位于图名与撤销之间）、undo/redo（historyChange 事件驱动禁用态）、内联 `ZoomControls`、主题切换、导出弹层（Esc/点外部关闭）：格式 PNG/JPEG/WebP、质量滑杆（仅 JPEG/WebP，0.1..1 步进 0.05 默认 0.9）、倍率 1x/2x/3x、范围整图/仅选中（无选中禁用）；确认导出走 core `toDataURL`，文件名 `<图名>-<宽>x<高>@<倍率>x[-selection].<ext>` |
+| `Toolbar` | 底部横向坞，10 个工具一次点击可达（视觉顺序：选择、平移、箭头、画笔、直线、形状、文字、马赛克、裁剪、旋转；`TOOLS` 数组顺序不变）。加载中全部 disabled。短标签始终可见 |
+| `FloatingOptions` | 坞上方的工具选项，仅绘制/crop 模式出现（其余 mode 返回 null，不再自己贴在画布顶）：crop→「完成 / 取消」；画笔类→线宽+色板；shape→形状类型+色板；mosaic→粒度 |
+| `ZoomControls` | 顶条内的内联控件：− / 百分比（点击复位 100%，`aria-label="重置缩放"`）/ ＋，步长 0.2（`setZoom`）。不再绝对贴在画布底；要浮动时用 `className` 自己覆写定位。没有「适配」按钮 |
+| `CanvasView` | 铺满的舞台底，ResizeObserver → `editor.notifyResize()`（保持 zoom/pan，按新容器重算居中） |
+| `LayersPanel` | 图层面板：列出 doc.objects（顶层在前 = 数组倒序），每项类型图标 + 名称（kind 中文名 + 同类序号，如「矩形 3」）+ 隐藏/锁定切换按钮；点击选中、Shift 加选/减选（`selectObjects`），HTML5 拖拽排序（`moveObjectToIndex`），选中项高亮。空态文案：「暂无图层，从底部工具坞绘制」。缺省壳里放在「图层」浮层中 |
+| `PropertiesPanel` | `section` 三档，默认 `'full'`（整板，兼容旧用法）。`full`：无选中显示只读缩放、背景尺寸或「未加载图片」、对象数，有背景才挂「背景调整」；有选中走对象表单，单选 image 带「图像调整」。`object`：无选中返回 null；有选中与 full 相同但不带滤镜。`filters`：只按滤镜目标渲染（背景调整 / 单选 image 的图像调整 / 「未加载图片」 / 「当前选择不能调整滤镜」）。对象表单仍是：shape/text/path 颜色与几何数字（描边宽度/字号/线宽）、mosaic 只读块数、image 只读尺寸、多选删除与「对齐分布」（6 对齐 + 2 分布，≥3 才启用分布）、不透明度、图层顺序与翻转；locked 时几何类控件禁用 |
 | `ColorPalette` | 7 色固定色板（`PALETTE_COLORS`）+ 原生自定义取色 input，纯受控 |
 
 所有组件接受可选 `className`，追加在语义类（`fp-topbar`、`fp-toolbar` 等）之后，便于覆写。
@@ -89,7 +90,7 @@ function App() {
 }
 ```
 
-注意：自定义 children 时，`FabricPhotoEditor` 的 grid 布局（`fp-editor`）仍在，`CanvasView` 落入 `canvas` 命名区域；如需完全脱离骨架布局，可传 `className` 覆写 `.fp-editor` 的 grid 定义。
+根节点不再是三列 grid。`.fp-canvas-mount` 绝对铺满（z-index 1）。自定义 children 叠在画布上，需要自己定位，并给出高于画布挂载层的 z-index，否则会被盖住。`FloatingOptions` 不再自己贴顶，`ZoomControls` 不再自己贴底。`.fp-side-panel` 不是缺省结构（样式仍留作纵向 flex，给想自己并排图层和属性的调用方）。缺省壳的调整/图层浮层与属性卡由未导出的 DefaultChrome 渲染，自定义 children 时不会出现。
 
 ## 快捷键
 
@@ -133,7 +134,7 @@ function App() {
 ## 样式说明
 
 - 所有类名 `fp-` 前缀（Tailwind `prefix: 'fp-'`，`preflight: false`），不引入未前缀的全局选择器/reset，宿主页面样式不受影响。
-- 布局：顶栏 48px、左工具栏 48px、右面板 240px（`fp-side-panel`：图层面板在上，max-height 45%，属性面板在下填满）、画布区灰底 `#e5e5e5`，grid 命名区域 `top/tools/canvas/props`（两行）；工具选项条为浮动层（`.fp-floating-options`，绝对定位于画布区顶部居中），不占 grid 行。
+- 布局：画布铺满；顶条、底部工具坞、调整浮层、图层浮层、属性卡全部绝对定位叠在画布上，不占轨道。舞台色亮色 `#e4e1dc`、暗色 `#1a1917`。`data-theme` 与 `prefers-color-scheme` 仍控制明暗 token。没有左轨，也没有常驻右栏。
 - 按钮 hover/active 态齐备；禁用态 50% 透明。
 - 色板格子 20×20 圆角带边框（白色块 `#ffffff` 有可见边框），选中态双层描边高亮。
 - 覆写方式：给组件传 `className` 追加自定义类，或在自己的 CSS 中按 `fp-` 类名覆写（组件无内联样式，唯一例外是色板格子的动态背景色）。

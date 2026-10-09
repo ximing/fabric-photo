@@ -77,7 +77,7 @@ describe('LayersPanel', () => {
         const editor = new Editor();
         const utils = renderWithEditor(editor);
 
-        expect(utils.getByText('暂无图层，使用左侧工具绘制')).not.toBeNull();
+        expect(utils.getByText('暂无图层，从底部工具坞绘制')).not.toBeNull();
         expect(utils.getByText('图层')).not.toBeNull();
         editor.destroy();
     });

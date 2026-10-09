@@ -39,7 +39,8 @@ function isEditableTarget(target: EventTarget | null): boolean {
  *   进入前已是 'pan'（H 键）时不挂临时状态，keyup 不退出。window blur 兜底恢复，防 Alt-Tab 卡 pan。
  * 守卫：metaKey/ctrlKey/altKey 跳过（留给系统与 core keymap）；shiftKey 仅放行
  * Shift+H/Shift+V 两个翻转组合，其余 shift 组合不触发单字母工具切换；target 为
- * input/textarea/contenteditable 跳过；editor.isTextEditing() 跳过。
+ * input/textarea/contenteditable 跳过；editor.isTextEditing() 跳过；
+ * editor.isLoadingImage 跳过（背景图加载中不切工具）。
  * Space 的 keydown preventDefault 防页面滚动；keyup 不做输入框守卫（焦点中途移入
  * 输入框也要收尾，否则卡在 pan 模式）。
  * cleanup 移除监听；node 环境（无 document）不挂监听。
@@ -80,6 +81,9 @@ export function useShortcuts(editor: Editor, getToolSettings: () => ToolSettings
                 return;
             }
             if (editor.isTextEditing()) {
+                return;
+            }
+            if (editor.isLoadingImage) {
                 return;
             }
             if (event.key === ' ') {

@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useRef, useSyncExternalStore } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { Editor, EditorEventMap, EditorState } from '@gmi/fp-core';
 import { EditorContext, EditorUIContext, type EditorUIState } from './context';
 import type { ThemeState } from './theme';
@@ -75,6 +75,19 @@ export function useEditorEvent<K extends keyof EditorEventMap>(
             editor.off(name, stable);
         };
     }, [editor, name]);
+}
+
+/**
+ * 订阅背景图加载中（core `isLoadingImage`，瞬时态不在 EditorState 上）。
+ * 经 `loadImageStart` / `loadImage` / `loadImageError` 重读 getter。
+ */
+export function useIsLoadingImage(): boolean {
+    const editor = useEditor();
+    const [, bump] = useState(0);
+    useEditorEvent('loadImageStart', () => bump((n) => n + 1));
+    useEditorEvent('loadImage', () => bump((n) => n + 1));
+    useEditorEvent('loadImageError', () => bump((n) => n + 1));
+    return editor.isLoadingImage;
 }
 
 /** 取 UI 层工具设置；无 provider 抛错。 */

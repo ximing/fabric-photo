@@ -52,15 +52,16 @@ function toolButton(utils: ReturnType<typeof render>, label: string): HTMLElemen
 }
 
 describe('Toolbar', () => {
-    it('按 TOOLS 顺序渲染 10 个工具按钮（label 文本可寻），初始 select active', () => {
+    it('按分组视觉顺序渲染 10 个工具按钮（label 文本可寻），初始 select active', () => {
         const editor = new Editor();
         const utils = renderWithEditor(editor);
 
         const buttons = utils.container.querySelectorAll('.fp-toolbar .fp-tool-btn');
         expect(buttons).toHaveLength(10);
         const labels = Array.from(buttons).map((btn) => btn.textContent);
-        expect(labels).toEqual(TOOLS.map((t) => t.label));
-        expect(labels).toEqual(['选择', '裁剪', '旋转', '箭头', '画笔', '直线', '形状', '文字', '马赛克', '平移']);
+        const visualOrder = ['选择', '平移', '箭头', '画笔', '直线', '形状', '文字', '马赛克', '裁剪', '旋转'];
+        expect(labels).toEqual(visualOrder);
+        expect(labels).toEqual(['选择', '平移', '箭头', '画笔', '直线', '形状', '文字', '马赛克', '裁剪', '旋转']);
 
         expect(toolButton(utils, '选择').className).toContain('fp-tool-btn-active');
         editor.destroy();
@@ -79,6 +80,21 @@ describe('Toolbar', () => {
         expect(editor.getCurrentState()).toBe('normal');
         expect(toolButton(utils, '画笔').className).not.toContain('fp-tool-btn-active');
         expect(toolButton(utils, '选择').className).toContain('fp-tool-btn-active');
+        editor.destroy();
+    });
+
+    it('isLoadingImage 时全部工具按钮 disabled，点击不切 mode', () => {
+        const editor = new Editor();
+        vi.spyOn(editor, 'isLoadingImage', 'get').mockReturnValue(true);
+        const utils = renderWithEditor(editor);
+
+        for (const tool of TOOLS) {
+            const btn = toolButton(utils, tool.label) as HTMLButtonElement;
+            expect(btn.disabled).toBe(true);
+            expect(btn.getAttribute('aria-disabled')).toBe('true');
+        }
+        fireEvent.click(toolButton(utils, '画笔'));
+        expect(editor.getCurrentState()).toBe('normal');
         editor.destroy();
     });
 

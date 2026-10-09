@@ -11,8 +11,9 @@ const MinusIcon = Minus as unknown as JSX.ElementType;
 const PlusIcon = Plus as unknown as JSX.ElementType;
 
 /**
- * 缩放控件：画布区底部居中的浮动胶囊（− / 百分比复位 / ＋）。
- * 绝对定位叠加在 CanvasView 内（z-index 盖在 fabric 挂载层之上），不占布局流。
+ * 缩放控件：− / 百分比复位 / ＋，步长 0.2，百分比点击 setZoom(1)。
+ * 缺省壳把它放进顶条，组件自身不再绝对贴在画布底；要浮动的调用方用 className 覆写定位。
+ * 不要改成「适配」，也不要调用 adjustCanvasDimension / resizeCanvasDimension。
  */
 export function ZoomControls(props: { className?: string }): JSX.Element {
     const editor = useEditor();

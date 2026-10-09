@@ -14,9 +14,15 @@ interface FakeEditorInstance {
     destroy: ReturnType<typeof vi.fn>;
     notifyResize: ReturnType<typeof vi.fn>;
     resizeCanvasDimension: ReturnType<typeof vi.fn>;
+    on: ReturnType<typeof vi.fn>;
+    off: ReturnType<typeof vi.fn>;
+    isLoadingImage: boolean;
 }
 
-const mocks = vi.hoisted(() => ({ createdEditors: [] as unknown[] }));
+const mocks = vi.hoisted(() => ({
+    createdEditors: [] as unknown[],
+    loadImageFromURLImpl: async (_url: string, _imageName: string): Promise<void> => undefined
+}));
 
 vi.mock('@gmi/fp-core', async (importOriginal) => {
     const actual = await importOriginal<typeof import('@gmi/fp-core')>();
@@ -24,7 +30,7 @@ vi.mock('@gmi/fp-core', async (importOriginal) => {
         readonly options: Record<string, unknown>;
         // 缺省 children 含 Toolbar（useEditorState 读 editor.state），FakeEditor 需给出最小 state
         readonly state = new actual.EditorState();
-        loadImageFromURL = vi.fn(async () => undefined);
+        loadImageFromURL = vi.fn((url: string, imageName: string) => mocks.loadImageFromURLImpl(url, imageName));
         subscribe = vi.fn(() => vi.fn());
         destroy = vi.fn();
         notifyResize = vi.fn();
@@ -32,6 +38,7 @@ vi.mock('@gmi/fp-core', async (importOriginal) => {
         // 缺省 children 含 TopBar：historyChange 订阅 + undo/redo 初值取栈空态
         on = vi.fn();
         off = vi.fn();
+        isLoadingImage = false;
         isEmptyUndoStack = vi.fn(() => true);
         isEmptyRedoStack = vi.fn(() => true);
         constructor(options: Record<string, unknown> = {}) {
@@ -64,12 +71,21 @@ function fakeEditorAt(index: number): FakeEditorInstance {
     return mocks.createdEditors[index] as FakeEditorInstance;
 }
 
+function emitFake(ed: FakeEditorInstance, name: string, payload: unknown): void {
+    for (const call of ed.on.mock.calls) {
+        if (call[0] === name) {
+            (call[1] as (p: unknown) => void)(payload);
+        }
+    }
+}
+
 beforeAll(() => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 });
 
 beforeEach(() => {
     mocks.createdEditors.length = 0;
+    mocks.loadImageFromURLImpl = async () => undefined;
     FakeResizeObserver.instances = [];
     vi.stubGlobal('ResizeObserver', FakeResizeObserver);
 });
@@ -81,7 +97,7 @@ afterEach(() => {
 });
 
 describe('FabricPhotoEditor', () => {
-    it('渲染 grid 骨架容器，ref 回调拿到的容器 div 用于创建 Editor，onReady 拿到实例', () => {
+    it('渲染编辑器根容器，ref 回调拿到的容器 div 用于创建 Editor，onReady 拿到实例', () => {
         const onReady = vi.fn();
         const { container } = render(
             <FabricPhotoEditor cssMaxWidth={500} cssMaxHeight={300} onReady={onReady} className="custom" />
@@ -100,7 +116,7 @@ describe('FabricPhotoEditor', () => {
         expect(onReady).toHaveBeenCalledTimes(1);
         expect(onReady).toHaveBeenCalledWith(ed);
 
-        // grid 骨架：布局由 styles.css 的 .fp-editor 承载（jsdom 不加载 CSS，
+        // 根容器：布局由 styles.css 的 .fp-editor 承载（jsdom 不加载 CSS，
         // 这里只验证语义 class 与无内联样式）
         const root = container.firstElementChild as HTMLElement;
         expect(root.className).toContain('fp-editor');
@@ -116,6 +132,9 @@ describe('FabricPhotoEditor', () => {
         expect(container.querySelector('.fp-option-bar')).toBeNull();
         // Toolbar 10 个工具按钮经 EditorProvider context 渲染
         expect(container.querySelectorAll('.fp-toolbar .fp-tool-btn')).toHaveLength(10);
+        expect(container.querySelector('.fp-side-panel')).toBeNull();
+        expect(container.querySelector('.fp-dock')).not.toBeNull();
+        expect(container.querySelector('.fp-props-card')).toBeNull();
     });
 
     it('src 存在时 loadImageFromURL(src, imageName 缺省 image)；显式 imageName 透传', () => {
@@ -177,6 +196,37 @@ describe('FabricPhotoEditor', () => {
         expect(ed.resizeCanvasDimension).toHaveBeenCalledTimes(1);
     });
 
+    it('在 loadImageFromURL 之前订阅 loadImageError，onError 收到 payload', () => {
+        const onError = vi.fn();
+        render(<FabricPhotoEditor src="https://example.com/a.png" onError={onError} />);
+        const ed = fakeEditorAt(0);
+        const errorOnIndex = ed.on.mock.calls.findIndex((call) => call[0] === 'loadImageError');
+        expect(errorOnIndex).toBeGreaterThanOrEqual(0);
+        expect(ed.on.mock.invocationCallOrder[errorOnIndex]).toBeLessThan(ed.loadImageFromURL.mock.invocationCallOrder[0]);
+
+        const payload = { url: 'https://example.com/a.png', error: new Error('404') };
+        act(() => {
+            const handler = ed.on.mock.calls[errorOnIndex][1] as (p: typeof payload) => void;
+            handler(payload);
+        });
+        expect(onError).toHaveBeenCalledTimes(1);
+        expect(onError).toHaveBeenCalledWith(payload);
+    });
+
+    it('src 加载 reject 时吞掉 promise（错误经 loadImageError / onError 上报）', async () => {
+        mocks.loadImageFromURLImpl = async () => {
+            throw new Error('404');
+        };
+        const onError = vi.fn();
+        render(<FabricPhotoEditor src="https://example.com/bad.png" onError={onError} />);
+        await act(async () => {
+            await Promise.resolve();
+        });
+        // FakeEditor 不 emit；此处只断言 catch 掉了 reject，避免未处理 rejection 让测试失败
+        expect(fakeEditorAt(0).loadImageFromURL).toHaveBeenCalledWith('https://example.com/bad.png', 'image');
+        expect(onError).not.toHaveBeenCalled();
+    });
+
     it('src 变化不重建 Editor：同一实例 loadImageFromURL 新地址（透传最新 imageName）', () => {
         const { rerender } = render(<FabricPhotoEditor src="https://example.com/a.png" />);
         const ed = fakeEditorAt(0);
@@ -205,6 +255,32 @@ describe('FabricPhotoEditor', () => {
         localStorage.clear();
     });
 
+    it('加载中画布 overlay + 工具禁用；loadImage 后恢复', () => {
+        const { container } = render(<FabricPhotoEditor src="https://example.com/a.png" />);
+        const ed = fakeEditorAt(0);
+        const root = container.firstElementChild as HTMLElement;
+        const toolBtn = container.querySelector('.fp-tool-btn') as HTMLButtonElement;
+
+        ed.isLoadingImage = true;
+        act(() => {
+            emitFake(ed, 'loadImageStart', { url: 'https://example.com/a.png', name: 'image' });
+        });
+        expect(container.querySelector('.fp-canvas-loading')).not.toBeNull();
+        expect(root.className).toContain('fp-editor-loading');
+        expect(toolBtn.disabled).toBe(true);
+        expect(toolBtn.getAttribute('aria-disabled')).toBe('true');
+        expect(container.querySelector('.fp-canvas-loading')?.getAttribute('aria-busy')).toBe('true');
+
+        ed.isLoadingImage = false;
+        act(() => {
+            emitFake(ed, 'loadImage', { name: 'image', width: 1, height: 1 });
+        });
+        expect(container.querySelector('.fp-canvas-loading')).toBeNull();
+        expect(root.className).not.toContain('fp-editor-loading');
+        expect(toolBtn.disabled).toBe(false);
+        expect(toolBtn.getAttribute('aria-disabled')).toBe('false');
+    });
+
     it('unmount 时退订并 destroy editor', () => {
         const { unmount } = render(<FabricPhotoEditor />);
         const ed = fakeEditorAt(0);
@@ -212,6 +288,7 @@ describe('FabricPhotoEditor', () => {
 
         unmount();
         expect(unsubscribe).toHaveBeenCalledTimes(1);
+        expect(ed.off).toHaveBeenCalledWith('loadImageError', expect.any(Function));
         expect(ed.destroy).toHaveBeenCalledTimes(1);
     });
 });

@@ -126,7 +126,7 @@ export function LayersPanel(props: LayersPanelProps): JSX.Element {
         <div className={rootClassName}>
             <div className="fp-layers-header">图层</div>
             {display.length === 0 ? (
-                <div className="fp-layers-empty">暂无图层，使用左侧工具绘制</div>
+                <div className="fp-layers-empty">暂无图层，从底部工具坞绘制</div>
             ) : (
                 <ul className="fp-layers-list">
                     {display.map((obj) => {

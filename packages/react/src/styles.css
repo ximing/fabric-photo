@@ -9,36 +9,33 @@
 
 /*
  * 组件样式层：全部 fp- 前缀，preflight 关闭，不污染全局。
- * 布局骨架（grid-template-areas）Tailwind 工具类表达不了，与各组件态样式
- * 一起收敛在此；类名同时出现在 src/*.tsx 中，Tailwind 按需保留。
+ * 缺省壳是叠层（画布铺满，顶条/坞/浮层绝对定位），不是三列 grid。
+ * 类名同时出现在 src/*.tsx 中，Tailwind 按需保留。
  */
 @layer components {
     /* ===== 布局骨架 ===== */
     .fp-editor {
         /* ===== 主题 tokens（亮色默认） ===== */
-        --fp-bg-app: #f5f5f5;
-        --fp-bg-panel: #ffffff;
-        --fp-bg-elevated: rgba(255, 255, 255, 0.92);
-        --fp-bg-hover: #f0f0f0;
-        --fp-border: #e5e5e5;
-        --fp-text: #1e1e1e;
-        --fp-text-dim: #666666;
-        --fp-accent: #0074d9;
-        --fp-accent-soft: rgba(0, 116, 217, 0.1);
-        --fp-shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.12);
-        --fp-danger: #d32f2f;
-        --fp-danger-soft: #fdecec;
-        --fp-warn-bg: #fff7e0;
-        --fp-warn-text: #8a6d1a;
-        display: grid;
-        grid-template-areas:
-            'top top top'
-            'tools canvas props';
-        grid-template-rows: 48px 1fr;
-        grid-template-columns: 48px 1fr 240px;
+        --fp-bg-app: #e4e1dc;
+        --fp-bg-panel: #f7f6f4;
+        --fp-bg-elevated: rgba(247, 246, 244, 0.88);
+        --fp-bg-hover: rgba(40, 38, 34, 0.06);
+        --fp-border: rgba(40, 38, 34, 0.12);
+        --fp-text: #2a2724;
+        --fp-text-dim: #6e6860;
+        --fp-accent: #3d6b82;
+        --fp-accent-soft: rgba(61, 107, 130, 0.14);
+        --fp-shadow-pop: 0 8px 28px rgba(40, 36, 30, 0.12);
+        --fp-danger: #c4493a;
+        --fp-danger-soft: rgba(196, 73, 58, 0.10);
+        --fp-warn-bg: rgba(160, 122, 48, 0.12);
+        --fp-warn-text: #7a5b16;
+        position: relative;
+        display: block;
         width: 100%;
         height: 100%;
-        background: var(--fp-bg-panel);
+        overflow: hidden;
+        background: var(--fp-bg-app);
         color: var(--fp-text);
         font-family:
             -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC',
@@ -50,37 +47,37 @@
        两块值相同但都必须存在（media 表达「跟随系统」，data-theme 表达「手动覆盖」） */
     @media (prefers-color-scheme: dark) {
         .fp-editor:not([data-theme='light']) {
-            --fp-bg-app: #181818;
-            --fp-bg-panel: #252526;
-            --fp-bg-elevated: rgba(45, 45, 45, 0.92);
-            --fp-bg-hover: #3a3a3a;
-            --fp-border: #3a3a3a;
-            --fp-text: #cccccc;
-            --fp-text-dim: #999999;
-            --fp-accent: #0d99ff;
-            --fp-accent-soft: rgba(13, 153, 255, 0.15);
-            --fp-shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.55);
-            --fp-danger: #e05555;
-            --fp-danger-soft: rgba(224, 85, 85, 0.12);
-            --fp-warn-bg: rgba(240, 192, 64, 0.12);
-            --fp-warn-text: #d8b13a;
+            --fp-bg-app: #1a1917;
+            --fp-bg-panel: #262421;
+            --fp-bg-elevated: rgba(38, 36, 33, 0.90);
+            --fp-bg-hover: rgba(255, 248, 240, 0.06);
+            --fp-border: rgba(255, 248, 240, 0.12);
+            --fp-text: #eceae6;
+            --fp-text-dim: #a39e96;
+            --fp-accent: #8eb4c6;
+            --fp-accent-soft: rgba(142, 180, 198, 0.16);
+            --fp-shadow-pop: 0 10px 28px rgba(0, 0, 0, 0.45);
+            --fp-danger: #e07a6a;
+            --fp-danger-soft: rgba(224, 122, 106, 0.14);
+            --fp-warn-bg: rgba(214, 176, 92, 0.14);
+            --fp-warn-text: #e2c27a;
         }
     }
     .fp-editor[data-theme='dark'] {
-        --fp-bg-app: #181818;
-        --fp-bg-panel: #252526;
-        --fp-bg-elevated: rgba(45, 45, 45, 0.92);
-        --fp-bg-hover: #3a3a3a;
-        --fp-border: #3a3a3a;
-        --fp-text: #cccccc;
-        --fp-text-dim: #999999;
-        --fp-accent: #0d99ff;
-        --fp-accent-soft: rgba(13, 153, 255, 0.15);
-        --fp-shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.55);
-        --fp-danger: #e05555;
-        --fp-danger-soft: rgba(224, 85, 85, 0.12);
-        --fp-warn-bg: rgba(240, 192, 64, 0.12);
-        --fp-warn-text: #d8b13a;
+        --fp-bg-app: #1a1917;
+        --fp-bg-panel: #262421;
+        --fp-bg-elevated: rgba(38, 36, 33, 0.90);
+        --fp-bg-hover: rgba(255, 248, 240, 0.06);
+        --fp-border: rgba(255, 248, 240, 0.12);
+        --fp-text: #eceae6;
+        --fp-text-dim: #a39e96;
+        --fp-accent: #8eb4c6;
+        --fp-accent-soft: rgba(142, 180, 198, 0.16);
+        --fp-shadow-pop: 0 10px 28px rgba(0, 0, 0, 0.45);
+        --fp-danger: #e07a6a;
+        --fp-danger-soft: rgba(224, 122, 106, 0.14);
+        --fp-warn-bg: rgba(214, 176, 92, 0.14);
+        --fp-warn-text: #e2c27a;
     }
     /* preflight 关闭，盒模型在组件作用域内补齐 */
     .fp-editor *,
@@ -107,51 +104,123 @@
         outline-offset: 1px;
     }
 
-    /* canvas 挂载容器：透明叠加在灰底 CanvasView 之上（同一 grid 区）。
-       min-width/min-height 必须归零：grid 项默认 min-size:auto，fabric 的
-       .canvas-container wrapper 带固定像素宽高会撑住轨道最小尺寸，容器就无法随
-       窗口缩窄/侧栏开合收缩（画布保持挂载时尺寸、右侧被面板遮挡）；归零后轨道
-       可缩，ResizeObserver → editor.notifyResize() 完成 refit。 */
+    /* canvas 挂载层铺满编辑器。min-size 归零：fabric 的 .canvas-container 带固定像素
+       宽高，否则绝对层的最小尺寸会被撑住，窗口缩窄时 ResizeObserver → notifyResize 无法 refit。 */
     .fp-canvas-mount {
-        grid-area: canvas;
-        position: relative;
+        position: absolute;
+        inset: 0;
+        z-index: 1;
         overflow: hidden;
         min-width: 0;
         min-height: 0;
     }
     .fp-canvas-view {
-        grid-area: canvas;
-        /* 浮动子元素（FloatingOptions）的定位上下文 */
-        position: relative;
+        position: absolute;
+        inset: 0;
+        z-index: 0;
         min-width: 0;
         min-height: 0;
         background-color: var(--fp-bg-app);
     }
+    /* 背景图加载中：挡住画布交互。选项条已搬出 view，加载时要单独禁掉指针。
+       顶条、调整、图层、属性卡不因加载整片禁用。 */
+    .fp-editor-loading .fp-canvas-mount,
+    .fp-editor-loading .fp-canvas-view,
+    .fp-editor-loading .fp-floating-options {
+        pointer-events: none;
+    }
+    .fp-canvas-loading {
+        position: absolute;
+        inset: 0;
+        z-index: 4;
+        min-width: 0;
+        min-height: 0;
+        pointer-events: none;
+        background: color-mix(in srgb, var(--fp-bg-app) 55%, transparent);
+        cursor: wait;
+    }
 
-    /* ===== 顶栏（48px，grid 行 1） ===== */
+    /* ===== 顶条：左右两枚胶囊，中间留白点得着画布 ===== */
     .fp-topbar {
-        grid-area: top;
+        position: absolute;
+        top: 10px;
+        left: 12px;
+        right: 12px;
+        z-index: 20;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: space-between;
         gap: 12px;
-        padding: 0 12px;
-        background: var(--fp-bg-panel);
-        border-bottom: 1px solid var(--fp-border);
+        height: 40px;
+        overflow: visible;
+        pointer-events: none;
+        background: transparent;
+    }
+    .fp-topbar-scroll,
+    .fp-topbar-actions {
+        pointer-events: auto;
+        display: flex;
+        align-items: center;
+        height: 40px;
+        border: 1px solid var(--fp-border);
+        border-radius: 999px;
+        background: var(--fp-bg-elevated);
+        box-shadow: var(--fp-shadow-pop);
+        backdrop-filter: blur(16px);
+    }
+    /* 滚动只在左胶囊：整条 overflow 会裁切下挂的导出弹层，backdrop-filter 也会变成包含块。 */
+    .fp-topbar-scroll {
+        flex: 0 1 auto;
+        gap: 2px;
+        min-width: 0;
+        max-width: calc(100% - 248px);
+        padding: 0 6px 0 14px;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+    .fp-topbar-scroll::-webkit-scrollbar {
+        display: none;
+    }
+    .fp-topbar-actions {
+        flex: 0 0 auto;
+        gap: 2px;
+        padding: 0 6px;
     }
     .fp-topbar-name {
-        flex: 1 1 0;
+        flex: 0 1 auto;
         min-width: 0;
+        max-width: 220px;
+        margin-right: 8px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
         color: var(--fp-text);
     }
+    .fp-topbar-upload {
+        flex: 0 0 auto;
+        height: 26px;
+        margin-right: 4px;
+        padding: 0 10px;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--fp-text) 6%, transparent);
+        font-size: 12px;
+        color: var(--fp-text);
+    }
+    .fp-topbar-upload:hover {
+        background: color-mix(in srgb, var(--fp-text) 10%, transparent);
+    }
+    .fp-topbar-file {
+        display: none;
+    }
     .fp-topbar-history,
-    .fp-topbar-actions {
+    .fp-topbar-separator,
+    .fp-zoom-controls {
+        flex-shrink: 0;
+    }
+    .fp-topbar-history {
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 2px;
     }
     .fp-topbar-btn {
         display: inline-flex;
@@ -159,7 +228,7 @@
         justify-content: center;
         width: 28px;
         height: 28px;
-        border-radius: 6px;
+        border-radius: 999px;
         color: var(--fp-text);
     }
     .fp-topbar-btn:hover:not(:disabled) {
@@ -187,12 +256,12 @@
         z-index: 20;
         display: flex;
         flex-direction: column;
-        gap: 6px;
-        width: 220px;
-        padding: 12px;
+        gap: 8px;
+        width: 232px;
+        padding: 14px;
         background: var(--fp-bg-elevated);
         border: 1px solid var(--fp-border);
-        border-radius: 10px;
+        border-radius: 16px;
         box-shadow: var(--fp-shadow-pop);
         backdrop-filter: blur(12px);
         font-size: 12px;
@@ -205,8 +274,6 @@
     }
     .fp-export-label {
         font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
         color: var(--fp-text-dim);
     }
     /* segmented 控件：底槽 + 等宽分段，选中段 accent 底 */
@@ -214,13 +281,13 @@
         display: flex;
         gap: 2px;
         padding: 2px;
-        border-radius: 6px;
-        background: var(--fp-bg-app);
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--fp-text) 6%, transparent);
     }
     .fp-seg-btn {
         flex: 1 1 0;
-        height: 24px;
-        border-radius: 4px;
+        height: 26px;
+        border-radius: 999px;
         font-size: 12px;
         color: var(--fp-text-dim);
     }
@@ -232,8 +299,8 @@
     }
     .fp-seg-btn-active,
     .fp-seg-btn-active:hover {
-        background: var(--fp-accent);
-        color: #ffffff;
+        background: var(--fp-accent-soft);
+        color: var(--fp-accent);
     }
     .fp-export-value {
         flex: 0 0 32px;
@@ -242,29 +309,36 @@
     }
     /* accent 底上的白字明暗通用，保留字面 #ffffff */
     .fp-export-confirm {
-        height: 28px;
-        border-radius: 6px;
+        height: 32px;
+        margin-top: 4px;
+        border-radius: 999px;
         background: var(--fp-accent);
         color: #ffffff;
         font-size: 12px;
     }
 
-    /* ===== 浮动工具选项条（画布区顶部居中，仅绘制/crop 模式渲染） ===== */
+    /* ===== 工具选项条（坞的正上方，静态流；normal/text/pan 不渲染） ===== */
     .fp-floating-options {
-        position: absolute;
-        top: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 10;
+        position: static;
+        transform: none;
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 6px 10px;
-        border-radius: 10px;
+        gap: 6px;
+        max-width: 100%;
+        padding: 4px 6px 4px 8px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        border-radius: 999px;
         background: var(--fp-bg-elevated);
         border: 1px solid var(--fp-border);
         box-shadow: var(--fp-shadow-pop);
-        backdrop-filter: blur(12px);
+        backdrop-filter: blur(16px);
+    }
+    .fp-floating-options::-webkit-scrollbar {
+        display: none;
+    }
+    .fp-floating-options .fp-color-palette {
+        flex-wrap: nowrap;
     }
     .fp-option-group {
         display: inline-flex;
@@ -275,47 +349,46 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        height: 28px;
-        padding: 0 10px;
-        border: 1px solid var(--fp-border);
-        border-radius: 6px;
-        background: var(--fp-bg-panel);
+        height: 26px;
+        padding: 0 9px;
+        border-radius: 999px;
+        background: transparent;
         font-size: 12px;
-        color: var(--fp-text);
+        font-variant-numeric: tabular-nums;
+        color: var(--fp-text-dim);
     }
     .fp-option-btn:hover {
         background: var(--fp-bg-hover);
+        color: var(--fp-text);
     }
     .fp-option-btn-active,
     .fp-option-btn-active:hover {
-        border-color: var(--fp-accent);
         color: var(--fp-accent);
         background: var(--fp-accent-soft);
     }
+    /* 实心 accent 只给「完成」和导出确认 */
+    .fp-option-btn-primary,
+    .fp-option-btn-primary:hover {
+        border-color: transparent;
+        background: var(--fp-accent);
+        color: #ffffff;
+    }
 
-    /* ===== 缩放胶囊（画布区底部居中） ===== */
+    /* ===== 缩放（顶条内联；单独使用也不再自己飞到底部） ===== */
     .fp-zoom-controls {
-        position: absolute;
-        bottom: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 10;
         display: flex;
         align-items: center;
         gap: 2px;
-        padding: 3px 6px;
-        border-radius: 999px;
-        background: var(--fp-bg-elevated);
-        border: 1px solid var(--fp-border);
-        box-shadow: var(--fp-shadow-pop);
-        backdrop-filter: blur(12px);
+        background: transparent;
+        border: none;
+        box-shadow: none;
     }
     .fp-zoom-btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 24px;
-        height: 24px;
+        width: 28px;
+        height: 28px;
         border-radius: 999px;
         color: var(--fp-text);
     }
@@ -324,7 +397,7 @@
     }
     .fp-zoom-value {
         min-width: 44px;
-        height: 24px;
+        height: 28px;
         padding: 0 4px;
         border-radius: 999px;
         font-size: 12px;
@@ -335,57 +408,230 @@
         background: var(--fp-bg-hover);
     }
 
-    /* ===== 左工具栏（48px，grid 列 1） ===== */
-    .fp-toolbar {
-        grid-area: tools;
+    /* ===== 工具坞（底边居中胶囊；单独使用 Toolbar 时自己就是胶囊） ===== */
+    .fp-dock {
+        position: absolute;
+        left: 50%;
+        bottom: 16px;
+        z-index: 12;
         display: flex;
         flex-direction: column;
         align-items: center;
+        gap: 8px;
+        max-width: calc(100% - 32px);
+        /* 两侧空白仍能点到画布；子节点自己接指针 */
+        pointer-events: none;
+        transform: translateX(-50%);
+    }
+    .fp-dock > * {
+        pointer-events: auto;
+    }
+    .fp-dock-bar {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
         gap: 2px;
-        padding: 4px 0;
-        background: var(--fp-bg-panel);
-        border-right: 1px solid var(--fp-border);
+        max-width: 100%;
+        padding: 6px;
+        overflow-x: auto;
+        border: 1px solid var(--fp-border);
+        border-radius: 999px;
+        background: var(--fp-bg-elevated);
+        box-shadow: var(--fp-shadow-pop);
+        backdrop-filter: blur(16px);
+    }
+    .fp-toolbar {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 2px;
+        padding: 6px;
+        border: 1px solid var(--fp-border);
+        border-radius: 999px;
+        background: var(--fp-bg-elevated);
+        box-shadow: var(--fp-shadow-pop);
+        backdrop-filter: blur(16px);
+    }
+    /* 嵌在坞里时去掉自己的胶囊，避免双层玻璃 */
+    .fp-dock-bar .fp-toolbar {
+        padding: 0;
+        border: none;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        backdrop-filter: none;
+    }
+    .fp-tool-group {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 2px;
+        flex-shrink: 0;
+    }
+    .fp-dock-bar > .fp-toolbar,
+    .fp-dock-aux,
+    .fp-tool-btn,
+    .fp-dock-aux-btn {
+        flex-shrink: 0;
+    }
+    .fp-tool-sep {
+        flex: 0 0 auto;
+        width: 1px;
+        height: 22px;
+        margin: 0 6px;
+        background: color-mix(in srgb, var(--fp-text) 14%, transparent);
+    }
+    .fp-dock-aux {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 2px;
     }
     .fp-tool-btn {
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        width: 40px;
-        height: 40px;
-        border-radius: 6px;
+        gap: 2px;
+        width: auto;
+        min-width: 48px;
+        height: auto;
+        padding: 5px 6px 4px;
+        border-radius: 14px;
+        color: var(--fp-text-dim);
+    }
+    .fp-tool-btn:hover:not(:disabled) {
+        background: var(--fp-bg-hover);
         color: var(--fp-text);
     }
-    .fp-tool-btn:hover {
-        background: var(--fp-bg-hover);
+    .fp-tool-btn:disabled {
+        opacity: 0.5;
     }
     .fp-tool-btn-active,
     .fp-tool-btn-active:hover {
         background: var(--fp-accent-soft);
         color: var(--fp-accent);
     }
-    /* 图标按钮的文字标签仅作无障碍/语义占位，视觉上隐藏 */
     .fp-tool-btn-label {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        margin: -1px;
-        padding: 0;
-        overflow: hidden;
-        clip: rect(0 0 0 0);
+        position: static;
+        font-size: 11px;
+        line-height: 1.2;
         white-space: nowrap;
-        border: 0;
+    }
+    /* 与工具按钮同高的柱：图标独占第一行，文字（和角标）在下一行 */
+    .fp-dock-aux-btn {
+        display: grid;
+        grid-template-columns: auto auto;
+        justify-content: center;
+        justify-items: center;
+        align-items: center;
+        column-gap: 4px;
+        row-gap: 2px;
+        min-width: 48px;
+        padding: 5px 6px 4px;
+        border-radius: 14px;
+        color: var(--fp-text-dim);
+        font-size: 11px;
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+    .fp-dock-aux-btn > svg {
+        grid-column: 1 / -1;
+        width: 16px;
+        height: 16px;
+    }
+    .fp-dock-aux-btn > span:only-of-type {
+        grid-column: 1 / -1;
+    }
+    .fp-dock-aux-btn:hover {
+        background: var(--fp-bg-hover);
+        color: var(--fp-text);
+    }
+    .fp-dock-aux-btn[aria-expanded='true'],
+    .fp-dock-aux-btn[aria-expanded='true']:hover {
+        background: var(--fp-accent-soft);
+        color: var(--fp-accent);
+    }
+    .fp-dock-count {
+        min-width: 16px;
+        padding: 0 4px;
+        border-radius: 999px;
+        background: var(--fp-bg-hover);
+        color: var(--fp-text-dim);
+        font-size: 11px;
+        line-height: 1.2;
+        font-variant-numeric: tabular-nums;
+        text-align: center;
+    }
+    .fp-dock-count-zero {
+        min-width: 0;
+        padding: 0;
+        background: transparent;
     }
 
-    /* ===== 右属性面板（240px，grid 列 3） ===== */
-    /* 缺省骨架下右列 = 侧栏容器（图层在上、属性在下）；自组布局直接用面板组件时
-       fp-layers-panel / fp-props-panel 的 grid-area 仍各自生效 */
+    /* ===== 浮层与属性卡（兄弟叠在画布上，不是坞的子节点） ===== */
+    .fp-popover,
+    .fp-props-card {
+        position: absolute;
+        overflow: auto;
+        pointer-events: auto;
+        border: 1px solid var(--fp-border);
+        border-radius: 16px;
+        background: var(--fp-bg-elevated);
+        box-shadow: var(--fp-shadow-pop);
+        backdrop-filter: blur(16px);
+    }
+    .fp-popover:focus {
+        outline: none;
+    }
+    .fp-props-card {
+        top: 64px;
+        right: 12px;
+        z-index: 12;
+        width: 280px;
+        max-width: calc(100% - 24px);
+        /* 半高会裁掉翻转和删除。常规对象卡大约 410px，放到 480 能完整看见，
+           同时在矮窗口里停在坞上方（100% - 188px）。 */
+        max-height: min(480px, calc(100% - 188px));
+    }
+    .fp-popover-adjust {
+        bottom: 136px;
+        left: 12px;
+        z-index: 13;
+        width: 280px;
+        max-width: calc(100% - 24px);
+        max-height: calc(50% - 80px);
+    }
+    .fp-popover-layers {
+        right: 12px;
+        bottom: 136px;
+        z-index: 13;
+        width: 260px;
+        max-width: calc(100% - 24px);
+        max-height: calc(50% - 80px);
+    }
+    .fp-props-card-title {
+        padding: 12px 14px 0;
+        color: var(--fp-text-dim);
+        font-size: 12px;
+    }
+    .fp-props-card .fp-props-panel,
+    .fp-popover .fp-props-panel {
+        padding: 8px 14px 14px;
+    }
+    .fp-props-filter-hint {
+        color: var(--fp-text-dim);
+        font-size: 12px;
+    }
+
+    /* 自组布局若想并排图层+属性，可包一层；缺省壳不再渲染它 */
     .fp-side-panel {
-        grid-area: props;
         display: flex;
         flex-direction: column;
         min-height: 0;
-        background: var(--fp-bg-panel);
-        border-left: 1px solid var(--fp-border);
     }
     .fp-side-panel .fp-layers-panel,
     .fp-side-panel .fp-props-panel {
@@ -397,14 +643,12 @@
         min-height: 0;
     }
     .fp-props-panel {
-        grid-area: props;
         display: flex;
         flex-direction: column;
         gap: 12px;
         padding: 12px;
         overflow-y: auto;
         background: var(--fp-bg-panel);
-        border-left: 1px solid var(--fp-border);
         font-size: 12px;
     }
     .fp-props-canvas,
@@ -437,8 +681,14 @@
         flex-direction: column;
         gap: 6px;
     }
+    .fp-color-field-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+    }
     .fp-color-field-value {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-variant-numeric: tabular-nums;
         font-size: 11px;
         color: var(--fp-text-dim);
     }
@@ -452,11 +702,19 @@
         width: 100%;
         height: 28px;
         padding: 0 8px;
-        border: 1px solid var(--fp-border);
-        border-radius: 4px;
+        border: 1px solid transparent;
+        border-radius: 8px;
         font: inherit;
+        font-variant-numeric: tabular-nums;
         color: inherit;
-        background: var(--fp-bg-panel);
+        background: color-mix(in srgb, var(--fp-text) 5%, transparent);
+        -moz-appearance: textfield;
+        appearance: textfield;
+    }
+    .fp-number-field input::-webkit-outer-spin-button,
+    .fp-number-field input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
     }
     .fp-number-field input:focus {
         outline: none;
@@ -466,11 +724,11 @@
     .fp-text-field textarea {
         min-height: 64px;
         padding: 6px 8px;
-        border: 1px solid var(--fp-border);
-        border-radius: 4px;
+        border: 1px solid transparent;
+        border-radius: 8px;
         font: inherit;
         color: inherit;
-        background: var(--fp-bg-panel);
+        background: color-mix(in srgb, var(--fp-text) 5%, transparent);
         resize: vertical;
     }
     .fp-text-field textarea:focus {
@@ -486,8 +744,6 @@
     .fp-props-group-label {
         color: var(--fp-text-dim);
         font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
     }
     .fp-props-style-toggles {
         display: flex;
@@ -507,28 +763,39 @@
         opacity: 0.5;
     }
     .fp-props-toggle {
-        height: 26px;
+        height: 28px;
         padding: 0 10px;
-        border: 1px solid var(--fp-border);
-        border-radius: 6px;
-        background: var(--fp-bg-panel);
+        border-radius: 8px;
+        background: color-mix(in srgb, var(--fp-text) 6%, transparent);
         font-size: 12px;
         color: var(--fp-text);
     }
     .fp-props-toggle:hover {
-        background: var(--fp-bg-hover);
+        background: color-mix(in srgb, var(--fp-text) 10%, transparent);
     }
     .fp-props-toggle-active,
     .fp-props-toggle-active:hover {
-        border-color: var(--fp-accent);
         color: var(--fp-accent);
         background: var(--fp-accent-soft);
+    }
+    .fp-props-reset {
+        align-self: flex-start;
+        height: 26px;
+        margin-top: 2px;
+        padding: 0 2px;
+        border-radius: 6px;
+        background: transparent;
+        font-size: 12px;
+        color: var(--fp-text-dim);
+    }
+    .fp-props-reset:hover {
+        color: var(--fp-text);
     }
     .fp-props-delete {
         height: 30px;
         padding: 0 12px;
         border: 1px solid var(--fp-danger);
-        border-radius: 6px;
+        border-radius: 8px;
         background: var(--fp-bg-panel);
         font-size: 12px;
         color: var(--fp-danger);
@@ -559,14 +826,50 @@
         color: var(--fp-text-dim);
     }
     .fp-filter-field-value {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-variant-numeric: tabular-nums;
         font-size: 11px;
         color: var(--fp-text-dim);
     }
-    .fp-filter-field input[type='range'] {
+    .fp-editor input[type='range'] {
+        -webkit-appearance: none;
+        appearance: none;
         width: 100%;
+        height: 16px;
         margin: 0;
+        background: transparent;
         accent-color: var(--fp-accent);
+        cursor: pointer;
+    }
+    .fp-editor input[type='range']:focus-visible {
+        outline: none;
+    }
+    .fp-editor input[type='range']::-webkit-slider-runnable-track {
+        height: 3px;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--fp-text) 16%, transparent);
+    }
+    .fp-editor input[type='range']::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 14px;
+        height: 14px;
+        margin-top: -5.5px;
+        border: 2px solid var(--fp-accent);
+        border-radius: 999px;
+        background: var(--fp-bg-panel);
+        box-shadow: 0 1px 2px rgba(40, 36, 30, 0.18);
+    }
+    .fp-editor input[type='range']::-moz-range-track {
+        height: 3px;
+        border: none;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--fp-text) 16%, transparent);
+    }
+    .fp-editor input[type='range']::-moz-range-thumb {
+        width: 14px;
+        height: 14px;
+        border: 2px solid var(--fp-accent);
+        border-radius: 999px;
+        background: var(--fp-bg-panel);
     }
 
     /* ===== 色板 ===== */
@@ -576,14 +879,14 @@
         flex-wrap: wrap;
         gap: 6px;
     }
-    /* 20x20 圆角带边框；边框对全部色块生效，白色块（#ffffff）也有可见边框。
-       色块自身边框 rgba(0,0,0,0.25) 明暗通用，保留字面值 */
+    /* 18px 圆点；边框对全部色块生效，白色块在浅底上也看得见。
+       色块边框用字面 rgba，明暗通用。 */
     .fp-swatch {
-        width: 20px;
-        height: 20px;
+        width: 18px;
+        height: 18px;
         padding: 0;
-        border: 1px solid rgba(0, 0, 0, 0.25);
-        border-radius: 4px;
+        border: 1px solid rgba(0, 0, 0, 0.22);
+        border-radius: 999px;
         cursor: pointer;
     }
     .fp-swatch:hover {
@@ -597,11 +900,11 @@
     }
     /* 自定义取色：与色块同尺寸同圆角 */
     .fp-color-custom {
-        width: 20px;
-        height: 20px;
+        width: 18px;
+        height: 18px;
         padding: 0;
-        border: 1px solid rgba(0, 0, 0, 0.25);
-        border-radius: 4px;
+        border: 1px solid rgba(0, 0, 0, 0.22);
+        border-radius: 999px;
         background: transparent;
         cursor: pointer;
     }
@@ -610,24 +913,21 @@
     }
     .fp-color-custom::-webkit-color-swatch {
         border: none;
-        border-radius: 3px;
+        border-radius: 999px;
     }
     .fp-color-custom::-moz-color-swatch {
         border: none;
-        border-radius: 3px;
+        border-radius: 999px;
     }
 
-    /* ===== 图层面板（右列上半，与属性面板同列） ===== */
+    /* ===== 图层面板 ===== */
     .fp-layers-panel {
-        grid-area: props;
         display: flex;
         flex-direction: column;
         flex: 0 1 auto;
         max-height: 45%;
         min-height: 0;
         background: var(--fp-bg-panel);
-        border-left: 1px solid var(--fp-border);
-        border-bottom: 1px solid var(--fp-border);
         font-size: 12px;
     }
     .fp-layers-header {
@@ -636,8 +936,19 @@
         color: var(--fp-text-dim);
         border-bottom: 1px solid var(--fp-border);
         font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+    }
+    .fp-popover .fp-layers-header {
+        padding: 12px 14px 2px;
+        border-bottom: none;
+    }
+    /* 浮层/属性卡里不再套一列带边侧栏 */
+    .fp-popover .fp-props-panel,
+    .fp-popover .fp-layers-panel,
+    .fp-props-card .fp-props-panel {
+        grid-area: unset;
+        max-height: none;
+        border: none;
+        background: transparent;
     }
     .fp-layers-empty {
         padding: 16px 12px;
@@ -655,10 +966,10 @@
     .fp-layer-item {
         display: flex;
         align-items: center;
-        gap: 6px;
-        height: 28px;
-        padding: 0 6px;
-        border-radius: 4px;
+        gap: 8px;
+        height: 32px;
+        padding: 0 8px;
+        border-radius: 8px;
         color: var(--fp-text);
         cursor: default;
         user-select: none;
@@ -713,5 +1024,52 @@
     .fp-layer-btn-active,
     .fp-layer-btn-active:hover {
         color: var(--fp-accent);
+    }
+
+    /* 只给浮层出现做动画；不要加到 .fp-dock 上（它的 translateX 居中会被覆盖） */
+    @keyframes fp-pop-in {
+        from {
+            opacity: 0;
+            transform: translateY(4px);
+        }
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+    .fp-tool-btn,
+    .fp-dock-aux-btn,
+    .fp-topbar-btn,
+    .fp-option-btn,
+    .fp-props-toggle,
+    .fp-zoom-btn,
+    .fp-zoom-value,
+    .fp-swatch {
+        transition:
+            background-color 120ms ease,
+            color 120ms ease,
+            box-shadow 120ms ease;
+    }
+    .fp-popover,
+    .fp-props-card,
+    .fp-export-panel {
+        animation: fp-pop-in 140ms ease-out;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .fp-popover,
+        .fp-props-card,
+        .fp-export-panel,
+        .fp-floating-options,
+        .fp-tool-btn,
+        .fp-dock-aux-btn,
+        .fp-topbar-btn,
+        .fp-option-btn,
+        .fp-props-toggle,
+        .fp-zoom-btn,
+        .fp-zoom-value,
+        .fp-swatch {
+            animation: none;
+            transition: none;
+        }
     }
 }

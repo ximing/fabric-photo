@@ -4,13 +4,14 @@ import type { Editor } from '@gmi/fp-core';
 export interface CanvasViewProps {
     editor: Editor;
     className?: string;
-    children?: ReactNode; // 浮动 UI（FloatingOptions / ZoomControls），绝对定位叠加在画布区
+    children?: ReactNode; // 自定义布局可往画布区放内容；缺省壳不再塞 FloatingOptions / ZoomControls
 }
 
 /**
- * 画布区域容器（灰底）：渲染在 FabricPhotoEditor grid 的 'canvas' 区。
- * ResizeObserver 监听容器尺寸变化（窗口缩放/面板开合）→ editor.notifyResize()
- * 做无状态重排（zoom/pan 保持，按新容器尺寸重算居中）。
+ * 画布区域容器（舞台底色）：绝对铺满编辑器。
+ * ResizeObserver 监听容器尺寸变化（窗口缩放）→ editor.notifyResize()
+ * 做无状态重排（zoom/pan 保持，按新容器尺寸重算居中）。这是「适配」的唯一路径，
+ * 不要另接 adjustCanvasDimension。
  * jsdom 等无 ResizeObserver 环境下跳过监听（真实 fabric 挂载路径在浏览器验证）。
  */
 export function CanvasView(props: CanvasViewProps): JSX.Element {

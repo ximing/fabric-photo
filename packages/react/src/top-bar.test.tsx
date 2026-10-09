@@ -115,6 +115,29 @@ describe('TopBar', () => {
         editor.destroy();
     });
 
+    it('上传图片在图名之后、撤销之前；选文件后 loadImageFromFile(file, file.name)', () => {
+        const editor = new Editor();
+        const spy = vi.spyOn(editor, 'loadImageFromFile').mockResolvedValue(undefined);
+        const utils = renderWithEditor(editor);
+        const nameEl = utils.container.querySelector('.fp-topbar-name') as HTMLElement;
+        const upload = button(utils, '上传图片');
+        const undo = button(utils, '撤销');
+
+        expect(nameEl.compareDocumentPosition(upload) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+            Node.DOCUMENT_POSITION_FOLLOWING
+        );
+        expect(upload.compareDocumentPosition(undo) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+            Node.DOCUMENT_POSITION_FOLLOWING
+        );
+
+        const input = utils.container.querySelector('input[type="file"]') as HTMLInputElement;
+        const file = new File(['x'], 'shot.png', { type: 'image/png' });
+        fireEvent.change(input, { target: { files: [file] } });
+        expect(spy).toHaveBeenCalledWith(file, 'shot.png');
+        expect(input.value).toBe('');
+        editor.destroy();
+    });
+
     it('点击导出打开弹层；再点导出 / Esc / 点外部关闭', () => {
         const editor = new Editor();
         const utils = renderWithEditor(editor);

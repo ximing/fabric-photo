@@ -102,6 +102,18 @@ describe('useShortcuts', () => {
         editor.destroy();
     });
 
+    it("isLoadingImage 时单字母工具快捷键不触发", () => {
+        const editor = new Editor();
+        vi.spyOn(editor, 'isLoadingImage', 'get').mockReturnValue(true);
+        const spy = vi.spyOn(editor, 'startFreeDrawing');
+        renderHook(() => useShortcuts(editor, () => DEFAULT_TOOL_SETTINGS));
+
+        pressKey('p');
+        expect(spy).not.toHaveBeenCalled();
+        expect(editor.getCurrentState()).toBe('normal');
+        editor.destroy();
+    });
+
     it("文本编辑态（isTextEditing() === true）时 'p' 与 Escape 均不触发", () => {
         const editor = new Editor();
         const startSpy = vi.spyOn(editor, 'startFreeDrawing');

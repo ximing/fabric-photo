@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState, type JSX } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type JSX } from 'react';
 import { Download, Moon, Redo2, Sun, Undo2 } from 'lucide-react';
 import type { ExportImageOptions } from '@gmi/fp-core';
 import { useEditor, useEditorEvent, useEditorState, useTheme } from './hooks';
 import { SegmentedControl, type SegmentedOption } from './segmented';
+import { ZoomControls } from './zoom-controls';
 
 /** 导出格式三选；MIME 为 `image/${format}`，扩展名与格式同名。 */
 type ExportFormat = 'png' | 'jpeg' | 'webp';
@@ -28,18 +29,21 @@ const SunIcon = Sun as unknown as JSX.ElementType;
 const MoonIcon = Moon as unknown as JSX.ElementType;
 
 /**
- * 顶栏（grid 行 1）：左图名 / 中 undo·redo / 右主题切换与导出。
+ * 顶条：左胶囊是图名、上传、撤销/重做，右胶囊是缩放、主题、导出。中间留白不接指针。缩放直接渲染 ZoomControls。
  * history 不在 EditorState 里：undo/redo 禁用态以 historyChange 事件驱动本地 state，
  * 初值取 editor.isEmptyUndoStack()/isEmptyRedoStack()。
  * 导出为弹层（绝对定位面板，Esc/点外部关闭）：格式 PNG/JPEG/WebP、质量滑杆（仅 JPEG/WebP，
  * 0.1..1 步进 0.05 默认 0.9）、倍率 1x/2x/3x、范围整图/仅选中（无选中禁用）；确认导出 →
  * core toDataURL → a[download=<图名>-<宽>x<高>@<倍率>x[-selection].<ext>] 并点击。
+ * 横向滚动放在 .fp-topbar-scroll，导出弹层留在滚动层外面：顶条有 backdrop-filter，
+ * 若 overflow 包住弹层会把下挂的 dialog 裁掉。
  */
 export function TopBar(props: { className?: string }): JSX.Element {
     const editor = useEditor();
     const { theme, toggleTheme } = useTheme();
     const imageName = useEditorState((state) => state.doc.background?.name ?? '');
     const hasSelection = useEditorState((state) => state.selection.length > 0);
+    const fileRef = useRef<HTMLInputElement>(null);
     const [undoDisabled, setUndoDisabled] = useState(() => editor.isEmptyUndoStack());
     const [redoDisabled, setRedoDisabled] = useState(() => editor.isEmptyRedoStack());
     useEditorEvent('historyChange', ({ undoSize, redoSize }) => {
@@ -103,33 +107,62 @@ export function TopBar(props: { className?: string }): JSX.Element {
         setExportOpen(false);
     };
 
+    const handleUpload = (event: ChangeEvent<HTMLInputElement>): void => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (file === undefined) {
+            return;
+        }
+        void editor.loadImageFromFile(file, file.name).catch(() => undefined);
+    };
+
     const rootClassName = props.className === undefined ? 'fp-topbar' : `fp-topbar ${props.className}`;
     return (
         <div className={rootClassName}>
-            <span className="fp-topbar-name">{imageName}</span>
-            <div className="fp-topbar-history">
+            <div className="fp-topbar-scroll">
+                <span className="fp-topbar-name">{imageName}</span>
                 <button
                     type="button"
-                    className="fp-topbar-btn"
-                    title="撤销"
-                    aria-label="撤销"
-                    disabled={undoDisabled}
-                    onClick={() => editor.undo()}
+                    className="fp-topbar-upload"
+                    aria-label="上传图片"
+                    onClick={() => fileRef.current?.click()}
                 >
-                    <UndoIcon size={18} aria-hidden />
+                    上传图片
                 </button>
-                <button
-                    type="button"
-                    className="fp-topbar-btn"
-                    title="重做"
-                    aria-label="重做"
-                    disabled={redoDisabled}
-                    onClick={() => editor.redo()}
-                >
-                    <RedoIcon size={18} aria-hidden />
-                </button>
+                <input
+                    ref={fileRef}
+                    className="fp-topbar-file"
+                    type="file"
+                    accept="image/*"
+                    aria-label="选择图片文件"
+                    onChange={handleUpload}
+                />
+                <div className="fp-topbar-history">
+                    <button
+                        type="button"
+                        className="fp-topbar-btn"
+                        title="撤销"
+                        aria-label="撤销"
+                        disabled={undoDisabled}
+                        onClick={() => editor.undo()}
+                    >
+                        <UndoIcon size={18} aria-hidden />
+                    </button>
+                    <button
+                        type="button"
+                        className="fp-topbar-btn"
+                        title="重做"
+                        aria-label="重做"
+                        disabled={redoDisabled}
+                        onClick={() => editor.redo()}
+                    >
+                        <RedoIcon size={18} aria-hidden />
+                    </button>
+                </div>
             </div>
             <div className="fp-topbar-actions">
+                <ZoomControls />
+                <span className="fp-topbar-separator" aria-hidden />
                 <button
                     type="button"
                     className="fp-topbar-btn"

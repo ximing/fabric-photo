@@ -1,4 +1,3 @@
-import { useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { FabricPhotoEditor } from '@gmi/fp-react';
 import type { Editor } from '@gmi/fp-core';
@@ -12,17 +11,6 @@ declare global {
 }
 
 function App() {
-    const fileRef = useRef<HTMLInputElement>(null);
-
-    const onUploadClick = () => fileRef.current?.click();
-    const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file && window.editor) {
-            void window.editor.loadImageFromFile(file, file.name);
-        }
-        e.target.value = '';
-    };
-
     return (
         <div className="demo-shell">
             <FabricPhotoEditor
@@ -33,16 +21,9 @@ function App() {
                 onReady={(editor) => {
                     window.editor = editor;
                 }}
-            />
-            <button type="button" className="demo-upload" onClick={onUploadClick}>
-                上传图片
-            </button>
-            <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={onFileChange}
+                onError={({ url, error }) => {
+                    console.error('image load failed', url, error);
+                }}
             />
         </div>
     );

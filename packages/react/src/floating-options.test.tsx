@@ -75,7 +75,7 @@ describe('FloatingOptions', () => {
         editor.destroy();
     });
 
-    it('crop 模式出现 Apply/Cancel；Apply → endCropping(true)，Cancel → endCropping(false)', () => {
+    it('crop 模式出现完成/取消；完成 → endCropping(true)，取消 → endCropping(false)', () => {
         const editor = new Editor();
         const spy = vi.spyOn(editor, 'endCropping');
         const utils = renderWithEditor(editor);
@@ -85,7 +85,7 @@ describe('FloatingOptions', () => {
         });
         expect(editor.getCurrentState()).toBe('crop');
 
-        fireEvent.click(utils.getByText('Apply'));
+        fireEvent.click(utils.getByText('完成'));
         expect(spy).toHaveBeenLastCalledWith(true);
         expect(editor.getCurrentState()).toBe('normal');
 
@@ -93,7 +93,7 @@ describe('FloatingOptions', () => {
         act(() => {
             editor.startCropping();
         });
-        fireEvent.click(utils.getByText('Cancel'));
+        fireEvent.click(utils.getByText('取消'));
         expect(spy).toHaveBeenLastCalledWith(false);
         expect(editor.getCurrentState()).toBe('normal');
         editor.destroy();

@@ -1,5 +1,5 @@
 import type { JSX } from 'react';
-import { DEFAULT_FILTERS, type Editor, type EditorObject, type FilterSettings, type ImageObject, type MosaicObject, type PathObject, type ShapeObject, type TextObject } from '@gmi/fp-core';
+import { DEFAULT_FILTERS, type BackgroundImage, type Editor, type EditorObject, type FilterSettings, type ImageObject, type MosaicObject, type PathObject, type ShapeObject, type TextObject } from '@gmi/fp-core';
 import { ColorPalette } from './color-palette';
 import { useEditor, useEditorState, useToolSettings } from './hooks';
 import { applyColor, modeToTool } from './tool-settings';
@@ -12,9 +12,11 @@ import { applyColor, modeToTool } from './tool-settings';
 function ColorField(props: { label: string; value: string; onChange: (color: string) => void }): JSX.Element {
     return (
         <div className="fp-color-field">
-            <span className="fp-color-field-label">{props.label}</span>
+            <div className="fp-color-field-head">
+                <span className="fp-color-field-label">{props.label}</span>
+                <span className="fp-color-field-value">{props.value === 'transparent' ? '透明' : props.value}</span>
+            </div>
             <ColorPalette value={props.value} onChange={props.onChange} inputLabel={props.label} />
-            <span className="fp-color-field-value">{props.value}</span>
         </div>
     );
 }
@@ -132,7 +134,7 @@ function FilterAdjustGroup(props: {
                     </button>
                 ))}
             </div>
-            <button type="button" className="fp-props-toggle" onClick={() => props.onReset()}>
+            <button type="button" className="fp-props-reset" onClick={() => props.onReset()}>
                 重置
             </button>
         </div>
@@ -364,8 +366,8 @@ function MosaicPanel(props: { editor: Editor; object: MosaicObject }): JSX.Eleme
     );
 }
 
-function ImagePanel(props: { editor: Editor; object: ImageObject }): JSX.Element {
-    const { editor, object } = props;
+function ImagePanel(props: { editor: Editor; object: ImageObject; includeFilters: boolean }): JSX.Element {
+    const { editor, object, includeFilters } = props;
     return (
         <>
             <div className="fp-props-readonly">
@@ -374,30 +376,61 @@ function ImagePanel(props: { editor: Editor; object: ImageObject }): JSX.Element
                     {object.width} × {object.height}
                 </span>
             </div>
-            <FilterAdjustGroup
-                title="图像调整"
-                filters={object.filters}
-                onPatch={(patch) => editor.setImageFilters(object.id, patch, { mergeKey: `img-filters-${object.id}` })}
-                onReset={() => editor.resetImageFilters(object.id)}
-            />
+            {includeFilters ? (
+                <FilterAdjustGroup
+                    title="图像调整"
+                    filters={object.filters}
+                    onPatch={(patch) => editor.setImageFilters(object.id, patch, { mergeKey: `img-filters-${object.id}` })}
+                    onReset={() => editor.resetImageFilters(object.id)}
+                />
+            ) : null}
             <DeleteButton editor={editor} />
         </>
     );
 }
 
 /**
- * 属性面板（grid 右列，gridArea 'props'）：由选中驱动表单。
- * 无选中 → 画布属性（缩放只读、背景尺寸/「未加载图片」、对象数）+「背景调整」滤镜组
- * （已加载背景时，mergeKey 'bg-filters'，连续拖动一个 undo 条目）；
- * 单选按 kind 分派 shape/text/path/mosaic/image 表单（change* API 均可撤销），
- * image 表单带「图像调整」滤镜组（mergeKey `img-filters-${id}`）；
- * 多选 → 数量 + 删除 +「对齐分布」按钮组（6 对齐 + 2 分布，≥3 选中才启用分布，
- * 委托 alignActiveObjects/distributeActiveObjects）。单选与多选均有「不透明度」滑杆（0..100 ↔ 0..1，
- * setObjectOpacity + mergeKey 连续拖动一个 undo 条目）、「图层顺序」
- * （置顶/上移/下移/置底）与「翻转」（水平/垂直）按钮组，委托 core 公开 API。
+ * 滤镜该打在谁身上。full 的「无选中」分支不走这里，那块 JSX 保持原样。
+ * 多选（哪怕夹着 image）与非 image 单选都没有滑杆：setImageFilters 只收单个 id。
+ */
+function resolveFilterTarget(selected: readonly EditorObject[], background: BackgroundImage | null):
+    | { kind: 'image'; object: ImageObject }
+    | { kind: 'background' }
+    | { kind: 'none'; reason: 'no-background' | 'not-image-selection' } {
+    if (selected.length === 1 && selected[0].kind === 'image') {
+        return { kind: 'image', object: selected[0] };
+    }
+    if (selected.length === 0 && background !== null) {
+        return { kind: 'background' };
+    }
+    if (selected.length === 0) {
+        return { kind: 'none', reason: 'no-background' };
+    }
+    return { kind: 'none', reason: 'not-image-selection' };
+}
+
+export interface PropertiesPanelProps {
+    className?: string;
+    /**
+     * full（默认）：整板，兼容旧用法与现有单测。
+     * object：只渲染选中对象表单，不带滤镜；无选中返回 null。
+     * filters：只渲染滤镜目标（背景 / 单选 image / 提示），不渲染对象字段。
+     */
+    section?: 'full' | 'object' | 'filters';
+}
+
+/**
+ * 属性面板：由选中驱动表单。section 见 PropertiesPanelProps。
+ * full 无选中 → 画布属性（缩放只读、背景尺寸/「未加载图片」、对象数）+「背景调整」
+ * （已加载背景时，mergeKey 'bg-filters'）；
+ * 有选中时 full 与 object 共用同一份对象表单（change* API 均可撤销）。
+ * image 的「图像调整」只在 includeFilters 时挂上（full 为 true，object 为 false；filters 段单独渲染，不复制组件）。
+ * 多选 → 数量 + 删除 +「对齐分布」（6 对齐 + 2 分布，≥3 才启用分布）。
+ * 单选与多选均有「不透明度」滑杆、「图层顺序」与「翻转」。
  * 单选 locked 对象时显示「已锁定」提示并禁用几何类控件（描边宽度/字号/线宽）。
  */
-export function PropertiesPanel(props: { className?: string }): JSX.Element {
+export function PropertiesPanel(props: PropertiesPanelProps): JSX.Element | null {
+    const section = props.section ?? 'full';
     const editor = useEditor();
     const selection = useEditorState((state) => state.selection);
     const objects = useEditorState((state) => state.doc.objects);
@@ -405,8 +438,98 @@ export function PropertiesPanel(props: { className?: string }): JSX.Element {
     const zoomText = useEditorState((state) => `${Math.round(state.viewport.zoom * 100)}%`);
     const selected = objects.filter((object) => selection.includes(object.id));
 
+    if (section === 'object' && selected.length === 0) {
+        return null;
+    }
+
+    const renderSelected = (includeFilters: boolean): JSX.Element => {
+        if (selected.length > 1) {
+            return (
+                <div className="fp-props-multi">
+                    <span className="fp-props-multi-count">已选 {selected.length} 个对象</span>
+                    <OpacitySlider editor={editor} objects={selected} />
+                    <AlignDistributeGroup editor={editor} selectedCount={selected.length} />
+                    <ArrangeGroups editor={editor} />
+                    <DeleteButton editor={editor} />
+                </div>
+            );
+        }
+        const object = selected[0];
+        const locked = object.locked === true;
+        let form: JSX.Element;
+        switch (object.kind) {
+            case 'shape':
+                form = <ShapePanel editor={editor} object={object} locked={locked} />;
+                break;
+            case 'text':
+                form = <TextPanel editor={editor} object={object} locked={locked} />;
+                break;
+            case 'path':
+                form = <PathPanel editor={editor} object={object} locked={locked} />;
+                break;
+            case 'mosaic':
+                form = <MosaicPanel editor={editor} object={object} />;
+                break;
+            case 'image':
+                form = <ImagePanel editor={editor} object={object} includeFilters={includeFilters} />;
+                break;
+        }
+        return (
+            <div className={`fp-props-object fp-props-object-${object.kind}`}>
+                {locked && <LockedHint />}
+                {form}
+                <OpacitySlider editor={editor} objects={selected} />
+                <ArrangeGroups editor={editor} />
+            </div>
+        );
+    };
+
+    const renderFilters = (): JSX.Element => {
+        const target = resolveFilterTarget(selected, background);
+        if (target.kind === 'image') {
+            const object = target.object;
+            return (
+                <FilterAdjustGroup
+                    title="图像调整"
+                    filters={object.filters}
+                    onPatch={(patch) => editor.setImageFilters(object.id, patch, { mergeKey: `img-filters-${object.id}` })}
+                    onReset={() => editor.resetImageFilters(object.id)}
+                />
+            );
+        }
+        if (target.kind === 'background' && background !== null) {
+            return (
+                <>
+                    <div className="fp-props-readonly">
+                        <span className="fp-props-readonly-label">背景</span>
+                        <span className="fp-props-readonly-value">
+                            {background.width} × {background.height}
+                        </span>
+                    </div>
+                    <FilterAdjustGroup
+                        title="背景调整"
+                        filters={background.filters}
+                        onPatch={(patch) => editor.setBackgroundFilters(patch, { mergeKey: 'bg-filters' })}
+                        onReset={() => editor.resetBackgroundFilters()}
+                    />
+                </>
+            );
+        }
+        if (target.kind === 'none' && target.reason === 'no-background') {
+            return (
+                <div className="fp-props-readonly">
+                    <span className="fp-props-readonly-label">背景</span>
+                    <span className="fp-props-readonly-value">未加载图片</span>
+                </div>
+            );
+        }
+        return <div className="fp-props-filter-hint">当前选择不能调整滤镜</div>;
+    };
+
     let content: JSX.Element;
-    if (selected.length === 0) {
+    if (section === 'filters') {
+        content = renderFilters();
+    } else if (selected.length === 0) {
         content = (
             <div className="fp-props-canvas">
                 <div className="fp-props-readonly">
@@ -433,45 +556,8 @@ export function PropertiesPanel(props: { className?: string }): JSX.Element {
                 )}
             </div>
         );
-    } else if (selected.length > 1) {
-        content = (
-            <div className="fp-props-multi">
-                <span className="fp-props-multi-count">已选 {selected.length} 个对象</span>
-                <OpacitySlider editor={editor} objects={selected} />
-                <AlignDistributeGroup editor={editor} selectedCount={selected.length} />
-                <ArrangeGroups editor={editor} />
-                <DeleteButton editor={editor} />
-            </div>
-        );
     } else {
-        const object = selected[0];
-        const locked = object.locked === true;
-        let form: JSX.Element;
-        switch (object.kind) {
-            case 'shape':
-                form = <ShapePanel editor={editor} object={object} locked={locked} />;
-                break;
-            case 'text':
-                form = <TextPanel editor={editor} object={object} locked={locked} />;
-                break;
-            case 'path':
-                form = <PathPanel editor={editor} object={object} locked={locked} />;
-                break;
-            case 'mosaic':
-                form = <MosaicPanel editor={editor} object={object} />;
-                break;
-            case 'image':
-                form = <ImagePanel editor={editor} object={object} />;
-                break;
-        }
-        content = (
-            <div className={`fp-props-object fp-props-object-${object.kind}`}>
-                {locked && <LockedHint />}
-                {form}
-                <OpacitySlider editor={editor} objects={selected} />
-                <ArrangeGroups editor={editor} />
-            </div>
-        );
+        content = renderSelected(section === 'full');
     }
 
     const rootClassName = props.className === undefined ? 'fp-props-panel' : `fp-props-panel ${props.className}`;

@@ -43,9 +43,9 @@ function paletteValue(objects: readonly EditorObject[], preset: string): string 
 }
 
 /**
- * 浮动工具选项条：定位在画布区顶部居中（.fp-floating-options 绝对定位，由 styles.css 承载），
+ * 工具选项条：缺省壳里作为 .fp-dock 的第一个子节点，静态流在坞的正上方（不再绝对贴画布顶）。
  * 仅 crop/brush/shape/mosaic 渲染内容，其余 mode（text/normal/pan）返回 null——不占布局、不留空壳。
- * crop → Apply/Cancel；freedraw/line/arrow → 线宽（写 toolSettings + setBrush 实时生效）+ 色板；
+ * crop → 完成/取消（完成是实心主按钮）；freedraw/line/arrow → 线宽（写 toolSettings + setBrush 实时生效）+ 色板；
  * shape → 形状类型（写 toolSettings + setDrawingShape）+ 色板（描边色）；mosaic → 粒度
  * （仅写 toolSettings，不重启模式，下次 startMosaicDrawing 生效）。
  * 色板改色统一走 applyColor 路由（选中对象优先改对象，否则写工具预设并实时同步 editor）。
@@ -66,11 +66,15 @@ export function FloatingOptions(props: { className?: string }): JSX.Element | nu
     if (mode === 'crop') {
         content = (
             <>
-                <button type="button" className="fp-option-btn" onClick={() => editor.endCropping(true)}>
-                    Apply
+                <button
+                    type="button"
+                    className="fp-option-btn fp-option-btn-primary"
+                    onClick={() => editor.endCropping(true)}
+                >
+                    完成
                 </button>
                 <button type="button" className="fp-option-btn" onClick={() => editor.endCropping(false)}>
-                    Cancel
+                    取消
                 </button>
             </>
         );

@@ -614,4 +614,65 @@ describe('PropertiesPanel', () => {
         expect(panel.getAttribute('style')).toBeNull();
         editor.destroy();
     });
+
+    it('section="object" 且无选中：不渲染 .fp-props-panel', () => {
+        const editor = new Editor();
+        const utils = render(
+            <EditorProvider editor={editor}>
+                <PropertiesPanel section="object" />
+            </EditorProvider>
+        );
+        expect(utils.container.querySelector('.fp-props-panel')).toBeNull();
+        editor.destroy();
+    });
+
+    it('section="object" 且单选 image：有尺寸和删除，没有图像调整', () => {
+        const editor = new Editor();
+        const utils = render(
+            <EditorProvider editor={editor}>
+                <PropertiesPanel section="object" />
+            </EditorProvider>
+        );
+        addAndSelect(editor, makeImage());
+        expect(utils.getByText('64 × 32')).not.toBeNull();
+        expect(utils.getByRole('button', { name: '删除' })).not.toBeNull();
+        expect(utils.queryByText('图像调整')).toBeNull();
+        editor.destroy();
+    });
+
+    it('section="filters"：背景 / 单选 image / 其他选中，滑杆 mergeKey 与 full 相同', () => {
+        const editor = new Editor();
+        const bgSpy = vi.spyOn(editor, 'setBackgroundFilters');
+        const imgSpy = vi.spyOn(editor, 'setImageFilters');
+        const utils = render(
+            <EditorProvider editor={editor}>
+                <PropertiesPanel section="filters" />
+            </EditorProvider>
+        );
+
+        act(() => {
+            editor.dispatch(
+                editor.newTransaction().addStep(
+                    new SetBackground({ src: 'data:image/png;base64,x', width: 100, height: 80, name: 'p.png', angle: 0 })
+                )
+            );
+        });
+        expect(utils.getByText('背景调整')).not.toBeNull();
+        expect(utils.queryByText('100%')).toBeNull();
+        expect(utils.container.querySelector('.fp-props-canvas-count')).toBeNull();
+        fireEvent.change(utils.getByLabelText('亮度'), { target: { value: '40' } });
+        expect(bgSpy).toHaveBeenCalledWith({ brightness: 0.4 }, { mergeKey: 'bg-filters' });
+
+        const image = makeImage();
+        addAndSelect(editor, image);
+        expect(utils.getByText('图像调整')).not.toBeNull();
+        expect(utils.queryByText('背景调整')).toBeNull();
+        fireEvent.change(utils.getByLabelText('对比度'), { target: { value: '-30' } });
+        expect(imgSpy).toHaveBeenCalledWith(image.id, { contrast: -0.3 }, { mergeKey: `img-filters-${image.id}` });
+
+        addAndSelect(editor, makeShape());
+        expect(utils.getByText('当前选择不能调整滤镜')).not.toBeNull();
+        expect(utils.queryByLabelText('亮度')).toBeNull();
+        editor.destroy();
+    });
 });
